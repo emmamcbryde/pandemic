@@ -21,6 +21,14 @@ export default {
     return new Promise(function (resolve) {
       setTimeout(function () { resolve(time) }, time)
     })
+  },
+
+  makeArray (n, v) {
+    let result = []
+    for (let i = 0; i < n; i += 1) {
+      result.push(v)
+    }
+    return result
   }
 
 }

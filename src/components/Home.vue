@@ -12,8 +12,9 @@
 
           <md-layout md-column>
 
-            <md-layout md-row md-vertical-align="center"
-                       style="padding-left: 1em">
+            <md-layout
+              md-row md-vertical-align="center"
+               style="padding-left: 1em">
               <md-input-container
                 style="width: 160px">
 
@@ -43,8 +44,9 @@
               </md-button>
             </md-layout>
 
-            <md-layout md-row md-vertical-align="center"
-                       style="padding-left: 1em">
+            <md-layout
+              md-row md-vertical-align="center"
+              style="padding-left: 1em">
               <md-radio
                 v-model="mode"
                 @change="changeMode('to')"
@@ -55,44 +57,31 @@
               </md-radio>
               <md-radio
                 v-model="mode"
-                @change="changeMode('from')"
+                @change="changeMode('risk')"
                 id="direction"
                 name="direction"
-                md-value="from">
-                origins
+                md-value="risk">
+                risk
               </md-radio>
-              <md-radio
-                v-model="mode"
-                @change="changeMode('risk1')"
-                id="direction"
-                name="direction"
-                md-value="risk1">
-                risk day 1
-              </md-radio>
-              <md-radio
-                v-model="mode"
-                @change="changeMode('risk2')"
-                id="direction"
-                name="direction"
-                md-value="risk2">
-                risk day 2
-              </md-radio>
-              <md-radio
-                v-model="mode"
-                @change="changeMode('risk3')"
-                id="direction"
-                name="direction"
-                md-value="risk3">
-                risk day 3
-              </md-radio>
+              - days
+              <div style="width: 300px">
+                <vue-slider
+                  ref="slider"
+                  :interval="1"
+                  @callback="selectTime()"
+                  :max="15"
+                  v-model="time"/>
+              </div>
             </md-layout>
 
-            <md-layout md-row md-vertical-align="center"
-                       style="padding-left: 1em">
+            <md-layout
+              md-row md-vertical-align="center"
+              style="padding-left: 1em">
 
               <md-input-container
                 style="
-width: 100px; margin-left: 1em">
+                  width: 100px;
+                  margin-left: 1em">
                 <label>Incubation Period</label>
                 <md-input
                   v-model="incubationPeriod"
@@ -101,7 +90,9 @@ width: 100px; margin-left: 1em">
               </md-input-container>
 
               <md-input-container
-                style="margin-left: 1em; width: 100px">
+                style="
+                  margin-left: 1em;
+                  width: 100px">
                 <label>Infectious Period</label>
                 <md-input
                   v-model="infectiousPeriod"
@@ -110,7 +101,9 @@ width: 100px; margin-left: 1em">
               </md-input-container>
 
               <md-input-container
-                style="margin-left: 1em; width: 100px">
+                style="
+                  margin-left: 1em;
+                  width: 100px">
                 <label>Prevalence</label>
                 <md-input
                   v-model="prevalence"
@@ -148,7 +141,6 @@ width: 100px; margin-left: 1em">
     overflow: hidden;
     position: fixed;
   }
-
   .countryTooltip {
     position: absolute;
     display: none;
@@ -167,23 +159,33 @@ width: 100px; margin-left: 1em">
 import _ from 'lodash'
 import $ from 'jquery'
 
+import vueSlider from 'vue-slider-component'
+
 import Globe from '../modules/globe'
 
-const travelData = require('../travelData')
-const world = require('../world')
+const travelData = require('../data/travel')
+const worldData = require('../data/world')
+
+let params = {
+  contactRate: 10,
+  recoverRate: 0.01
+}
 
 export default {
 
   id: 'home',
 
+  components: {vueSlider},
+
   data () {
     return {
       selectableCountries: [],
       iCountry: -1,
-      mode: 'from', // or 'to'
+      mode: 'to', // or 'risk'
       incubationPeriod: 5,
       infectiousPeriod: 30,
-      prevalence: 30000
+      prevalence: 30000,
+      time: 1 // days
     }
   },
 
@@ -192,13 +194,13 @@ export default {
     this.resize()
     window.addEventListener('resize', this.resize)
 
-    this.globe = new Globe(world, '#main')
+    this.globe = new Globe(worldData, '#main')
     this.globe.getCountryPopupHtml = this.getCountryPopupHtml
     this.globe.clickCountry = this.selectById
 
     this.travelData = travelData
     this.iCountry = 0
-    this.mode = 'to' // 'to' or 'from'
+    this.mode = 'to' // 'to' or 'risk'
 
     let countries = []
     let nCountry = this.travelData.countries.length
@@ -243,29 +245,60 @@ export default {
       return values
     },
 
-    getRiskById (nDay) {
-      let nCountry = this.travelData.countries.length
+    runSirModel (iCountry, delta, compartment, dTime) {
+      let flow = {}
+      flow.susceptible =
+        - (params.contactRate *
+             compartment.prevalence *
+             compartment.susceptible /
+             compartment.population)
+      flow.prevalence =
+        + (params.contactRate *
+             compartment.prevalence *
+             compartment.susceptible /
+             compartment.population)
+        - (params.recoverRate *
+             compartment.prevalence)
+      flow.recovered =
+        + (params.recoverRate *
+             compartment.prevalence)
 
-      function makeArray (n, v) {
-        let result = []
-        for (let i = 0; i < n; i += 1) {
-          result.push(v)
-        }
-        return result
+      for (let key of ['prevalence', 'susceptible', 'recovered']) {
+        delta[key] += dTime * flow[key]
       }
+    },
+
+    getRiskById () {
+      let nDay = this.time
+      let nCountry = this.travelData.countries.length
 
       const probSickCanTravel =
         parseFloat(this.incubationPeriod) /
           (parseFloat(this.incubationPeriod) +
            parseFloat(this.infectiousPeriod))
 
-      let values = makeArray(nCountry, 0)
-      values[this.iCountry] = this.prevalence
+      let compartment = []
+      for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
+        let entry = {
+          prevalence: 0,
+          population: travelData.countries[iCountry].population,
+          susceptible: 0,
+          recovered: 0
+        }
+        if (this.iCountry === iCountry) {
+          entry.prevalence = this.prevalence
+        }
+        entry.susceptible = entry.population - entry.prevalence
+        compartment.push(entry)
+      }
 
       for (let iDay = 0; iDay < nDay; iDay += 1) {
-        let lastValues = _.cloneDeep(values)
-        values = makeArray(nCountry, 0)
+        let delta = []
+        for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
+          delta.push({prevalence: 0})
+        }
 
+        // calculates changes from travelling
         for (let iFromCountry = 0; iFromCountry < nCountry; iFromCountry += 1) {
           for (let iToCountry = 0; iToCountry < nCountry; iToCountry += 1) {
             // 2014 Feb data
@@ -274,19 +307,26 @@ export default {
             if ((iFromCountry !== iToCountry) && isFinite(population)) {
               let probTravelPerDay = travelPerDay / population
               let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
-              values[iToCountry] += lastValues[iFromCountry] * probSickTravelPerDay
+              delta[iToCountry].prevalence += compartment[iFromCountry].prevalence *
+                probSickTravelPerDay
             }
           }
         }
+
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
-          values[iCountry] += lastValues[iCountry]
+          this.runSirModel(iCountry, delta[iCountry], compartment[iCountry], 1)
+        }
+
+        // update changes
+        for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
+          compartment[iCountry].prevalence += delta[iCountry].prevalence
         }
       }
 
       let result = {}
       for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
         let id = this.travelData.countries[iCountry].id
-        result[id] = values[iCountry]
+        result[id] = compartment[iCountry].prevalence
       }
 
       return result
@@ -295,7 +335,7 @@ export default {
     loadCountry () {
       let valuesById
       if (_.startsWith(this.mode, 'risk')) {
-        valuesById = this.getRiskById(parseInt(_.last(this.mode)))
+        valuesById = this.getRiskById()
       } else {
         valuesById = this.getTravelValuesById(this.mode)
       }
@@ -305,10 +345,7 @@ export default {
       this.globe.setCountryValue(this.getId(), 0)
       let modeColors = {
         'to': '#02386F',
-        'from': '#606',
-        'risk1': '#f0f',
-        'risk2': '#f0f',
-        'risk3': '#f0f'
+        'risk': '#f0f',
       }
       this.globe.resetCountryColorsFromValues(modeColors[this.mode])
       this.globe.setCountryColor(this.getId(), '#f00')
@@ -379,6 +416,12 @@ export default {
       }
       s += `</div>`
       return s
+    },
+
+    selectTime () {
+      this.mode = 'risk'
+      this.loadCountry()
+      this.globe.draw()
     }
 
   }

@@ -3,5 +3,4 @@
 /dist/
 /node-modules/
 /*.js
-src/travelData.js
-src/world.js
+/data/
