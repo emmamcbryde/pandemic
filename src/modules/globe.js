@@ -19,7 +19,7 @@ class Globe {
       this.iCountryFromId[countryFeature.id] = i
     }
 
-    this.nullColor = '#663'
+    this.nullColor = '#CCB'
     this.borderColor = '#EEE'
     this.outerBorderColor = '#999'
 
