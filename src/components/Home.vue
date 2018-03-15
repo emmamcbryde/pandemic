@@ -371,14 +371,18 @@ export default {
         result[id] = this.compartment[iCountry].prevalence
       }
       let values = _.values(result)
+      console.log('result', Math.max(...values), Math.min(...values))
 
-      return result
+      return [result, Math.max(...values)]
     },
 
     loadCountry () {
-      let valuesById
+      let valuesById, maxValue
       if (_.startsWith(this.mode, 'risk')) {
-        valuesById = this.getRiskById()
+        [valuesById, maxValue] = this.getRiskById()
+        valuesById[this.getId()] = 0
+        console.log(maxValue, Math.max(..._.values(valuesById)), 100)
+        maxValue = 100
       } else {
         valuesById = this.getTravelValuesById(this.mode)
       }
@@ -390,7 +394,7 @@ export default {
         'to': '#02386F',
         'risk': '#f0f'
       }
-      this.globe.resetCountryColorsFromValues(modeColors[this.mode])
+      this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
       this.globe.setCountryColor(this.getId(), '#f00')
     },
 

@@ -188,11 +188,13 @@ class Globe {
     this.rotateTo(r)
   }
 
-  resetCountryColorsFromValues (maxColor) {
-    let maxValue = Math.max.apply(null, this.values)
+  resetCountryColorsFromValues (maxColor, maxValue = null, minColor = '#DDD') {
+    if (maxValue === null) {
+      maxValue = Math.max.apply(null, this.values)
+    }
     let paletteScale = d3.scaleLinear()
       .domain([0, maxValue])
-      .range(['#DDD', maxColor])
+      .range([minColor, maxColor])
 
     for (let i = 0; i < this.countryFeatures.length; i += 1) {
       if (this.values[i] == null) {
