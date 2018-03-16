@@ -158,6 +158,8 @@ import $ from 'jquery'
 
 import vueSlider from 'vue-slider-component'
 
+import legend from 'd3-svg-legend'
+
 import Globe from '../modules/globe'
 import util from '../modules/util'
 
@@ -219,6 +221,10 @@ export default {
     this.calcParams()
 
     this.random()
+
+    let legend = d3.legendColor()
+    let svg = d3.select("svg")
+    
   },
 
   methods: {

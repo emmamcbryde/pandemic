@@ -29,10 +29,12 @@ The app can now be opened from `dist/index.html` in your browser.
 If you are ready to make changes to the source code in the `src` directory, you can run a development version of the app:
 
 ```bash
-> ./hot_reload.sh
+> yarn run dev
 ```
 
 This will open up the page in the browser at the url `localhost:8080`. Any changes in the `src` directory will cause the app to be recompiled and automatically reloaded in the browser.
+
+This command is conveniently stored in `hot_reload.sh` for mac and linux.
 
 ## Framework
 
