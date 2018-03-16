@@ -118,9 +118,6 @@
       </md-layout>
     </div>
 
-    <div>
-      <svg id="legend"></svg>
-    </div>
     <md-layout>
       <div
         id="main"
@@ -129,6 +126,12 @@
           width: calc(100vw);
           user-select: none;
           cursor: pointer">
+      </div>
+      <div
+        style="
+          position: absolute;
+          bottom: 0">
+        <svg id="legend"></svg>
       </div>
     </md-layout>
 
