@@ -192,7 +192,7 @@ class Globe {
     if (maxValue === null) {
       maxValue = Math.max.apply(null, this.values)
     }
-    let paletteScale = d3.scaleLinear()
+    this.paletteScale = d3.scaleLinear()
       .domain([0, maxValue])
       .range([minColor, maxColor])
 
@@ -200,7 +200,7 @@ class Globe {
       if (this.values[i] == null) {
         this.colors[i] = this.nullColor
       } else {
-        this.colors[i] = paletteScale(this.values[i])
+        this.colors[i] = this.paletteScale(this.values[i])
       }
     }
   }

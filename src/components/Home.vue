@@ -118,6 +118,9 @@
       </md-layout>
     </div>
 
+    <div>
+      <svg id="legend"></svg>
+    </div>
     <md-layout>
       <div
         id="main"
@@ -157,12 +160,13 @@ import _ from 'lodash'
 import $ from 'jquery'
 
 import vueSlider from 'vue-slider-component'
-
-import legend from 'd3-svg-legend'
-
 import Globe from '../modules/globe'
 import util from '../modules/util'
+import {legendColor} from 'd3-svg-legend'
 
+const d3 = require('d3')
+
+console.log(legendColor)
 console.log(util.jstr({}))
 
 const travelData = require('../data/travel')
@@ -221,10 +225,6 @@ export default {
     this.calcParams()
 
     this.random()
-
-    let legend = d3.legendColor()
-    let svg = d3.select("svg")
-    
   },
 
   methods: {
@@ -402,6 +402,7 @@ export default {
       }
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
       this.globe.setCountryColor(this.getId(), '#f00')
+      this.drawLegend()
     },
 
     getId () {
@@ -439,6 +440,21 @@ export default {
       this.mode = mode
       this.loadCountry()
       this.globe.draw()
+    },
+
+    drawLegend () {
+      let svg = d3.select('#legend')
+      svg.html('')
+      let colorLegend = legendColor()
+        .labelFormat(d3.format('.0f'))
+        .scale(this.globe.paletteScale)
+        .shapePadding(5)
+        .shapeWidth(50)
+        .shapeHeight(20)
+        .labelOffset(12)
+      svg.append('g')
+        // .attr('transform', 'translate(352, 60)')
+        .call(colorLegend)
     },
 
     getCountry (id) {
