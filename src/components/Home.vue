@@ -62,7 +62,7 @@
             <vue-slider
               ref="slider"
               :interval="1"
-              @callback="selectDays()"
+              @callback="reCalculateRisk()"
               :min="1"
               :max="15"
               v-model="days"/>
@@ -90,6 +90,7 @@
             <md-input
               v-model="infectiousPeriod"
               type="number"
+              @change="reCalculateRisk"
               placeholder="in days"/>
           </md-input-container>
           <md-input-container
@@ -100,6 +101,7 @@
             <md-input
               v-model="prevalence"
               type="number"
+              @change="reCalculateRisk"
               placeholder="number of cases"/>
           </md-input-container>
           <md-input-container
@@ -110,9 +112,9 @@
             <md-input
               v-model="reproductionNumber"
               type="number"
+              @change="reCalculateRisk"
               placeholder="Reproduction Number"/>
           </md-input-container>
-          {{params}}
         </md-layout>
 
       </md-layout>
@@ -490,11 +492,11 @@ export default {
       return s
     },
 
-    selectDays () {
+    reCalculateRisk () {
       this.mode = 'risk'
       this.loadCountry()
       this.globe.draw()
-    }
+    },
 
   }
 }
