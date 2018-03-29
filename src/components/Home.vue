@@ -62,7 +62,7 @@
             <vue-slider
               ref="slider"
               :interval="1"
-              @callback="reCalculateRisk()"
+              @callback="reCalculateRisk"
               :min="1"
               :max="15"
               v-model="days"/>
@@ -170,9 +170,6 @@ import util from '../modules/util'
 import {legendColor} from 'd3-svg-legend'
 
 const d3 = require('d3')
-
-console.log(legendColor)
-console.log(util.jstr({}))
 
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
@@ -344,7 +341,7 @@ export default {
             }
             let population = this.getPopulation(iFromCountry)
             if (!isFinite(population)) {
-              console.log('> travel error', iFromCountry,
+              console.log('> Home.getRiskById travel error', iFromCountry,
                 this.travelData.countries[iFromCountry].name,
                 travelData.countries[iFromCountry].population)
             } else {
@@ -382,7 +379,7 @@ export default {
         result[id] = this.compartment[iCountry].prevalence
       }
       let values = _.values(result)
-      console.log('result', Math.max(...values), Math.min(...values))
+      console.log('> Home.getRiskById values range', Math.max(...values), Math.min(...values))
 
       return [result, Math.max(...values)]
     },
@@ -392,7 +389,6 @@ export default {
       if (_.startsWith(this.mode, 'risk')) {
         [valuesById, maxValue] = this.getRiskById()
         valuesById[this.getId()] = 0
-        console.log(maxValue, Math.max(..._.values(valuesById)), 100)
         maxValue = 100
       } else {
         valuesById = this.getTravelValuesById(this.mode)
@@ -418,7 +414,7 @@ export default {
       let country = this.travelData.countries[this.iCountry]
       let id = country.id
       let coordinates = country.coordinates
-      console.log('> TravellingRollingGlobe.select', id, country.name, '' + coordinates)
+      console.log('> Home.transition', id, country.name, '' + coordinates)
       let countryTargetR = [-coordinates[1], -coordinates[0]]
       this.globe.rotateTransition(countryTargetR)
     },
@@ -492,11 +488,14 @@ export default {
       return s
     },
 
-    reCalculateRisk () {
+    async reCalculateRisk () {
+      console.log('> Home.reCaclulateRisk')
+      // a little delay to allow the data to update
+      await util.delay(10)
       this.mode = 'risk'
       this.loadCountry()
       this.globe.draw()
-    },
+    }
 
   }
 }
