@@ -30,9 +30,9 @@
             </md-select>
           </md-input-container>
           <md-button
-            class="md-raised md-fab md-mini"
+            class="md-raised md-mini"
             @click="random()">
-            <md-icon>help</md-icon>
+            Random
           </md-button>
         </md-layout>
 
@@ -62,11 +62,16 @@
             <vue-slider
               ref="slider"
               :interval="1"
-              @callback="reCalculateRisk"
+              @callback="recalculateRisk"
               :min="1"
-              :max="15"
+              :max="maxDay"
               v-model="days"/>
           </div>
+          <md-switch
+            v-model="isLoop"
+            @change="changeLoop">
+            Loop
+          </md-switch>
         </md-layout>
 
         <md-layout
@@ -90,7 +95,7 @@
             <md-input
               v-model="infectiousPeriod"
               type="number"
-              @change="reCalculateRisk"
+              @change="recalculateRisk"
               placeholder="in days"/>
           </md-input-container>
           <md-input-container
@@ -101,7 +106,7 @@
             <md-input
               v-model="prevalence"
               type="number"
-              @change="reCalculateRisk"
+              @change="recalculateRisk"
               placeholder="number of cases"/>
           </md-input-container>
           <md-input-container
@@ -112,7 +117,7 @@
             <md-input
               v-model="reproductionNumber"
               type="number"
-              @change="reCalculateRisk"
+              @change="recalculateRisk"
               placeholder="Reproduction Number"/>
           </md-input-container>
         </md-layout>
@@ -187,10 +192,12 @@ export default {
       mode: 'to', // or 'risk'
       incubationPeriod: 5,
       infectiousPeriod: 30,
-      prevalence: 30000,
-      reproductionNumber: 10,
+      prevalence: 3000,
+      reproductionNumber: 50,
       days: 1,
-      params: {}
+      maxDay: 15,
+      params: {},
+      isLoop: false
     }
   },
 
@@ -227,6 +234,8 @@ export default {
     this.calcParams()
 
     this.random()
+
+    setInterval(this.loop, 2000)
   },
 
   methods: {
@@ -477,7 +486,7 @@ export default {
         value = value.toFixed(3)
       }
       let s = ''
-      s += `<div style="width: 8em; text-align: center">`
+      s += `<div style="text-align: center">`
       s += `${name}`
       let tag = 'travel'
       s += `<br>${tag}: ${value}`
@@ -488,13 +497,30 @@ export default {
       return s
     },
 
-    async reCalculateRisk () {
-      console.log('> Home.reCaclulateRisk')
+    async recalculateRisk () {
+      console.log('> Home.recalculateRisk')
       // a little delay to allow the data to update
       await util.delay(10)
       this.mode = 'risk'
       this.loadCountry()
       this.globe.draw()
+    },
+
+    loop () {
+      if ((this.isLoop) && (_.startsWith(this.mode, 'risk'))) {
+        if (this.days < this.maxDay) {
+          this.days += 1
+        } else {
+          this.days = 1
+        }
+        console.log('> Home.loop forward', this.days)
+        this.recalculateRisk()
+      }
+    },
+
+    changeLoop (p) {
+      console.log('> Home.changeLoop', p)
+      this.isLoop = p
     }
 
   }
