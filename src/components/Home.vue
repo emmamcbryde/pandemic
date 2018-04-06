@@ -179,6 +179,84 @@ const d3 = require('d3')
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
 
+class SirModel {
+  constructor (
+    id, population, prevalence, incubationPeriod,
+    infectiousPeriod, reproductionNumber) {
+    this.id = id
+
+    this.params = {}
+    this.params.recoverRate = 1 / (incubationPeriod + infectiousPeriod)
+    this.params.contactRate = reproductionNumber * this.params.recoverRate
+
+    this.compartment = {
+      prevalence,
+      susceptible: population - prevalence,
+      recovered: 0
+    }
+
+    this.keys = _.keys(this.compartment)
+
+    this.var = { population }
+    this.flow = {}
+    this.delta = {}
+  }
+
+  clearDelta () {
+    for (let key of this.keys) {
+      this.delta[key] = 0
+    }
+  }
+
+  calcVar () {
+    this.var.population =
+      this.compartment.prevalence +
+      this.compartment.susceptible +
+      this.compartment.recovered
+  }
+
+  calcFlow () {
+    for (let key of this.keys) {
+      this.flow[key] = 0
+    }
+
+    this.flow.susceptible =
+      (-this.params.contactRate *
+        this.compartment.prevalence *
+        this.compartment.susceptible /
+        this.var.population)
+
+    this.flow.prevalence =
+      (this.params.contactRate *
+        this.compartment.prevalence *
+        this.compartment.susceptible /
+        this.var.population) -
+      (this.params.recoverRate *
+        this.compartment.prevalence)
+
+    this.flow.recovered =
+      (this.params.recoverRate *
+        this.compartment.prevalence)
+  }
+
+  updateInternalFlow (dTime) {
+    this.calcVar()
+
+    this.calcFlow()
+
+    for (let key of this.keys) {
+      this.delta[key] += dTime * this.flow[key]
+    }
+
+    for (let key of this.keys) {
+      this.compartment[key] += this.delta[key]
+      if (this.compartment[key] < 0) {
+        this.compartment[key] = 0
+      }
+    }
+  }
+}
+
 export default {
 
   id: 'home',
@@ -231,8 +309,6 @@ export default {
 
     this.countryIndices = _.map(countries, 'iCountry')
 
-    this.calcParams()
-
     this.random()
 
     setInterval(this.loop, 2000)
@@ -277,120 +353,52 @@ export default {
       return values
     },
 
-    runSirModel (iCountry, delta, compartment, dTime) {
-      let flow = {}
-      if (compartment.population > 1) {
-        flow.susceptible =
-          (-this.params.contactRate *
-            compartment.prevalence *
-            compartment.susceptible /
-            compartment.population)
-        flow.prevalence =
-          (this.params.contactRate *
-            compartment.prevalence *
-            compartment.susceptible /
-            compartment.population) -
-          (this.params.recoverRate *
-            compartment.prevalence)
-        flow.recovered =
-          (this.params.recoverRate *
-            compartment.prevalence)
-
-        for (let key of ['prevalence', 'susceptible', 'recovered']) {
-          delta[key] += dTime * flow[key]
-        }
+    getTravelPrevalence (iFromCountry, iToCountry) {
+      if (iFromCountry === iToCountry) {
+        return 0
       }
-    },
-
-    calcParams () {
-      this.params.recoverRate = 1 / (this.incubationPeriod + this.infectiousPeriod)
-      this.params.contactRate = this.reproductionNumber * this.params.recoverRate
+      let population = this.getPopulation(iFromCountry)
+      let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
+      let probTravelPerDay = travelPerDay / population
+      const probSickCanTravel =
+        this.incubationPeriod / (this.incubationPeriod + this.infectiousPeriod)
+      let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
+      return this.countryModel[iFromCountry].compartment.prevalence * probSickTravelPerDay
     },
 
     getRiskById () {
-      let nDay = this.days
-
-      this.calcParams()
-
-      const probSickCanTravel =
-        parseFloat(this.incubationPeriod) /
-          (parseFloat(this.incubationPeriod) +
-            parseFloat(this.infectiousPeriod))
-
-      this.compartment = {}
+      this.countryModel = {}
       for (let iCountry of this.countryIndices) {
-        let entry = {
-          prevalence: 0,
-          population: parseFloat(travelData.countries[iCountry].population),
-          susceptible: 0,
-          recovered: 0
-        }
-        if (this.iCountry === iCountry) {
-          entry.prevalence = parseFloat(this.prevalence)
-        }
-        entry.susceptible = entry.population - entry.prevalence
-        this.compartment[iCountry] = entry
+        let population = parseFloat(travelData.countries[iCountry].population)
+        let prevalence = this.iCountry === iCountry ? parseFloat(this.prevalence) : 0
+        this.countryModel[iCountry] = new SirModel(
+          iCountry, population, prevalence, this.incubationPeriod,
+          this.infectiousPeriod, this.reproductionNumber)
       }
 
-      for (let iDay = 0; iDay < nDay; iDay += 1) {
-        let delta = {}
+      for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
-          delta[iCountry] = {
-            prevalence: 0,
-            susceptible: 0,
-            recovered: 0
-          }
+          this.countryModel[iCountry].clearDelta()
         }
-
         // calculates changes from travelling
         for (let iFromCountry of this.countryIndices) {
           for (let iToCountry of this.countryIndices) {
-            if (iFromCountry === iToCountry) {
-              continue
-            }
-            let population = this.getPopulation(iFromCountry)
-            if (!isFinite(population)) {
-              console.log('> Home.getRiskById travel error', iFromCountry,
-                this.travelData.countries[iFromCountry].name,
-                travelData.countries[iFromCountry].population)
-            } else {
-              let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
-              let probTravelPerDay = travelPerDay / population
-              let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
-              let d = this.compartment[iFromCountry].prevalence * probSickTravelPerDay
-              delta[iToCountry].prevalence += d
-            }
+            this.countryModel[iToCountry].delta.prevalence +=
+              this.getTravelPrevalence(iFromCountry, iToCountry)
           }
         }
-
         for (let iCountry of this.countryIndices) {
-          this.runSirModel(iCountry, delta[iCountry], this.compartment[iCountry], 1)
-        }
-
-        // update changes
-        for (let iCountry of this.countryIndices) {
-          for (let key of _.keys(delta[iCountry])) {
-            this.compartment[iCountry][key] += delta[iCountry][key]
-            if (this.compartment[iCountry][key] < 0) {
-              this.compartment[iCountry][key] = 0
-            }
-          }
-          this.compartment[iCountry].population =
-            this.compartment[iCountry].prevalence +
-            this.compartment[iCountry].susceptible +
-            this.compartment[iCountry].recovered
+          this.countryModel[iCountry].updateInternalFlow(1)
         }
       }
 
       let result = {}
       for (let iCountry of this.countryIndices) {
         let id = this.travelData.countries[iCountry].id
-        result[id] = this.compartment[iCountry].prevalence
+        result[id] = this.countryModel[iCountry].compartment.prevalence
       }
-      let values = _.values(result)
-      console.log('> Home.getRiskById values range', Math.max(...values), Math.min(...values))
 
-      return [result, Math.max(...values)]
+      return [result, _.max(_.values(result))]
     },
 
     loadCountry () {
@@ -521,6 +529,9 @@ export default {
     changeLoop (p) {
       console.log('> Home.changeLoop', p)
       this.isLoop = p
+      if (this.isLoop) {
+        this.mode = 'risk'
+      }
     }
 
   }

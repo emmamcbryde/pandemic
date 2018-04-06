@@ -55,6 +55,9 @@ class Globe {
       .on('mouseup', () => this.mouseup())
       .on('mousemove', () => this.mousemove())
       .on('mousewheel', () => this.mousewheel())
+      .on('touchstart', () => this.mousedown())
+      .on('touchend', () => this.mouseup())
+      .on('touchmove', () => this.mousemove())
 
     // draw the countries, add change the colors
     this.svg.selectAll('.country')
