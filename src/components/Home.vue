@@ -96,6 +96,12 @@
 
         </md-layout>
 
+        <div
+          id="charts"
+          style="
+            width: 300px;
+            height: 150px">
+        </div>
       </md-layout>
     </div>
 
@@ -147,151 +153,20 @@ import vueSlider from 'vue-slider-component'
 import Globe from '../modules/globe'
 import util from '../modules/util'
 import {legendColor} from 'd3-svg-legend'
+import SirModel from '../modules/model'
+import ChartContainer from '../modules/chartContainer'
 
 const d3 = require('d3')
 
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
 
-class SirModel {
-  constructor (id) {
-    this.id = id
-
-    this.modelType = 'SIR'
-
-    this.params = {}
-
-    this.compartment = {
-      prevalence: 0,
-      susceptible: 0,
-      recovered: 0
-    }
-
-    this.keys = _.keys(this.compartment)
-
-    this.var = {}
-    this.flow = {}
-    this.delta = {}
-
-    this.defaultInputParams = {
-      population: 50000,
-      incubationPeriod: 5,
-      infectiousPeriod: 30,
-      prevalence: 3000,
-      reproductionNumber: 50
-    }
-
-    this.inputParamEntries = [
-      {
-        key: 'incubationPeriod',
-        value: 5,
-        placeHolder: '',
-        label: 'incubation'
-      },
-      {
-        key: 'infectiousPeriod',
-        value: 30,
-        placeHolder: '',
-        label: 'infectious'
-      },
-      {
-        key: 'prevalence',
-        value: 3000,
-        placeHolder: '',
-        label: 'prevalence'
-      },
-      {
-        key: 'reproductionNumber',
-        value: 50,
-        placeHolder: '',
-        label: 'R0'
-      }
-    ]
-
-    this.reset(this.defaultInputParams)
+let models = [
+  {
+    modelClass: SirModel,
+    name: SirModel.modelType
   }
-
-  reset (inputParams) {
-    this.params.recoverRate =
-      1 /
-        (inputParams.incubationPeriod +
-         inputParams.infectiousPeriod)
-    this.params.contactRate =
-      inputParams.reproductionNumber *
-        this.params.recoverRate
-    this.params.probSickCanTravel =
-      inputParams.incubationPeriod /
-       (inputParams.incubationPeriod +
-        inputParams.infectiousPeriod)
-
-    for (let key of this.keys) {
-      this.compartment[key] = 0
-    }
-    this.compartment.prevalence = inputParams.prevalence
-    this.compartment.susceptible =
-      inputParams.population - inputParams.prevalence
-    this.compartment.recovered = 0
-
-    this.var.population = inputParams.population
-  }
-
-  clearDelta () {
-    for (let key of this.keys) {
-      this.delta[key] = 0
-    }
-  }
-
-  calcVar () {
-    this.var.population = _.sum(_.values(this.compartment))
-  }
-
-  calcFlow () {
-    for (let key of this.keys) {
-      this.flow[key] = 0
-    }
-
-    this.flow.susceptible =
-      (-this.params.contactRate *
-        this.compartment.prevalence *
-        this.compartment.susceptible /
-        this.var.population)
-
-    this.flow.prevalence =
-      (this.params.contactRate *
-        this.compartment.prevalence *
-        this.compartment.susceptible /
-        this.var.population) -
-      (this.params.recoverRate *
-        this.compartment.prevalence)
-
-    this.flow.recovered =
-      (this.params.recoverRate *
-        this.compartment.prevalence)
-  }
-
-  updateCompartment (dTime) {
-    this.calcVar()
-    this.calcFlow()
-    for (let key of this.keys) {
-      this.delta[key] += dTime * this.flow[key]
-    }
-    for (let key of this.keys) {
-      this.compartment[key] += this.delta[key]
-      if (this.compartment[key] < 0) {
-        this.compartment[key] = 0
-      }
-    }
-  }
-
-  getExitPrevalence (travelPerDay) {
-    let population = this.var.population
-    let probTravelPerDay = travelPerDay / population
-    let probSickTravelPerDay =
-      this.params.probSickCanTravel * probTravelPerDay
-    return this.compartment.prevalence * probSickTravelPerDay
-  }
-}
-
+]
 export default {
 
   id: 'home',
@@ -340,6 +215,10 @@ export default {
 
     this.countryIndices = _.map(countries, 'iCountry')
 
+    this.solution = {
+      prevalence: []
+    }
+
     this.countryModel = {}
     for (let iCountry of this.countryIndices) {
       this.countryModel[iCountry] = new SirModel(iCountry)
@@ -349,6 +228,12 @@ export default {
     }
 
     this.random()
+
+    this.chartsContainer = new ChartContainer('#charts')
+    this.chartsContainer.setTitle('global prevalence')
+    this.chartsContainer.setXLabel('days')
+    this.chartsContainer.setYLabel('')
+    this.chartsContainer.addDataset('prevalence')
 
     setInterval(this.loop, 2000)
   },
@@ -369,11 +254,11 @@ export default {
 
     getTravelPerDay (iFrom, iTo) {
       // data is for Feb, 2015
-      return parseFloat(this.travelData.travel[iFrom][iTo][1]) / 28
+      return this.travelData.travel[iFrom][iTo][1] / 28
     },
 
     getPopulation (iCountry) {
-      return parseFloat(travelData.countries[iCountry].population)
+      return travelData.countries[iCountry].population
     },
 
     getTravelValuesById (direction) {
@@ -404,12 +289,15 @@ export default {
         for (let param of this.inputParamEntries) {
           inputParams[param.key] = param.value
         }
-        inputParams.population = parseFloat(travelData.countries[iCountry].population)
+        inputParams.population = travelData.countries[iCountry].population
         if (this.iCountry !== iCountry) {
           inputParams.prevalence = 0
         }
         this.countryModel[iCountry].reset(inputParams)
       }
+
+      let days = []
+      this.solution.prevalence = []
 
       for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
@@ -426,9 +314,15 @@ export default {
             }
           }
         }
+
+        let prevalence = 0
         for (let iCountry of this.countryIndices) {
           this.countryModel[iCountry].updateCompartment(1)
+          prevalence += this.countryModel[iCountry].compartment.prevalence
         }
+
+        this.solution.prevalence.push(prevalence)
+        days.push(iDay)
       }
 
       let result = {}
@@ -436,6 +330,8 @@ export default {
         let id = this.travelData.countries[iCountry].id
         result[id] = this.countryModel[iCountry].compartment.prevalence
       }
+
+      this.chartsContainer.updateDataset(0, days, this.solution.prevalence)
 
       return [result, _.max(_.values(result))]
     },
