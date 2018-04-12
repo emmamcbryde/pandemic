@@ -8,118 +8,92 @@
       <!-- controls at top -->
       <md-layout md-column>
 
-        <md-layout
-          md-row
-          md-vertical-align="center">
-          <md-input-container
-            style="width: 160px">
-            <label>
-              Country
-            </label>
-            <md-select
-              name="country"
-              id="country"
-              v-model="iCountry">
-              <md-option
-                :value="country.iCountry"
-                v-for="(country, i) in selectableCountries"
-                :key="i"
-                @selected="select()">
-                {{country.name}}
-              </md-option>
-            </md-select>
-          </md-input-container>
-          <md-button
-            class="md-raised md-mini"
-            @click="random()">
-            Random
-          </md-button>
-        </md-layout>
+        <md-layout>
 
-        <md-layout
-          md-row
-          md-vertical-align="center">
-          <md-radio
-            v-model="mode"
-            @change="changeMode('to')"
-            id="direction"
-            name="direction"
-            md-value="to">
-            destinations
-          </md-radio>
-          <md-radio
-            v-model="mode"
-            @change="changeMode('risk')"
-            id="direction"
-            name="direction"
-            md-value="risk">
-            risk
-          </md-radio>
-          - days
-          <div style="
-            margin-left: 0.5em;
-            width: 300px">
-            <vue-slider
-              ref="slider"
-              :interval="1"
-              @callback="recalculateRisk"
-              :min="1"
-              :max="maxDay"
-              v-model="days"/>
-          </div>
-          <md-switch
-            v-model="isLoop"
-            @change="changeLoop">
-            Loop
-          </md-switch>
-        </md-layout>
+          <md-layout
+            md-row
+            md-vertical-align="center">
+            <md-input-container
+              style="width: 160px">
+              <label>
+                Country
+              </label>
+              <md-select
+                name="country"
+                id="country"
+                v-model="iCountry">
+                <md-option
+                  :value="country.iCountry"
+                  v-for="(country, i) in selectableCountries"
+                  :key="i"
+                  @selected="select()">
+                  {{country.name}}
+                </md-option>
+              </md-select>
+            </md-input-container>
+            <md-button
+              class="md-raised md-mini"
+              @click="random()">
+              Random
+            </md-button>
+          </md-layout>
 
-        <md-layout
-          md-row
-          md-vertical-align="center">
-          <md-input-container
-            style="
-              margin-right: 1em;
-              width: 50px;">
-            <label>Incubation</label>
-            <md-input
-              v-model="incubationPeriod"
-              type="number"
-              placeholder="in days"/>
-          </md-input-container>
-          <md-input-container
-            style="
-              margin-right: 1em;
-              width: 50px">
-            <label>Infectious</label>
-            <md-input
-              v-model="infectiousPeriod"
-              type="number"
-              @change="recalculateRisk"
-              placeholder="in days"/>
-          </md-input-container>
-          <md-input-container
-            style="
-              margin-right: 1em;
-              width: 80px">
-            <label>Prevalence</label>
-            <md-input
-              v-model="prevalence"
-              type="number"
-              @change="recalculateRisk"
-              placeholder="number of cases"/>
-          </md-input-container>
-          <md-input-container
-            style="
-              margin-right: 1em;
-              width: 50px">
-            <label>R0</label>
-            <md-input
-              v-model="reproductionNumber"
-              type="number"
-              @change="recalculateRisk"
-              placeholder="Reproduction Number"/>
-          </md-input-container>
+          <md-layout
+            md-row
+            md-vertical-align="center">
+            <md-radio
+              v-model="mode"
+              @change="changeMode('to')"
+              id="direction"
+              name="direction"
+              md-value="to">
+              destinations
+            </md-radio>
+            <md-radio
+              v-model="mode"
+              @change="changeMode('risk')"
+              id="direction"
+              name="direction"
+              md-value="risk">
+              risk
+            </md-radio>
+            - days
+            <div style="
+              margin-left: 0.5em;
+              width: 100px">
+              <vue-slider
+                ref="slider"
+                :interval="1"
+                @callback="calculateRisk"
+                :min="1"
+                :max="maxDay"
+                v-model="days"/>
+            </div>
+            <md-switch
+              v-model="isLoop"
+              @change="changeLoop">
+              Loop
+            </md-switch>
+          </md-layout>
+
+          <md-layout
+            md-row
+            md-vertical-align="center">
+            <md-input-container
+              v-for="(entry, i) in inputParamEntries"
+              :key="i"
+              style="
+                margin-right: 1em;
+                width: 50px;">
+              <label>{{entry.label}}</label>
+              <md-input
+                v-model="entry.value"
+                type="number"
+                :placeholder="entry.placeHolder"
+                @change="calculateRisk"/>
+            </md-input-container>
+          </md-layout>
+
         </md-layout>
 
       </md-layout>
@@ -180,26 +154,85 @@ const travelData = require('../data/travel')
 const worldData = require('../data/world')
 
 class SirModel {
-  constructor (
-    id, population, prevalence, incubationPeriod,
-    infectiousPeriod, reproductionNumber) {
+  constructor (id) {
     this.id = id
 
+    this.modelType = 'SIR'
+
     this.params = {}
-    this.params.recoverRate = 1 / (incubationPeriod + infectiousPeriod)
-    this.params.contactRate = reproductionNumber * this.params.recoverRate
 
     this.compartment = {
-      prevalence,
-      susceptible: population - prevalence,
+      prevalence: 0,
+      susceptible: 0,
       recovered: 0
     }
 
     this.keys = _.keys(this.compartment)
 
-    this.var = { population }
+    this.var = {}
     this.flow = {}
     this.delta = {}
+
+    this.defaultInputParams = {
+      population: 50000,
+      incubationPeriod: 5,
+      infectiousPeriod: 30,
+      prevalence: 3000,
+      reproductionNumber: 50
+    }
+
+    this.inputParamEntries = [
+      {
+        key: 'incubationPeriod',
+        value: 5,
+        placeHolder: '',
+        label: 'incubation'
+      },
+      {
+        key: 'infectiousPeriod',
+        value: 30,
+        placeHolder: '',
+        label: 'infectious'
+      },
+      {
+        key: 'prevalence',
+        value: 3000,
+        placeHolder: '',
+        label: 'prevalence'
+      },
+      {
+        key: 'reproductionNumber',
+        value: 50,
+        placeHolder: '',
+        label: 'R0'
+      }
+    ]
+
+    this.reset(this.defaultInputParams)
+  }
+
+  reset (inputParams) {
+    this.params.recoverRate =
+      1 /
+        (inputParams.incubationPeriod +
+         inputParams.infectiousPeriod)
+    this.params.contactRate =
+      inputParams.reproductionNumber *
+        this.params.recoverRate
+    this.params.probSickCanTravel =
+      inputParams.incubationPeriod /
+       (inputParams.incubationPeriod +
+        inputParams.infectiousPeriod)
+
+    for (let key of this.keys) {
+      this.compartment[key] = 0
+    }
+    this.compartment.prevalence = inputParams.prevalence
+    this.compartment.susceptible =
+      inputParams.population - inputParams.prevalence
+    this.compartment.recovered = 0
+
+    this.var.population = inputParams.population
   }
 
   clearDelta () {
@@ -209,10 +242,7 @@ class SirModel {
   }
 
   calcVar () {
-    this.var.population =
-      this.compartment.prevalence +
-      this.compartment.susceptible +
-      this.compartment.recovered
+    this.var.population = _.sum(_.values(this.compartment))
   }
 
   calcFlow () {
@@ -239,21 +269,26 @@ class SirModel {
         this.compartment.prevalence)
   }
 
-  updateInternalFlow (dTime) {
+  updateCompartment (dTime) {
     this.calcVar()
-
     this.calcFlow()
-
     for (let key of this.keys) {
       this.delta[key] += dTime * this.flow[key]
     }
-
     for (let key of this.keys) {
       this.compartment[key] += this.delta[key]
       if (this.compartment[key] < 0) {
         this.compartment[key] = 0
       }
     }
+  }
+
+  getExitPrevalence (travelPerDay) {
+    let population = this.var.population
+    let probTravelPerDay = travelPerDay / population
+    let probSickTravelPerDay =
+      this.params.probSickCanTravel * probTravelPerDay
+    return this.compartment.prevalence * probSickTravelPerDay
   }
 }
 
@@ -268,13 +303,9 @@ export default {
       selectableCountries: [],
       iCountry: -1,
       mode: 'to', // or 'risk'
-      incubationPeriod: 5,
-      infectiousPeriod: 30,
-      prevalence: 3000,
-      reproductionNumber: 50,
       days: 1,
       maxDay: 15,
-      params: {},
+      inputParamEntries: [],
       isLoop: false
     }
   },
@@ -308,6 +339,14 @@ export default {
     this.selectableCountries = _.sortBy(countries, a => a.name)
 
     this.countryIndices = _.map(countries, 'iCountry')
+
+    this.countryModel = {}
+    for (let iCountry of this.countryIndices) {
+      this.countryModel[iCountry] = new SirModel(iCountry)
+      if (this.inputParamEntries.length === 0) {
+        this.inputParamEntries = _.clone(this.countryModel[iCountry].inputParamEntries)
+      }
+    }
 
     this.random()
 
@@ -353,42 +392,42 @@ export default {
       return values
     },
 
-    getTravelPrevalence (iFromCountry, iToCountry) {
-      if (iFromCountry === iToCountry) {
-        return 0
-      }
-      let population = this.getPopulation(iFromCountry)
-      let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
-      let probTravelPerDay = travelPerDay / population
-      const probSickCanTravel =
-        this.incubationPeriod / (this.incubationPeriod + this.infectiousPeriod)
-      let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
-      return this.countryModel[iFromCountry].compartment.prevalence * probSickTravelPerDay
-    },
-
     getRiskById () {
-      this.countryModel = {}
+      for (let param of this.inputParamEntries) {
+        param.value = parseFloat(param.value)
+      }
+
+      console.log('getRiskById', _.clone(this.inputParamEntries))
+
       for (let iCountry of this.countryIndices) {
-        let population = parseFloat(travelData.countries[iCountry].population)
-        let prevalence = this.iCountry === iCountry ? parseFloat(this.prevalence) : 0
-        this.countryModel[iCountry] = new SirModel(
-          iCountry, population, prevalence, this.incubationPeriod,
-          this.infectiousPeriod, this.reproductionNumber)
+        let inputParams = {}
+        for (let param of this.inputParamEntries) {
+          inputParams[param.key] = param.value
+        }
+        inputParams.population = parseFloat(travelData.countries[iCountry].population)
+        if (this.iCountry !== iCountry) {
+          inputParams.prevalence = 0
+        }
+        this.countryModel[iCountry].reset(inputParams)
       }
 
       for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
           this.countryModel[iCountry].clearDelta()
         }
-        // calculates changes from travelling
         for (let iFromCountry of this.countryIndices) {
           for (let iToCountry of this.countryIndices) {
-            this.countryModel[iToCountry].delta.prevalence +=
-              this.getTravelPrevalence(iFromCountry, iToCountry)
+            if (iFromCountry !== iToCountry) {
+              let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
+              let deltaPrevalence =
+                this.countryModel[iFromCountry].getExitPrevalence(travelPerDay)
+              this.countryModel[iFromCountry].delta.prevalence -= deltaPrevalence
+              this.countryModel[iToCountry].delta.prevalence += deltaPrevalence
+            }
           }
         }
         for (let iCountry of this.countryIndices) {
-          this.countryModel[iCountry].updateInternalFlow(1)
+          this.countryModel[iCountry].updateCompartment(1)
         }
       }
 
@@ -481,32 +520,48 @@ export default {
 
     getCountryPopupHtml (id) {
       let country = this.getCountry(id)
+
       let name = ''
       let population = ''
       if (country) {
         name = country.name
         population = country.population
       }
+
+      let s = ''
+      s += `<div style="text-align: center">`
+      s += `${name}`
+
+      let tag = 'travel'
       let value = this.globe.getCountryValue(id)
       if (value === null) {
         value = ''
       } else {
         value = value.toFixed(3)
       }
-      let s = ''
-      s += `<div style="text-align: center">`
-      s += `${name}`
-      let tag = 'travel'
       s += `<br>${tag}: ${value}`
+
       if (value !== null) {
         s += `<br>pop: ${population}`
       }
+
+      if (this.mode === 'risk') {
+        let nCountry = this.travelData.countries.length
+        for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
+          let countryId = this.travelData.countries[iCountry].id
+          if (countryId === id) {
+            let prevalence = this.countryModel[iCountry].compartment.prevalence.toFixed(2)
+            s += `<br>prevalence: ${prevalence}`
+          }
+        }
+      }
+
       s += `</div>`
       return s
     },
 
-    async recalculateRisk () {
-      console.log('> Home.recalculateRisk')
+    async calculateRisk () {
+      console.log('> Home.calculateRisk for', this.days, 'days')
       // a little delay to allow the data to update
       await util.delay(10)
       this.mode = 'risk'
@@ -521,8 +576,7 @@ export default {
         } else {
           this.days = 1
         }
-        console.log('> Home.loop forward', this.days)
-        this.recalculateRisk()
+        this.calculateRisk()
       }
     },
 
