@@ -96,12 +96,14 @@
 
         </md-layout>
 
-        <div
-          id="charts"
-          style="
+        <md-layout>
+          <div
+            id="charts"
+            style="
             width: 300px;
             height: 150px">
-        </div>
+          </div>
+        </md-layout>
       </md-layout>
     </div>
 
@@ -223,7 +225,7 @@ export default {
     for (let iCountry of this.countryIndices) {
       this.countryModel[iCountry] = new SirModel(iCountry)
       if (this.inputParamEntries.length === 0) {
-        this.inputParamEntries = _.clone(this.countryModel[iCountry].inputParamEntries)
+        this.inputParamEntries = this.countryModel[iCountry].getInputParamEntries()
       }
     }
 
@@ -289,7 +291,7 @@ export default {
         for (let param of this.inputParamEntries) {
           inputParams[param.key] = param.value
         }
-        inputParams.population = travelData.countries[iCountry].population
+        inputParams.initPopulation = travelData.countries[iCountry].population
         if (this.iCountry !== iCountry) {
           inputParams.prevalence = 0
         }
@@ -322,7 +324,7 @@ export default {
         }
 
         this.solution.prevalence.push(prevalence)
-        days.push(iDay)
+        days.push(iDay + 1)
       }
 
       let result = {}

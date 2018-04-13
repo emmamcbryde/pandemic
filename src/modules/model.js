@@ -6,8 +6,6 @@ class SirModel {
 
     this.modelType = 'SIR'
 
-    this.params = {}
-
     this.compartment = {
       prevalence: 0,
       susceptible: 0,
@@ -17,29 +15,27 @@ class SirModel {
     this.keys = _.keys(this.compartment)
 
     this.var = {}
+
+    this.events = []
+
     this.flow = {}
     this.delta = {}
 
-    this.defaultInputParams = {
-      population: 50000,
-      incubationPeriod: 5,
-      infectiousPeriod: 30,
+    this.params = {}
+
+    this.defaultParams = {
+      initPopulation: 50000,
+      period: 30,
       prevalence: 3000,
       reproductionNumber: 50
     }
 
     this.inputParamEntries = [
       {
-        key: 'incubationPeriod',
-        value: 5,
-        placeHolder: '',
-        label: 'incubation'
-      },
-      {
-        key: 'infectiousPeriod',
+        key: 'period',
         value: 30,
         placeHolder: '',
-        label: 'infectious'
+        label: 'period'
       },
       {
         key: 'prevalence',
@@ -55,31 +51,35 @@ class SirModel {
       }
     ]
 
-    this.reset(this.defaultInputParams)
+    this.reset(this.defaultParams)
+  }
+
+  getInputParamEntries () {
+    return _.clone(this.inputParamEntries)
   }
 
   reset (inputParams) {
+    _.assign(this.params, inputParams)
+    this.init()
+  }
+
+  init () {
     this.params.recoverRate =
-      1 /
-      (inputParams.incubationPeriod +
-        inputParams.infectiousPeriod)
+      1 / (this.params.period)
     this.params.contactRate =
-      inputParams.reproductionNumber *
+      this.params.reproductionNumber *
       this.params.recoverRate
-    this.params.probSickCanTravel =
-      inputParams.incubationPeriod /
-      (inputParams.incubationPeriod +
-        inputParams.infectiousPeriod)
+    this.params.probSickCanTravel = 1
 
     for (let key of this.keys) {
       this.compartment[key] = 0
     }
-    this.compartment.prevalence = inputParams.prevalence
-    this.compartment.susceptible =
-      inputParams.population - inputParams.prevalence
-    this.compartment.recovered = 0
 
-    this.var.population = inputParams.population
+    this.compartment.prevalence = this.params.prevalence
+    this.compartment.susceptible =
+      this.params.initPopulation - this.params.prevalence
+
+    this.calcVar()
   }
 
   clearDelta () {
@@ -90,30 +90,30 @@ class SirModel {
 
   calcVar () {
     this.var.population = _.sum(_.values(this.compartment))
+    this.var.rateForce =
+      this.params.contactRate /
+      this.var.population *
+      this.compartment.prevalence
   }
 
   calcFlow () {
+    this.events = []
+
+    let d
+    d = this.var.rateForce * this.compartment.susceptible
+    this.events.push(['susceptible', 'prevalence', d])
+
+    d = this.params.recoverRate * this.compartment.prevalence
+    this.events.push(['susceptible', 'prevalence', d])
+
     for (let key of this.keys) {
       this.flow[key] = 0
     }
 
-    this.flow.susceptible =
-      (-this.params.contactRate *
-        this.compartment.prevalence *
-        this.compartment.susceptible /
-        this.var.population)
-
-    this.flow.prevalence =
-      (this.params.contactRate *
-        this.compartment.prevalence *
-        this.compartment.susceptible /
-        this.var.population) -
-      (this.params.recoverRate *
-        this.compartment.prevalence)
-
-    this.flow.recovered =
-      (this.params.recoverRate *
-        this.compartment.prevalence)
+    for (let [from, to, val] of this.events) {
+      this.flow[from] -= val
+      this.flow[to] += val
+    }
   }
 
   updateCompartment (dTime) {
