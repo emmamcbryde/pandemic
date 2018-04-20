@@ -79,6 +79,29 @@
           <md-layout
             md-row
             md-vertical-align="center">
+
+            <md-input-container
+              style="
+                margin-right: 1em;
+                width: 120px">
+              <label>
+                Model
+              </label>
+              <md-select
+                style="width: 120px"
+                name="modelType"
+                id="modelType"
+                v-model="modelType">
+                <md-option
+                  :value="modelType"
+                  v-for="(modelType, i) in modelTypes"
+                  :key="i"
+                  @selected="setModel">
+                  {{modelType}}
+                </md-option>
+              </md-select>
+            </md-input-container>
+
             <md-input-container
               v-for="(entry, i) in inputParamEntries"
               :key="i"
@@ -92,6 +115,7 @@
                 :placeholder="entry.placeHolder"
                 @change="calculateRisk"/>
             </md-input-container>
+
           </md-layout>
 
         </md-layout>
@@ -155,7 +179,7 @@ import vueSlider from 'vue-slider-component'
 import Globe from '../modules/globe'
 import util from '../modules/util'
 import {legendColor} from 'd3-svg-legend'
-import SirModel from '../modules/model'
+import {SirModel, SisModel} from '../modules/model'
 import ChartContainer from '../modules/chartContainer'
 
 const d3 = require('d3')
@@ -166,9 +190,14 @@ const worldData = require('../data/world')
 let models = [
   {
     modelClass: SirModel,
-    name: SirModel.modelType
+    name: 'SIR',
+  },
+  {
+    modelClass: SisModel,
+    name: 'SIS'
   }
 ]
+
 export default {
 
   id: 'home',
@@ -183,7 +212,9 @@ export default {
       days: 1,
       maxDay: 15,
       inputParamEntries: [],
-      isLoop: false
+      isLoop: false,
+      modelType: 'SIR',
+      modelTypes: ['SIR', 'SIS']
     }
   },
 
@@ -222,12 +253,7 @@ export default {
     }
 
     this.countryModel = {}
-    for (let iCountry of this.countryIndices) {
-      this.countryModel[iCountry] = new SirModel(iCountry)
-      if (this.inputParamEntries.length === 0) {
-        this.inputParamEntries = this.countryModel[iCountry].getInputParamEntries()
-      }
-    }
+    this.setModel(this.modelType)
 
     this.random()
 
@@ -241,6 +267,23 @@ export default {
   },
 
   methods: {
+    setModel () {
+      let ModelClass
+      for (let model of models) {
+        if (model.name === this.modelType) {
+          ModelClass = model.modelClass
+        }
+      }
+      this.countryModel = {}
+      this.inputParamEntries.length = 0
+      for (let iCountry of this.countryIndices) {
+        this.countryModel[iCountry] = new ModelClass(iCountry)
+        if (this.inputParamEntries.length === 0) {
+          this.inputParamEntries = this.countryModel[iCountry].getInputParamEntries()
+        }
+      }
+      this.changeMode(this.mode)
+    },
 
     getICountryName (iCountry) {
       return this.travelData.countries[iCountry].name
@@ -284,7 +327,7 @@ export default {
         param.value = parseFloat(param.value)
       }
 
-      console.log('getRiskById', _.clone(this.inputParamEntries))
+      console.log('getRiskById', this.countryModel[0].modelType, _.clone(this.inputParamEntries))
 
       for (let iCountry of this.countryIndices) {
         let inputParams = {}
