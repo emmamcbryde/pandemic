@@ -1,14 +1,16 @@
 import _ from 'lodash'
 
-class SisModel {
+class SEIRModel {
   constructor (id) {
     this.id = id
 
-    this.modelType = 'SIS'
+    this.modelType = 'SEIR'
 
     this.compartment = {
       prevalence: 0,
-      susceptible: 0
+      susceptible: 0,
+      exposed: 0,
+      recovered: 0
     }
 
     this.keys = _.keys(this.compartment)
@@ -21,6 +23,9 @@ class SisModel {
 
     this.defaultParams = {
       initPopulation: 50000,
+      period: 30,
+      incubation: 50,
+      caseFatality: 200,
       prevalence: 3000,
       reproductionNumber: 50
     }
@@ -30,13 +35,25 @@ class SisModel {
         key: 'period',
         value: 30,
         placeHolder: '',
-        label: 'period'
+        label: 'Period'
+      },
+      {
+        key: 'incubation',
+        value: 50,
+        placeHolder: '',
+        label: 'Latency'
+      },
+      {
+        key: 'CaseFatality',
+        value:200,
+        placeHolder: '',
+        label: 'Fatality'
       },
       {
         key: 'prevalence',
         value: 3000,
         placeHolder: '',
-        label: 'prevalence'
+        label: 'Prevalence'
       },
       {
         key: 'reproductionNumber',
@@ -60,12 +77,13 @@ class SisModel {
 
   init () {
     this.params.recoverRate =
-      1 / (this.params.period)
+      (1 - 1 / (this.params.caseFatality)) / (this.params.period)
+    this.params.incubationRate = 1 / (this.params.incubation)
     this.params.contactRate =
       this.params.reproductionNumber *
-      this.params.recoverRate
+      (1 / this.params.period)
     this.params.probSickCanTravel = 1
-
+    
     for (let key of this.keys) {
       this.compartment[key] = 0
     }
@@ -96,10 +114,13 @@ class SisModel {
 
     let d
     d = this.var.rateForce * this.compartment.susceptible
-    this.events.push(['susceptible', 'prevalence', d])
+    this.events.push(['susceptible', 'exposed', d])
+
+    d = this.params.incubationRate * this.compartment.exposed
+    this.events.push(['exposed', 'prevalence', d])
 
     d = this.params.recoverRate * this.compartment.prevalence
-    this.events.push(['prevalence', 'susceptible', d])
+    this.events.push(['prevalence', 'recovered', d])
 
     for (let key of this.keys) {
       this.flow[key] = 0
@@ -161,7 +182,7 @@ class SirModel {
       initPopulation: 50000,
       period: 30,
       prevalence: 3000,
-      reproductionNumber: 50
+      reproductionNumber: 1.5
     }
 
     this.inputParamEntries = [
@@ -169,7 +190,7 @@ class SirModel {
         key: 'period',
         value: 30,
         placeHolder: '',
-        label: 'period'
+        label: 'duration '
       },
       {
         key: 'prevalence',
@@ -179,12 +200,13 @@ class SirModel {
       },
       {
         key: 'reproductionNumber',
-        value: 50,
+        value: 1.5,
         placeHolder: '',
         label: 'R0'
       }
     ]
 
+    //console.log('Adeshina', this.inputParamEntries)
     this.reset(this.defaultParams)
   }
 
@@ -273,4 +295,4 @@ class SirModel {
   }
 }
 
-export { SirModel, SisModel }
+export { SirModel, SEIRModel }

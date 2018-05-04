@@ -179,7 +179,7 @@ import vueSlider from 'vue-slider-component'
 import Globe from '../modules/globe'
 import util from '../modules/util'
 import {legendColor} from 'd3-svg-legend'
-import {SirModel, SisModel} from '../modules/model'
+import {SirModel, SEIRModel} from '../modules/model'
 import ChartContainer from '../modules/chartContainer'
 
 const d3 = require('d3')
@@ -193,8 +193,8 @@ let models = [
     name: 'SIR',
   },
   {
-    modelClass: SisModel,
-    name: 'SIS'
+    modelClass: SEIRModel,
+    name: 'SEIR'
   }
 ]
 
@@ -210,11 +210,11 @@ export default {
       iCountry: -1,
       mode: 'to', // or 'risk'
       days: 1,
-      maxDay: 15,
+      maxDay: 60,
       inputParamEntries: [],
       isLoop: false,
       modelType: 'SIR',
-      modelTypes: ['SIR', 'SIS']
+      modelTypes: ['SIR', 'SEIR']
     }
   },
 
@@ -259,10 +259,15 @@ export default {
 
     this.chartsContainer = new ChartContainer('#charts')
     this.chartsContainer.setTitle('global prevalence')
-    this.chartsContainer.setXLabel('days')
-    this.chartsContainer.setYLabel('')
+    this.chartsContainer.setXLabel('Number of days')
+    this.chartsContainer.setYLabel('Number of people')
     this.chartsContainer.addDataset('prevalence')
 
+    this.chartsContainer1 = new ChartContainer('#charts')
+    this.chartsContainer1.setTitle('People at risk')
+    this.chartsContainer1.setXLabel('Number of days')
+    this.chartsContainer1.setYLabel('Number of people')
+    this.chartsContainer1.addDataset('susceptible')
     setInterval(this.loop, 2000)
   },
 
@@ -335,6 +340,8 @@ export default {
           inputParams[param.key] = param.value
         }
         inputParams.initPopulation = travelData.countries[iCountry].population
+         console.log(inputParams.initPopulation)
+         
         if (this.iCountry !== iCountry) {
           inputParams.prevalence = 0
         }
@@ -343,6 +350,7 @@ export default {
 
       let days = []
       this.solution.prevalence = []
+      this.solution.susceptible = []  // I added this
 
       for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
@@ -361,12 +369,15 @@ export default {
         }
 
         let prevalence = 0
+        let susceptible = 0  // I added this
         for (let iCountry of this.countryIndices) {
           this.countryModel[iCountry].updateCompartment(1)
           prevalence += this.countryModel[iCountry].compartment.prevalence
+          susceptible += this.countryModel[iCountry].compartment.susceptible
         }
 
         this.solution.prevalence.push(prevalence)
+        this.solution.susceptible.push(susceptible)
         days.push(iDay + 1)
       }
 
@@ -377,7 +388,10 @@ export default {
       }
 
       this.chartsContainer.updateDataset(0, days, this.solution.prevalence)
-
+       // I added
+      //susceptible = inputParams.initPopulation-this.solution.susceptible
+      this.chartsContainer1.updateDataset(0, days,this.solution.susceptible )
+     
       return [result, _.max(_.values(result))]
     },
 
