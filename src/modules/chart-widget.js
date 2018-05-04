@@ -27,13 +27,19 @@ function makeLineChartData (title, xAxisLabel, yAxisLabel) {
             display: true,
             labelString: xAxisLabel
           },
-          ticks: {}
+          ticks: {
+            min: 0,
+            max: 60
+          }
         }],
         yAxes: [{
           type: 'linear',
           scaleLabel: {
             display: true,
             labelString: yAxisLabel
+          },
+          ticks: {
+            beginAtZero: true
           }
         }]
       }
@@ -75,7 +81,7 @@ function getColor (name) {
  * the datasets are accessed by this.getDataset(iChart)
  *
  */
-class ChartContainer {
+class ChartWidget {
   constructor (divTag, chartData) {
     this.divTag = divTag
     this.div = $(this.divTag)
@@ -112,7 +118,9 @@ class ChartContainer {
       fill: false,
       backgroundColor: getColor(iDataset),
       borderColor: getColor(iDataset),
-      showLine: false
+      showLine: true,
+      pointRadius: 1.7,
+      borderWidth: 1.5
     }
     datasets.push(newDataset)
     this.chart.update()
@@ -145,4 +153,4 @@ class ChartContainer {
   }
 }
 
-export default ChartContainer
+export default ChartWidget

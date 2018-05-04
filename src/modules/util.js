@@ -1,7 +1,7 @@
 export default {
 
   jstr (s) {
-    return JSON.stringify(s, null)
+    return JSON.stringify(s, null, 2)
   },
 
   downloadFile (fname, s) {
