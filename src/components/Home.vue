@@ -357,11 +357,20 @@ export default {
       let countryName = this.getNameFromICountry(this.iSourceCountry)
       console.log('> Home.setModel', this.modelType, countryName)
       this.countryModel = {}
+      let oldInputParams = {}
+      for (let paramEntry of this.inputParamEntries) {
+        oldInputParams[paramEntry.key] = paramEntry.value
+      }
       this.inputParamEntries.length = 0
       for (let iCountry of this.countryIndices) {
         this.countryModel[iCountry] = new ModelClass(countryName)
         if (this.inputParamEntries.length === 0) {
           this.inputParamEntries = this.countryModel[iCountry].getInputParamEntries()
+        }
+      }
+      for (let paramEntry of this.inputParamEntries) {
+        if (paramEntry.key in oldInputParams) {
+          paramEntry.value = oldInputParams[paramEntry.key]
         }
       }
       this.resetModels()
@@ -377,19 +386,6 @@ export default {
       return result
     },
 
-    getSumPropKey (prop, key) {
-      return _.sum(_.values(this.getPropKey(prop, key)))
-    },
-
-    getSumProp (prop) {
-      let keys = _.keys(this.countryModel[0][prop])
-      let result = 0
-      for (let key of keys) {
-        result += _.sum(_.values(this.getPropKey(prop, key)))
-      }
-      return result
-    },
-
     async getRiskById () {
       this.isRunning = true
       this.globalPrevalence.length = 0
@@ -399,12 +395,6 @@ export default {
         this.countryModel[iCountry].clearDelta()
       }
 
-      let s = `Home.getRiskById ${this.countryModel[0].modelType} before day=${this.days} `
-      let accum = {
-        travel: 0,
-        d: 0,
-        prevalence: 0,
-      }
       for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
           this.countryModel[iCountry].clearDelta()
@@ -414,26 +404,22 @@ export default {
           for (let iToCountry of this.countryIndices) {
             if (iFromCountry !== iToCountry) {
               let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
-              accum.travel += travelPerDay
               let d = this.countryModel[iFromCountry].getExitPrevalence(travelPerDay)
-              accum.d += d
               this.countryModel[iFromCountry].delta.prevalence -= d
               this.countryModel[iToCountry].delta.prevalence += d
             }
           }
         }
 
-        let prevalence = 0
+        let globalPrevalence = 0
         for (let iCountry of this.countryIndices) {
           this.countryModel[iCountry].updateCompartment(1)
-          this.countryModel[iCountry].solution.prevalence.push(
-            this.countryModel[iCountry].compartment.prevalence
-          )
-          prevalence += this.countryModel[iCountry].compartment.prevalence
+          let prevalence = this.countryModel[iCountry].compartment.prevalence
+          this.countryModel[iCountry].solution.prevalence.push(prevalence)
+          globalPrevalence += prevalence
         }
-        accum.prevalence += prevalence
 
-        this.globalPrevalence.push(prevalence)
+        this.globalPrevalence.push(globalPrevalence)
       }
 
       this.globalPrevalenceChart.updateDataset(
