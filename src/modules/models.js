@@ -1,8 +1,4 @@
 import _ from 'lodash'
-import util from '../modules/util'
-
-console.log('models init', util.jstr(util))
-
 
 class BaseModel {
   constructor (id) {
@@ -20,12 +16,17 @@ class BaseModel {
     this.delta = {}
     this.params = {}
 
-    this.solution = { prevalence: [] }
+    this.solution = {
+      prevalence: [],
+      susceptible: []
+    }
   }
 
   init () {
     this.keys = _.keys(this.compartment)
-    this.solution.prevalence.length = 0
+    for (let key of _.keys(this.solution)) {
+      this.solution[key].length = 0
+    }
     for (let key of this.keys) {
       this.compartment[key] = 0
     }

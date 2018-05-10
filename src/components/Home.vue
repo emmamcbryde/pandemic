@@ -153,6 +153,14 @@
             width: 280px;
             height: 150px">
           </div>
+
+          <div
+            id="local-susceptible"
+            style="
+            width: 280px;
+            height: 150px">
+          </div>
+
         </md-layout>
 
       </md-layout>
@@ -275,16 +283,22 @@ export default {
 
     this.globalPrevalence = []
     this.globalPrevalenceChart = new ChartWidget('#global-prevalence')
-    this.globalPrevalenceChart.setTitle('global prevalence')
+    this.globalPrevalenceChart.setTitle('Global Prevalence')
     this.globalPrevalenceChart.setXLabel('days')
     this.globalPrevalenceChart.setYLabel('')
     this.globalPrevalenceChart.addDataset('prevalence')
 
     this.localPrevalenceChart = new ChartWidget('#local-prevalence')
-    this.localPrevalenceChart.setTitle('local prevalence')
+    this.localPrevalenceChart.setTitle('Local Prevalence')
     this.localPrevalenceChart.setXLabel('days')
     this.localPrevalenceChart.setYLabel('')
     this.localPrevalenceChart.addDataset('prevalence')
+
+    this.localSusceptibleChart = new ChartWidget('#local-susceptible')
+    this.localSusceptibleChart.setTitle('Local Susceptible')
+    this.localSusceptibleChart.setXLabel('days')
+    this.localSusceptibleChart.setYLabel('')
+    this.localSusceptibleChart.addDataset('susceptible')
 
     setInterval(this.loop, 2000)
   },
@@ -416,6 +430,8 @@ export default {
           this.countryModel[iCountry].updateCompartment(1)
           let prevalence = this.countryModel[iCountry].compartment.prevalence
           this.countryModel[iCountry].solution.prevalence.push(prevalence)
+          let susceptible = this.countryModel[iCountry].compartment.susceptible
+          this.countryModel[iCountry].solution.susceptible.push(susceptible)
           globalPrevalence += prevalence
         }
 
@@ -438,10 +454,13 @@ export default {
 
       if (this.iWatchCountry >= 0) {
         let country = this.travelData.countries[this.iWatchCountry]
-        this.localPrevalenceChart.setTitle('prevalence of ' + country.name)
+        this.localPrevalenceChart.setTitle('Prevalence of ' + country.name)
+        this.localSusceptibleChart.setTitle('Susceptible of ' + country.name)
         let nDay = this.countryModel[this.iWatchCountry].solution.prevalence.length
         this.localPrevalenceChart.updateDataset(
           0, _.range(1, nDay + 1), this.countryModel[this.iWatchCountry].solution.prevalence)
+        this.localSusceptibleChart.updateDataset(
+          0, _.range(1, nDay + 1), this.countryModel[this.iWatchCountry].solution.susceptible)
       }
     },
 
