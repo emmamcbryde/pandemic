@@ -3,6 +3,7 @@ import util from '../modules/util'
 
 console.log('models init', util.jstr(util))
 
+
 class BaseModel {
   constructor (id) {
     this.id = id
@@ -22,7 +23,14 @@ class BaseModel {
     this.solution = { prevalence: [] }
   }
 
-  init () {}
+  init () {
+    this.keys = _.keys(this.compartment)
+    this.solution.prevalence.length = 0
+    for (let key of this.keys) {
+      this.compartment[key] = 0
+    }
+    this.params.probSickCanTravel = 1
+  }
 
   getInputParamEntries () {
     return _.cloneDeep(this.inputParamEntries)
@@ -85,6 +93,14 @@ class BaseModel {
       }
     }
   }
+
+  getExitPrevalence (travelPerDay) {
+    this.calcVar()
+    let probTravelPerDay = travelPerDay / this.var.population
+    let probSickTravelPerDay =
+      this.params.probSickCanTravel * probTravelPerDay
+    return this.compartment.prevalence * probSickTravelPerDay
+  }
 }
 
 class SisModel extends BaseModel {
@@ -142,8 +158,7 @@ class SisModel extends BaseModel {
   }
 
   init () {
-    this.keys = _.keys(this.compartment)
-    this.keys.sort()
+    super.init()
 
     this.params.period =
       this.params.infectiousPeriod +
@@ -153,17 +168,10 @@ class SisModel extends BaseModel {
     this.params.contactRate =
       this.params.reproductionNumber *
       this.params.recoverRate
-    this.params.probSickCanTravel = 1
-
-    for (let key of this.keys) {
-      this.compartment[key] = 0
-    }
 
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
       this.params.initPopulation - this.params.prevalence
-
-    this.solution.prevalence.length = 0
   }
 
   calcVar () {
@@ -172,14 +180,6 @@ class SisModel extends BaseModel {
       this.params.contactRate /
         this.var.population *
           this.compartment.prevalence
-  }
-
-  getExitPrevalence (travelPerDay) {
-    this.calcVar()
-    let probTravelPerDay = travelPerDay / this.var.population
-    let probSickTravelPerDay =
-      this.params.probSickCanTravel * probTravelPerDay
-    return this.compartment.prevalence * probSickTravelPerDay
   }
 }
 
@@ -237,8 +237,7 @@ class SirModel extends BaseModel {
   }
 
   init () {
-    this.keys = _.keys(this.compartment)
-    this.keys.sort()
+    super.init()
 
     this.params.period =
       this.params.infectiousPeriod +
@@ -248,17 +247,10 @@ class SirModel extends BaseModel {
     this.params.contactRate =
       this.params.reproductionNumber *
       this.params.recoverRate
-    this.params.probSickCanTravel = 1
-
-    for (let key of this.keys) {
-      this.compartment[key] = 0
-    }
 
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
       this.params.initPopulation - this.params.prevalence
-
-    this.solution.prevalence.length = 0
   }
 
   calcVar () {
@@ -268,13 +260,92 @@ class SirModel extends BaseModel {
       this.var.population *
       this.compartment.prevalence
   }
+}
 
-  getExitPrevalence (travelPerDay) {
-    this.calcVar()
-    let probTravelPerDay = travelPerDay / this.var.population
-    let probSickTravelPerDay =
-      this.params.probSickCanTravel * probTravelPerDay
-    return this.compartment.prevalence * probSickTravelPerDay
+
+class SEIRModel extends BaseModel {
+  constructor (id) {
+    super(id)
+    this.id = id
+
+    this.modelType = 'SEIR'
+
+    this.compartment = {
+      prevalence: 0,
+      susceptible: 0,
+      exposed: 0,
+      recovered: 0
+    }
+
+    this.defaultParams = {
+      initPopulation: 50000,
+      period: 30,
+      incubation: 50,
+      caseFatality: 200,
+      prevalence: 3000,
+      reproductionNumber: 50
+    }
+    this.params = _.cloneDeep(this.defaultParams)
+
+    this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
+    this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
+    this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
+
+    this.inputParamEntries = [
+      {
+        key: 'period',
+        value: 30,
+        placeHolder: '',
+        label: 'Period'
+      },
+      {
+        key: 'incubation',
+        value: 50,
+        placeHolder: '',
+        label: 'Latency'
+      },
+      {
+        key: 'CaseFatality',
+        value: 200,
+        placeHolder: '',
+        label: 'Fatality'
+      },
+      {
+        key: 'prevalence',
+        value: 3000,
+        placeHolder: '',
+        label: 'Prevalence'
+      },
+      {
+        key: 'reproductionNumber',
+        value: 50,
+        placeHolder: '',
+        label: 'R0'
+      }
+    ]
+  }
+
+  init () {
+    super.init()
+
+    this.params.recoverRate =
+      (1 - 1 / (this.params.caseFatality)) / (this.params.period)
+    this.params.incubationRate = 1 / (this.params.incubation)
+    this.params.contactRate =
+      this.params.reproductionNumber *
+      (1 / this.params.period)
+
+    this.compartment.prevalence = this.params.prevalence
+    this.compartment.susceptible =
+      this.params.initPopulation - this.params.prevalence
+  }
+
+  calcVar () {
+    this.var.population = _.sum(_.values(this.compartment))
+    this.var.rateForce =
+      this.params.contactRate /
+      this.var.population *
+      this.compartment.prevalence
   }
 }
 
@@ -286,7 +357,12 @@ let models = [
   {
     class: SirModel,
     name: 'SIR'
+  },
+  {
+    class: SEIRModel,
+    name: 'SEIR'
   }
+
 ]
 
 export { models }
