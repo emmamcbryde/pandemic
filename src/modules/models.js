@@ -18,7 +18,8 @@ class BaseModel {
 
     this.solution = {
       prevalence: [],
-      susceptible: []
+      susceptible: [],
+      incidence: []
     }
   }
 
@@ -69,6 +70,16 @@ class BaseModel {
     }
   }
 
+  placeSolution (dTime) {
+    let incidence = 0
+    for (let [from, to, val] of this.events) {
+      if (to === 'prevalence') {
+        incidence += val * dTime
+      }
+    }
+    this.solution.incidence.push(incidence)
+  }
+
   updateCompartment (dTime) {
     this.calcVar()
 
@@ -93,6 +104,8 @@ class BaseModel {
         this.compartment[key] = 0
       }
     }
+
+    this.placeSolution(dTime)
   }
 
   getExitPrevalence (travelPerDay) {

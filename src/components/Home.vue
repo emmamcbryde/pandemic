@@ -143,22 +143,29 @@
           <div
             id="global-prevalence"
             style="
-            width: 280px;
-            height: 150px">
+            width: 250px;
+            height: 130px">
+          </div>
+
+          <div
+            id="cumulative-incidence"
+            style="
+            width: 250px;
+            height: 130px">
           </div>
 
           <div
             id="local-prevalence"
             style="
-            width: 280px;
-            height: 150px">
+            width: 250px;
+            height: 130px">
           </div>
 
           <div
             id="local-susceptible"
             style="
-            width: 280px;
-            height: 150px">
+            width: 250px;
+            height: 130px">
           </div>
 
         </md-layout>
@@ -288,6 +295,12 @@ export default {
     this.globalPrevalenceChart.setYLabel('')
     this.globalPrevalenceChart.addDataset('prevalence')
 
+    this.cumulativeIncidenceChart = new ChartWidget('#cumulative-incidence')
+    this.cumulativeIncidenceChart.setTitle('Cumulative Incidence')
+    this.cumulativeIncidenceChart.setXLabel('days')
+    this.cumulativeIncidenceChart.setYLabel('')
+    this.cumulativeIncidenceChart.addDataset('prevalence')
+
     this.localPrevalenceChart = new ChartWidget('#local-prevalence')
     this.localPrevalenceChart.setTitle('Local Prevalence')
     this.localPrevalenceChart.setXLabel('days')
@@ -357,6 +370,9 @@ export default {
         }
         this.countryModel[iCountry].resetParams(inputParams)
       }
+
+      this.globalIncidence = []
+      this.cumulativeIncidence = []
     },
 
     async setModel () {
@@ -418,28 +434,40 @@ export default {
           for (let iToCountry of this.countryIndices) {
             if (iFromCountry !== iToCountry) {
               let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
-              let d = this.countryModel[iFromCountry].getExitPrevalence(travelPerDay)
-              this.countryModel[iFromCountry].delta.prevalence -= d
-              this.countryModel[iToCountry].delta.prevalence += d
+              let fromCountry = this.countryModel[iFromCountry]
+              let toCountry = this.countryModel[iToCountry]
+              let delta = fromCountry.getExitPrevalence(travelPerDay)
+              fromCountry.delta.prevalence -= delta
+              toCountry.delta.prevalence += delta
             }
           }
         }
 
         let globalPrevalence = 0
+        let globalIncidence = 0
         for (let iCountry of this.countryIndices) {
-          this.countryModel[iCountry].updateCompartment(1)
-          let prevalence = this.countryModel[iCountry].compartment.prevalence
-          this.countryModel[iCountry].solution.prevalence.push(prevalence)
-          let susceptible = this.countryModel[iCountry].compartment.susceptible
-          this.countryModel[iCountry].solution.susceptible.push(susceptible)
-          globalPrevalence += prevalence
+          let country = this.countryModel[iCountry]
+          country.updateCompartment(1)
+          for (let key of ['prevalence', 'susceptible']) {
+            country.solution[key].push(country.compartment[key])
+          }
+          globalPrevalence += country.compartment.prevalence
+          globalIncidence += _.last(country.solution.incidence)
         }
 
+        this.globalIncidence.push(globalIncidence)
         this.globalPrevalence.push(globalPrevalence)
       }
 
-      this.globalPrevalenceChart.updateDataset(
-        0, _.map(_.range(this.days), d => d + 1), this.globalPrevalence)
+      this.cumulativeIncidence = []
+      for (let i of _.range(this.globalIncidence.length)) {
+        let val = _.sum(this.globalIncidence.slice(0, i + 1))
+        this.cumulativeIncidence.push(val)
+      }
+
+      let days =  _.map(_.range(this.days), d => d + 1)
+      this.globalPrevalenceChart.updateDataset(0, days, this.globalPrevalence)
+      this.cumulativeIncidenceChart.updateDataset(0, days, this.cumulativeIncidence)
 
       this.updateWatchCountry()
 
@@ -454,13 +482,12 @@ export default {
 
       if (this.iWatchCountry >= 0) {
         let country = this.travelData.countries[this.iWatchCountry]
+        let days = _.map(_.range(this.days), d => d + 1)
+        let solution = this.countryModel[this.iWatchCountry].solution
         this.localPrevalenceChart.setTitle('Prevalence of ' + country.name)
+        this.localPrevalenceChart.updateDataset(0, days, solution.prevalence)
         this.localSusceptibleChart.setTitle('Susceptible of ' + country.name)
-        let nDay = this.countryModel[this.iWatchCountry].solution.prevalence.length
-        this.localPrevalenceChart.updateDataset(
-          0, _.range(1, nDay + 1), this.countryModel[this.iWatchCountry].solution.prevalence)
-        this.localSusceptibleChart.updateDataset(
-          0, _.range(1, nDay + 1), this.countryModel[this.iWatchCountry].solution.susceptible)
+        this.localSusceptibleChart.updateDataset(0, days, solution.susceptible)
       }
     },
 
