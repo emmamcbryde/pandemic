@@ -459,6 +459,7 @@ export default {
       for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
           this.countryModel[iCountry].clearDelta()
+          this.countryModel[iCountry].inputIncidence = 0
         }
 
         for (let iFromCountry of this.countryIndices) {
@@ -470,6 +471,7 @@ export default {
               let delta = fromCountry.getExitPrevalence(travelPerDay)
               fromCountry.delta.prevalence -= delta
               toCountry.delta.prevalence += delta
+              toCountry.inputIncidence += delta
             }
           }
         }
@@ -479,6 +481,7 @@ export default {
         for (let iCountry of this.countryIndices) {
           let country = this.countryModel[iCountry]
           country.updateCompartment(1)
+          country.solution.inputIncidence.push(country.inputIncidence)
           for (let key of ['prevalence', 'susceptible']) {
             country.solution[key].push(country.compartment[key])
           }

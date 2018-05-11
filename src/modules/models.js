@@ -82,14 +82,8 @@ class BaseModel {
     }
   }
 
-  recordInput () {
-    this.solution.inputIncidence.push(this.delta.prevalence)
-  }
-
   calcFlow () {
     this.events.length = 0
-
-    this.recordInput()
 
     this.calcVar()
     for (let [from, to, varKey] of this.varEvents) {
