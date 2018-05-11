@@ -245,7 +245,14 @@ function acumulateValues (vals) {
 }
 
 function convertLabel (val) {
-  return numeral(val).format('0a')
+  val = parseFloat(val)
+  if (val > 1) {
+    return numeral(val).format('0a')
+  } if (val === 0) {
+    return "0"
+  } else {
+    return numeral(val).format('0.0[000000]')
+  }
 }
 
 export default {
