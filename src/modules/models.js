@@ -309,7 +309,6 @@ class SirModel extends BaseModel {
   }
 }
 
-
 class SEIRModel extends BaseModel {
   constructor (id) {
     super(id)

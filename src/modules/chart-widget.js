@@ -119,8 +119,8 @@ class ChartWidget {
       backgroundColor: getColor(iDataset),
       borderColor: getColor(iDataset),
       showLine: true,
-      pointRadius: 1.7,
-      borderWidth: 1.5
+      pointRadius: 1.2,
+      borderWidth: 1
     }
     datasets.push(newDataset)
     this.chart.update()

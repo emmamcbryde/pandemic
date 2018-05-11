@@ -95,6 +95,12 @@
             risk
           </md-radio>
 
+          - play &nbsp;
+          <md-switch
+            v-model="isLoop"
+            @change="changeLoop">
+          </md-switch>
+
           - {{ days }} days
 
           <div style="
@@ -106,19 +112,27 @@
               tooltip="none"
               @callback="calculateRisk"
               :min="1"
-              :max="maxDays"
+              :max="getMaxDays"
               v-model="days"/>
           </div>
 
-          <md-switch
-            v-model="isLoop"
-            @change="changeLoop">
-            Play
-          </md-switch>
+
+          <md-input-container
+            style="
+              margin-left: 1em;
+              width: 80px;">
+            <label>Max Days</label>
+            <md-input
+              v-model="maxDays"
+              type="number"/>
+          </md-input-container>
 
         </md-layout>
 
-        <md-layout id="allCharts">
+        <md-layout id="globalCharts">
+        </md-layout>
+
+        <md-layout id="localCharts">
           <div>
             <md-input-container
               style="width: 140px">
@@ -192,12 +206,14 @@
 <script>
 import _ from 'lodash'
 import $ from 'jquery'
+import numeral from 'numeral'
 
 import vueSlider from 'vue-slider-component'
+
+import util from '../modules/util'
 import Globe from '../modules/globe'
 import {legendColor} from 'd3-svg-legend'
 import {models} from '../modules/models'
-import util from '../modules/util'
 import ChartWidget from '../modules/chart-widget'
 
 const d3 = require('d3')
@@ -219,6 +235,15 @@ function waitForElement (selector) {
   })
 }
 
+function acumulateValues (vals) {
+  let result = []
+  for (let i of _.range(vals.length)) {
+    let val = _.sum(vals.slice(0, i + 1))
+    result.push(val)
+  }
+  return result
+}
+
 export default {
 
   id: 'home',
@@ -233,7 +258,7 @@ export default {
       iWatchCountry: -1,
       mode: 'to', // or 'risk'
       days: 1,
-      maxDays: 200,
+      maxDays: 60,
       inputParamEntries: [],
       isLoop: false,
       modelType: modelTypes[0],
@@ -278,15 +303,25 @@ export default {
     this.random()
 
     this.chartWidgets = {}
-    await this.newChartWidget('#allCharts', 'globalPrevalence')
-    await this.newChartWidget('#allCharts', 'cumulativeIncidence')
-    await this.newChartWidget('#allCharts', 'prevalence')
-    await this.newChartWidget('#allCharts', 'susceptible')
-    await this.newChartWidget('#allCharts', 'inputIncidence')
+    await this.newChartWidget('#globalCharts', 'globalPrevalence')
+    await this.newChartWidget('#globalCharts', 'cumulativeIncidence')
+    await this.newChartWidget('#localCharts', 'prevalence')
+    await this.newChartWidget('#localCharts', 'susceptible')
+    await this.newChartWidget('#localCharts', 'inputIncidence')
 
     window.dispatchEvent(new Event('resize'))
 
     setInterval(this.loop, 2000)
+  },
+
+  computed: {
+    /**
+     * Needed as md-input corrupts this.maxDays into string
+     * @returns {number}
+     */
+    getMaxDays () {
+      return parseFloat(this.maxDays)
+    }
   },
 
   methods: {
@@ -295,16 +330,24 @@ export default {
       let selector = `#${id}`
       await waitForElement(selector)
       let chartWidget = new ChartWidget(selector)
-      chartWidget.setTitle(id)
-      chartWidget.setXLabel('days')
+      chartWidget.setTitle('')
+      chartWidget.setXLabel('')
       chartWidget.setYLabel('')
       chartWidget.addDataset(id)
+      chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = (val) => {
+        return numeral(val).format('0a')
+      }
       this.chartWidgets[id] = chartWidget
       return selector
     },
 
     getNameFromICountry (iCountry) {
       return this.travelData.countries[iCountry].name
+    },
+
+    async changeMaxDays () {
+      await util.delay(20)
+      this.calculateRisk()
     },
 
     resize () {
@@ -445,15 +488,15 @@ export default {
         this.globalPrevalence.push(globalPrevalence)
       }
 
-      this.cumulativeIncidence = []
-      for (let i of _.range(this.globalIncidence.length)) {
-        let val = _.sum(this.globalIncidence.slice(0, i + 1))
-        this.cumulativeIncidence.push(val)
-      }
-
       let days =  _.map(_.range(this.days), d => d + 1)
+
+      this.chartWidgets.globalPrevalence.setTitle('Global Prevalence')
+      this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(0, days, this.globalPrevalence)
-      this.chartWidgets.cumulativeIncidence.updateDataset(0, days, this.cumulativeIncidence)
+
+      this.chartWidgets.cumulativeIncidence.setTitle('Global Cumulative Incidence')
+      this.chartWidgets.cumulativeIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.cumulativeIncidence.updateDataset(0, days, acumulateValues(this.globalIncidence))
 
       this.updateWatchCountry()
 
@@ -465,19 +508,23 @@ export default {
 
     async updateWatchCountry () {
       await util.delay(100)
-
-      if (this.iWatchCountry >= 0) {
-        let country = this.travelData.countries[this.iWatchCountry]
-        let days = _.map(_.range(this.days), d => d + 1)
-        let solution = this.countryModel[this.iWatchCountry].solution
-
-        this.chartWidgets['prevalence'].setTitle('Prevalence of ' + country.name)
-        this.chartWidgets['prevalence'].updateDataset(0, days, solution.prevalence)
-        this.chartWidgets['susceptible'].setTitle('Susceptible of ' + country.name)
-        this.chartWidgets['susceptible'].updateDataset(0, days, solution.susceptible)
-        this.chartWidgets['inputIncidence'].setTitle('Input incidence of ' + country.name)
-        this.chartWidgets['inputIncidence'].updateDataset(0, days, solution.inputIncidence)
+      if (this.iWatchCountry < 0) {
+        return
       }
+      let days = _.map(_.range(this.days), d => d + 1)
+      let solution = this.countryModel[this.iWatchCountry].solution
+
+      this.chartWidgets.prevalence.setTitle('Prevalence')
+      this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.prevalence.updateDataset(0, days, solution.prevalence)
+
+      this.chartWidgets.susceptible.setTitle('Susceptible')
+      this.chartWidgets.susceptible.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.susceptible.updateDataset(0, days, solution.susceptible)
+
+      this.chartWidgets.inputIncidence.setTitle('Cumulative Input Incidence')
+      this.chartWidgets.inputIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.inputIncidence.updateDataset(0, days, acumulateValues(solution.inputIncidence))
     },
 
     async loadCountry () {
@@ -634,7 +681,7 @@ export default {
 
     loop () {
       if ((this.isLoop) && (_.startsWith(this.mode, 'risk'))) {
-        if (this.days < this.maxDays) {
+        if (this.days < this.getMaxDays) {
           this.days += 1
         } else {
           this.days = 1
