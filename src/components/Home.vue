@@ -1,180 +1,207 @@
 <template>
 
   <md-layout
-    md-column
-    style="padding: 1em">
+    md-row
+    style="
+      height: calc(100vh - 48px);
+      width: calc(100vw);">
 
-    <div>
-      <md-layout md-column>
+    <div style="height: calc(100vh - 48px); width: 50%">
+      <div style="overflow-y: scroll; height: calc(100vh - 48px); padding: 1em;">
+        <md-layout md-column>
 
-        <md-layout
-          md-row
-          md-vertical-align="center">
+          <h3 class="md-title">Model Parameters</h3>
 
-          <md-input-container
-            style="
-                margin-right: 1em;
-                width: 120px">
-            <label>
-              Model
-            </label>
-            <md-select
-              style="width: 120px"
-              name="modelType"
-              id="modelType"
-              v-model="modelType">
-              <md-option
-                :value="modelType"
-                v-for="(modelType, i) in modelTypes"
+          <!--<div>-->
+            <md-layout
+              md-row
+              md-vertical-align="center">
+
+              <md-input-container
+                style="
+                    margin-right: 1em;
+                    width: 120px">
+                <label>
+                  Model
+                </label>
+                <md-select
+                  style="width: 120px"
+                  name="modelType"
+                  id="modelType"
+                  v-model="modelType">
+                  <md-option
+                    :value="modelType"
+                    v-for="(modelType, i) in modelTypes"
+                    :key="i"
+                    @selected="setModel">
+                    {{modelType}}
+                  </md-option>
+                </md-select>
+              </md-input-container>
+
+              <md-input-container
+                v-for="(entry, i) in inputParamEntries"
                 :key="i"
-                @selected="setModel">
-                {{modelType}}
-              </md-option>
-            </md-select>
-          </md-input-container>
+                style="
+                    margin-right: 1em;
+                    width: 100px;">
+                <label>{{entry.label}}</label>
+                <md-input
+                  v-model="entry.value"
+                  type="number"
+                  :placeholder="entry.placeHolder"
+                  @change="calculateRisk"/>
+              </md-input-container>
 
-          <md-input-container
-            v-for="(entry, i) in inputParamEntries"
-            :key="i"
-            style="
-                margin-right: 1em;
-                width: 100px;">
-            <label>{{entry.label}}</label>
-            <md-input
-              v-model="entry.value"
-              type="number"
-              :placeholder="entry.placeHolder"
-              @change="calculateRisk"/>
-          </md-input-container>
+            </md-layout>
+          <!--</div>-->
 
-        </md-layout>
+          <h3 class="md-title">Source Country</h3>
 
-        <md-layout
-          md-row
-          style="margin-top: -1em"
-          md-vertical-align="center">
+          <div style="width: 100%">
+            <md-layout
+              md-row
+              style="margin-top: -1em"
+              md-vertical-align="center">
 
-          <md-input-container
-            style="width: 160px">
-            <label>
-              Source Country
-            </label>
-            <md-select
-              name="country"
-              id="country"
-              v-model="iSourceCountry">
-              <md-option
-                :value="country.iCountry"
-                v-for="(country, i) in selectableCountries"
-                :key="i"
-                @selected="selectSourceCountry()">
-                {{country.name}}
-              </md-option>
-            </md-select>
-          </md-input-container>
+              <md-input-container
+                style="width: 160px">
+                <label>
+                  Source Country
+                </label>
+                <md-select
+                  name="country"
+                  id="country"
+                  v-model="iSourceCountry">
+                  <md-option
+                    :value="country.iCountry"
+                    v-for="(country, i) in selectableCountries"
+                    :key="i"
+                    @selected="selectSourceCountry()">
+                    {{country.name}}
+                  </md-option>
+                </md-select>
+              </md-input-container>
 
-          <span style="width:1em"></span>
+              <span style="width:1em"></span>
 
-          <md-radio
-            v-model="mode"
-            @change="selectMode('to')"
-            id="direction"
-            name="direction"
-            md-value="to">
-            destinations
-          </md-radio>
+              <md-radio
+                v-model="mode"
+                @change="selectMode('to')"
+                id="direction"
+                name="direction"
+                md-value="to">
+                destinations
+              </md-radio>
 
-          <span style="width:1em"></span>
+              <span style="width:1em "></span>
 
-          <md-radio
-            v-model="mode"
-            @change="selectMode('risk')"
-            id="direction"
-            name="direction"
-            md-value="risk">
-            risk
-          </md-radio>
+              <md-radio
+                v-model="mode"
+                @change="selectMode('risk')"
+                id="direction"
+                name="direction"
+                md-value="risk">risk</md-radio>
 
-          - play &nbsp;
-          <md-switch
-            v-model="isLoop"
-            @change="changeLoop">
-          </md-switch>
-
-          - {{ days }} days
-
-          <div style="
-              margin-left: 0.5em;
-              width: 170px">
-            <vue-slider
-              ref="slider"
-              :interval="1"
-              tooltip="none"
-              @callback="calculateRisk"
-              :min="1"
-              :max="getMaxDays"
-              v-model="days"/>
+            </md-layout>
           </div>
 
+          <h3 class="md-title">Risk Factor</h3>
 
-          <md-input-container
-            style="
-              margin-left: 1em;
-              width: 80px;">
-            <label>Max Days</label>
-            <md-input
-              v-model="maxDays"
-              type="number"/>
-          </md-input-container>
-
-        </md-layout>
-
-        <md-layout id="globalCharts">
-        </md-layout>
-
-        <md-layout id="localCharts">
           <div>
-            <md-input-container
-              style="width: 140px">
-              <label>
-                Watch Country
-              </label>
-              <md-select
-                name="country"
-                id="country"
-                v-model="iWatchCountry">
-                <md-option
-                  :value="country.iCountry"
-                  v-for="(country, i) in selectableCountries"
-                  :key="i"
-                  @selected="selectWatchCountry()">
-                  {{country.name}}
-                </md-option>
-              </md-select>
-            </md-input-container>
+            <md-layout
+              md-row
+              md-vertical-align="center">
+              <md-switch
+                v-model="isLoop"
+                @change="changeLoop">
+                Play
+              </md-switch>
+
+              for {{ days }} days
+
+              <div style="
+                  margin-left: 0.5em;
+                  width: 170px">
+                <vue-slider
+                  ref="slider"
+                  :interval="1"
+                  tooltip="none"
+                  @callback="calculateRisk"
+                  :min="1"
+                  :max="getMaxDays"
+                  v-model="days"/>
+              </div>
+
+              <md-input-container
+                style="
+                  margin-left: 1em;
+                  width: 80px;">
+                <label>Max Days</label>
+                <md-input
+                  v-model="maxDays"
+                  type="number"/>
+              </md-input-container>
+
+            </md-layout>
           </div>
+
+          <div style="width: 100%">
+            <md-layout id="globalCharts">
+            </md-layout>
+          </div>
+
+          <h3 class="md-title">Watch Country</h3>
+
+          <div style="width: 100%">
+            <div>
+              <md-input-container
+                style="width: 140px">
+                <label>
+                  Watch Country
+                </label>
+                <md-select
+                  name="country"
+                  id="country"
+                  v-model="iWatchCountry">
+                  <md-option
+                    :value="country.iCountry"
+                    v-for="(country, i) in selectableCountries"
+                    :key="i"
+                    @selected="selectWatchCountry()">
+                    {{country.name}}
+                  </md-option>
+                </md-select>
+              </md-input-container>
+            </div>
+            <md-layout id="localCharts">
+            </md-layout>
+          </div>
+
         </md-layout>
-
-      </md-layout>
-
+      </div>
     </div>
 
-    <md-layout>
-      <div
-        id="main"
-        style="
-          background-color: white;
-          width: calc(100vw);
-          user-select: none;
-          cursor: pointer">
-      </div>
-      <div
-        style="
-          position: absolute;
-          bottom: 0">
-        <svg id="legend"></svg>
-      </div>
-    </md-layout>
+    <div style="height: calc(100vh - 48px); flex: 1; border-left: 1px solid #CCC">
+      <md-layout style="overflow: scroll; height: calc(100vh - 48px);">
+        <div
+          id="main"
+          style="
+            background-color: white;
+            user-select: none;
+            height: 100%;
+            width: 100%;
+            cursor: pointer">
+        </div>
+        <div
+          style="
+            position: absolute;
+            bottom: 0;
+            padding-left: 10px;">
+          <svg id="legend"></svg>
+        </div>
+      </md-layout>
+    </div>
 
   </md-layout>
 
@@ -245,7 +272,14 @@ function acumulateValues (vals) {
 }
 
 function convertLabel (val) {
-  return numeral(val).format('0a')
+  val = parseFloat(val)
+  if (val > 1) {
+    return numeral(val).format('0a')
+  } if (val === 0) {
+    return '0'
+  } else {
+    return numeral(val).format('0.0[000000]')
+  }
 }
 
 export default {
@@ -330,7 +364,9 @@ export default {
 
   methods: {
     async newChartWidget (parentSelector, id) {
-      $(parentSelector).append($(`<div id="${id}" class="chart">`))
+      let $parent = $(parentSelector)
+      await waitForElement($parent)
+      $parent.append($(`<div id="${id}" class="chart">`))
       let selector = `#${id}`
       await waitForElement(selector)
       let chartWidget = new ChartWidget(selector)
@@ -493,7 +529,7 @@ export default {
         this.globalPrevalence.push(globalPrevalence)
       }
 
-      let days =  _.map(_.range(this.days), d => d + 1)
+      let days = _.map(_.range(this.days), d => d + 1)
 
       this.chartWidgets.globalPrevalence.setTitle('Global Prevalence')
       this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
