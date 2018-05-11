@@ -244,6 +244,10 @@ function acumulateValues (vals) {
   return result
 }
 
+function convertLabel (val) {
+  return numeral(val).format('0a')
+}
+
 export default {
 
   id: 'home',
@@ -334,9 +338,7 @@ export default {
       chartWidget.setXLabel('')
       chartWidget.setYLabel('')
       chartWidget.addDataset(id)
-      chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = (val) => {
-        return numeral(val).format('0a')
-      }
+      chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = convertLabel
       this.chartWidgets[id] = chartWidget
       return selector
     },
