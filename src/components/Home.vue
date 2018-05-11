@@ -118,7 +118,7 @@
 
         </md-layout>
 
-        <md-layout>
+        <md-layout id="allCharts">
           <div>
             <md-input-container
               style="width: 140px">
@@ -139,35 +139,6 @@
               </md-select>
             </md-input-container>
           </div>
-
-          <div
-            id="global-prevalence"
-            style="
-            width: 250px;
-            height: 130px">
-          </div>
-
-          <div
-            id="cumulative-incidence"
-            style="
-            width: 250px;
-            height: 130px">
-          </div>
-
-          <div
-            id="local-prevalence"
-            style="
-            width: 250px;
-            height: 130px">
-          </div>
-
-          <div
-            id="local-susceptible"
-            style="
-            width: 250px;
-            height: 130px">
-          </div>
-
         </md-layout>
 
       </md-layout>
@@ -212,6 +183,10 @@
     font-size: 14px;
     font-family: sans-serif;
   }
+  .chart {
+    width: 250px;
+    height: 130px;
+  }
 </style>
 
 <script>
@@ -230,6 +205,20 @@ const d3 = require('d3')
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
 
+function waitForElement (selector) {
+  return new Promise(resolve => {
+    function loop () {
+      let $element = $(selector)
+      if ($element.length) {
+        resolve($element)
+      } else {
+        window.setTimeout(loop, 50)
+      }
+    }
+    loop()
+  })
+}
+
 export default {
 
   id: 'home',
@@ -244,7 +233,7 @@ export default {
       iWatchCountry: -1,
       mode: 'to', // or 'risk'
       days: 1,
-      maxDays: 60,
+      maxDays: 200,
       inputParamEntries: [],
       isLoop: false,
       modelType: modelTypes[0],
@@ -252,7 +241,7 @@ export default {
     }
   },
 
-  mounted () {
+  async mounted () {
     this.$element = $('#main')
     this.resize()
     window.addEventListener('resize', this.resize)
@@ -288,35 +277,32 @@ export default {
 
     this.random()
 
-    this.globalPrevalence = []
-    this.globalPrevalenceChart = new ChartWidget('#global-prevalence')
-    this.globalPrevalenceChart.setTitle('Global Prevalence')
-    this.globalPrevalenceChart.setXLabel('days')
-    this.globalPrevalenceChart.setYLabel('')
-    this.globalPrevalenceChart.addDataset('prevalence')
+    this.chartWidgets = {}
+    await this.newChartWidget('#allCharts', 'globalPrevalence')
+    await this.newChartWidget('#allCharts', 'cumulativeIncidence')
+    await this.newChartWidget('#allCharts', 'prevalence')
+    await this.newChartWidget('#allCharts', 'susceptible')
+    await this.newChartWidget('#allCharts', 'inputIncidence')
 
-    this.cumulativeIncidenceChart = new ChartWidget('#cumulative-incidence')
-    this.cumulativeIncidenceChart.setTitle('Cumulative Incidence')
-    this.cumulativeIncidenceChart.setXLabel('days')
-    this.cumulativeIncidenceChart.setYLabel('')
-    this.cumulativeIncidenceChart.addDataset('prevalence')
-
-    this.localPrevalenceChart = new ChartWidget('#local-prevalence')
-    this.localPrevalenceChart.setTitle('Local Prevalence')
-    this.localPrevalenceChart.setXLabel('days')
-    this.localPrevalenceChart.setYLabel('')
-    this.localPrevalenceChart.addDataset('prevalence')
-
-    this.localSusceptibleChart = new ChartWidget('#local-susceptible')
-    this.localSusceptibleChart.setTitle('Local Susceptible')
-    this.localSusceptibleChart.setXLabel('days')
-    this.localSusceptibleChart.setYLabel('')
-    this.localSusceptibleChart.addDataset('susceptible')
+    window.dispatchEvent(new Event('resize'))
 
     setInterval(this.loop, 2000)
   },
 
   methods: {
+    async newChartWidget (parentSelector, id) {
+      $(parentSelector).append($(`<div id="${id}" class="chart">`))
+      let selector = `#${id}`
+      await waitForElement(selector)
+      let chartWidget = new ChartWidget(selector)
+      chartWidget.setTitle(id)
+      chartWidget.setXLabel('days')
+      chartWidget.setYLabel('')
+      chartWidget.addDataset(id)
+      this.chartWidgets[id] = chartWidget
+      return selector
+    },
+
     getNameFromICountry (iCountry) {
       return this.travelData.countries[iCountry].name
     },
@@ -418,7 +404,7 @@ export default {
 
     async getRiskById () {
       this.isRunning = true
-      this.globalPrevalence.length = 0
+      this.globalPrevalence = []
       this.resetModels()
 
       for (let iCountry of this.countryIndices) {
@@ -466,8 +452,8 @@ export default {
       }
 
       let days =  _.map(_.range(this.days), d => d + 1)
-      this.globalPrevalenceChart.updateDataset(0, days, this.globalPrevalence)
-      this.cumulativeIncidenceChart.updateDataset(0, days, this.cumulativeIncidence)
+      this.chartWidgets.globalPrevalence.updateDataset(0, days, this.globalPrevalence)
+      this.chartWidgets.cumulativeIncidence.updateDataset(0, days, this.cumulativeIncidence)
 
       this.updateWatchCountry()
 
@@ -484,10 +470,13 @@ export default {
         let country = this.travelData.countries[this.iWatchCountry]
         let days = _.map(_.range(this.days), d => d + 1)
         let solution = this.countryModel[this.iWatchCountry].solution
-        this.localPrevalenceChart.setTitle('Prevalence of ' + country.name)
-        this.localPrevalenceChart.updateDataset(0, days, solution.prevalence)
-        this.localSusceptibleChart.setTitle('Susceptible of ' + country.name)
-        this.localSusceptibleChart.updateDataset(0, days, solution.susceptible)
+
+        this.chartWidgets['prevalence'].setTitle('Prevalence of ' + country.name)
+        this.chartWidgets['prevalence'].updateDataset(0, days, solution.prevalence)
+        this.chartWidgets['susceptible'].setTitle('Susceptible of ' + country.name)
+        this.chartWidgets['susceptible'].updateDataset(0, days, solution.susceptible)
+        this.chartWidgets['inputIncidence'].setTitle('Input incidence of ' + country.name)
+        this.chartWidgets['inputIncidence'].updateDataset(0, days, solution.inputIncidence)
       }
     },
 

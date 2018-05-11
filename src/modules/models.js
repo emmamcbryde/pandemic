@@ -19,7 +19,8 @@ class BaseModel {
     this.solution = {
       prevalence: [],
       susceptible: [],
-      incidence: []
+      incidence: [],
+      inputIncidence: []
     }
   }
 
@@ -38,6 +39,29 @@ class BaseModel {
     return _.cloneDeep(this.inputParamEntries)
   }
 
+  calcVar () {
+  }
+
+  checkEvents () {
+    this.calcVar()
+    let varKeys = _.keys(this.var)
+    for (let varEvent of this.varEvents) {
+      let varEventKey = varEvent[2]
+      if (!(_.includes(varKeys, varEventKey))) {
+        console.log(`Error: ${varEventKey} of this.varEvents not` +
+          `found in this.calcVars`)
+      }
+    }
+    for (let paramEvent of this.paramEvents) {
+      let paramEventKey = paramEvent[2]
+      let paramKeys = _.keys(this.params)
+      if (!(_.includes(paramKeys, paramEventKey))) {
+        console.log(`Error: ${paramEventKey} of this.paramEvents not` +
+          `found in this.params`)
+      }
+    }
+  }
+
   resetParams (inputParams) {
     this.params = _.cloneDeep(this.defaultParams)
     _.assign(this.params, inputParams)
@@ -49,7 +73,7 @@ class BaseModel {
       }
     }
     this.init()
-    this.calcVar()
+    this.checkEvents()
   }
 
   clearDelta () {
@@ -58,12 +82,21 @@ class BaseModel {
     }
   }
 
+  recordInput () {
+    this.solution.inputIncidence.push(this.delta.prevalence)
+  }
+
   calcFlow () {
     this.events.length = 0
+
+    this.recordInput()
+
+    this.calcVar()
     for (let [from, to, varKey] of this.varEvents) {
       let val = this.var[varKey] * this.compartment[from]
       this.events.push([from, to, val])
     }
+
     for (let [from, to, paramKey] of this.paramEvents) {
       let val = this.params[paramKey] * this.compartment[from]
       this.events.push([from, to, val])
@@ -72,7 +105,9 @@ class BaseModel {
 
   placeSolution (dTime) {
     let incidence = 0
-    for (let [from, to, val] of this.events) {
+    for (let event of this.events) {
+      let to = event[1]
+      let val = event[2]
       if (to === 'prevalence') {
         incidence += val * dTime
       }
@@ -81,8 +116,6 @@ class BaseModel {
   }
 
   updateCompartment (dTime) {
-    this.calcVar()
-
     this.calcFlow()
 
     for (let key of this.keys) {
