@@ -95,6 +95,12 @@
             risk
           </md-radio>
 
+          - play &nbsp;
+          <md-switch
+            v-model="isLoop"
+            @change="changeLoop">
+          </md-switch>
+
           - {{ days }} days
 
           <div style="
@@ -110,11 +116,6 @@
               v-model="days"/>
           </div>
 
-          <md-switch
-            v-model="isLoop"
-            @change="changeLoop">
-            Play
-          </md-switch>
 
           <md-input-container
             style="
@@ -205,6 +206,7 @@
 <script>
 import _ from 'lodash'
 import $ from 'jquery'
+import numeral from 'numeral'
 
 import vueSlider from 'vue-slider-component'
 
@@ -256,7 +258,7 @@ export default {
       iWatchCountry: -1,
       mode: 'to', // or 'risk'
       days: 1,
-      maxDays: 200,
+      maxDays: 60,
       inputParamEntries: [],
       isLoop: false,
       modelType: modelTypes[0],
@@ -332,6 +334,9 @@ export default {
       chartWidget.setXLabel('')
       chartWidget.setYLabel('')
       chartWidget.addDataset(id)
+      chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = (val) => {
+        return numeral(val).format('0a')
+      }
       this.chartWidgets[id] = chartWidget
       return selector
     },
@@ -489,7 +494,7 @@ export default {
       this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(0, days, this.globalPrevalence)
 
-      this.chartWidgets.cumulativeIncidence.setTitle('Cumulative Incidence')
+      this.chartWidgets.cumulativeIncidence.setTitle('Global Cumulative Incidence')
       this.chartWidgets.cumulativeIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.cumulativeIncidence.updateDataset(0, days, acumulateValues(this.globalIncidence))
 
@@ -503,24 +508,23 @@ export default {
 
     async updateWatchCountry () {
       await util.delay(100)
-
-      if (this.iWatchCountry >= 0) {
-        let country = this.travelData.countries[this.iWatchCountry]
-        let days = _.map(_.range(this.days), d => d + 1)
-        let solution = this.countryModel[this.iWatchCountry].solution
-
-        this.chartWidgets.prevalence.setTitle('Prevalence')
-        this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-        this.chartWidgets.prevalence.updateDataset(0, days, solution.prevalence)
-
-        this.chartWidgets.susceptible.setTitle('Susceptible')
-        this.chartWidgets.susceptible.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-        this.chartWidgets.susceptible.updateDataset(0, days, solution.susceptible)
-
-        this.chartWidgets.inputIncidence.setTitle('Cumulative Input Incidence')
-        this.chartWidgets.inputIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-        this.chartWidgets.inputIncidence.updateDataset(0, days, acumulateValues(solution.inputIncidence))
+      if (this.iWatchCountry < 0) {
+        return
       }
+      let days = _.map(_.range(this.days), d => d + 1)
+      let solution = this.countryModel[this.iWatchCountry].solution
+
+      this.chartWidgets.prevalence.setTitle('Prevalence')
+      this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.prevalence.updateDataset(0, days, solution.prevalence)
+
+      this.chartWidgets.susceptible.setTitle('Susceptible')
+      this.chartWidgets.susceptible.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.susceptible.updateDataset(0, days, solution.susceptible)
+
+      this.chartWidgets.inputIncidence.setTitle('Cumulative Input Incidence')
+      this.chartWidgets.inputIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.inputIncidence.updateDataset(0, days, acumulateValues(solution.inputIncidence))
     },
 
     async loadCountry () {
