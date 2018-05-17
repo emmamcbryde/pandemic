@@ -202,7 +202,9 @@
           style="
             position: absolute;
             bottom: 0;
-            padding-left: 10px;">
+            padding-left: 10px;
+            user-select: none;
+            pointer-events: none;">
           <svg id="legend"></svg>
         </div>
       </md-layout>
@@ -558,7 +560,11 @@ export default {
         return
       }
       let days = _.map(_.range(this.days), d => d + 1)
-      let solution = this.countryModel[this.iWatchCountry].solution
+      let countryModel = this.countryModel[this.iWatchCountry]
+      if (_.isUndefined(countryModel)) {
+        return
+      }
+      let solution = countryModel.solution
 
       this.chartWidgets.prevalence.setTitle('Prevalence')
       this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
@@ -660,12 +666,11 @@ export default {
       let colorLegend = legendColor()
         .labelFormat(d3.format('.0f'))
         .scale(this.globe.paletteScale)
-        .shapePadding(5)
-        .shapeWidth(50)
+        .shapePadding(0)
+        .shapeWidth(20)
         .shapeHeight(20)
-        .labelOffset(12)
+        .labelOffset(8)
       svg.append('g')
-        // .attr('transform', 'translate(352, 60)')
         .call(colorLegend)
     },
 
