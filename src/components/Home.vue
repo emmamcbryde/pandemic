@@ -32,7 +32,7 @@
                     :value="modelType"
                     v-for="(modelType, i) in modelTypes"
                     :key="i"
-                    @selected="setModel">
+                    @selected="asyncSelectNewModel">
                     {{modelType}}
                   </md-option>
                 </md-select>
@@ -49,7 +49,7 @@
                   v-model="entry.value"
                   type="number"
                   :placeholder="entry.placeHolder"
-                  @change="calculateRisk"/>
+                  @change="asyncCalculateRisk"/>
               </md-input-container>
 
             </md-layout>
@@ -74,7 +74,7 @@
                     :value="country.iCountry"
                     v-for="(country, i) in selectableCountries"
                     :key="i"
-                    @selected="selectSourceCountry()">
+                    @selected="asyncSelectSourceCountry()">
                     {{country.name}}
                   </md-option>
                 </md-select>
@@ -84,7 +84,7 @@
 
               <md-radio
                 v-model="mode"
-                @change="selectMode('to')"
+                @change="asyncSelectMode('to')"
                 id="direction"
                 name="direction"
                 md-value="to">
@@ -95,7 +95,7 @@
 
               <md-radio
                 v-model="mode"
-                @change="selectMode('risk')"
+                @change="asyncSelectMode('risk')"
                 id="direction"
                 name="direction"
                 md-value="risk">risk</md-radio>
@@ -122,7 +122,7 @@
                   ref="slider"
                   :interval="1"
                   tooltip="none"
-                  @callback="calculateRisk"
+                  @callback="asyncCalculateRisk"
                   :min="1"
                   :max="getMaxDays"
                   v-model="days"/>
@@ -167,7 +167,7 @@
                     :value="country.iCountry"
                     v-for="(country, i) in selectableCountries"
                     :key="i"
-                    @selected="selectWatchCountry()">
+                    @selected="asyncSelectWatchCountry()">
                     {{country.name}}
                   </md-option>
                 </md-select>
@@ -323,17 +323,17 @@ export default {
     this.countryIndices = _.map(countries, 'iCountry')
 
     this.countryModel = {}
-    this.setModel(this.modelType)
+    this.asyncSelectNewModel(this.modelType)
     this.isRunning = false
 
     this.selectRandomSourceCountry()
 
     this.chartWidgets = {}
-    await this.newChartWidget('#globalCharts', 'globalPrevalence')
-    await this.newChartWidget('#globalCharts', 'cumulativeIncidence')
-    await this.newChartWidget('#localCharts', 'prevalence')
-    await this.newChartWidget('#localCharts', 'susceptible')
-    await this.newChartWidget('#localCharts', 'inputIncidence')
+    await this.asyncMakeChartWidget('#globalCharts', 'globalPrevalenceSolution')
+    await this.asyncMakeChartWidget('#globalCharts', 'cumulativeIncidenceSolution')
+    await this.asyncMakeChartWidget('#localCharts', 'prevalence')
+    await this.asyncMakeChartWidget('#localCharts', 'susceptible')
+    await this.asyncMakeChartWidget('#localCharts', 'inputIncidence')
 
     window.dispatchEvent(new Event('resize'))
 
@@ -351,7 +351,7 @@ export default {
   },
 
   methods: {
-    async newChartWidget (parentSelector, id) {
+    async asyncMakeChartWidget (parentSelector, id) {
       let $parent = $(parentSelector)
       await waitForElement($parent)
       $parent.append($(`<div id="${id}" class="chart">`))
@@ -397,9 +397,9 @@ export default {
       return result
     },
 
-    async changeMaxDays () {
+    async asyncChangeMaxDays () {
       await util.delay(20)
-      this.calculateRisk()
+      this.asyncCalculateRisk()
     },
 
     resize () {
@@ -419,16 +419,12 @@ export default {
       return travelData.countries[iCountry].population
     },
 
-    getTravelValuesById (direction) {
+    getTravelValuesById () {
       let values = {}
       let nCountry = this.travelData.countries.length
       for (let jCountry = 0; jCountry < nCountry; jCountry += 1) {
         let value
-        if (direction === 'to') {
-          value = this.getTravelPerDay(this.iSourceCountry, jCountry)
-        } else {
-          value = this.getTravelPerDay(jCountry, this.iSourceCountry)
-        }
+        value = this.getTravelPerDay(this.iSourceCountry, jCountry)
         let id = this.travelData.countries[jCountry].id
         values[id] = value
       }
@@ -452,11 +448,12 @@ export default {
         this.countryModel[iCountry].resetParams(inputParams)
       }
 
-      this.globalIncidence = []
-      this.cumulativeIncidence = []
+      this.globalIncidenceSolution = []
+      this.globalPrevalenceSolution = []
+      this.cumulativeIncidenceSolution = []
     },
 
-    async setModel () {
+    async asyncSelectNewModel () {
       await util.delay(100)
 
       let ModelClass
@@ -484,17 +481,11 @@ export default {
         }
       }
       this.resetModels()
-      this.selectMode(this.mode)
+      this.asyncSelectMode(this.mode)
     },
 
-    async calculateRiskOfCurrentSourceCountry () {
-      this.isRunning = true
-      this.globalPrevalence = []
+    calculateRiskOfCurrentSourceCountry () {
       this.resetModels()
-
-      for (let iCountry of this.countryIndices) {
-        this.countryModel[iCountry].clearDelta()
-      }
 
       for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
@@ -529,30 +520,28 @@ export default {
           globalIncidence += _.last(country.solution.incidence)
         }
 
-        this.globalIncidence.push(globalIncidence)
-        this.globalPrevalence.push(globalPrevalence)
+        this.globalIncidenceSolution.push(globalIncidence)
+        this.globalPrevalenceSolution.push(globalPrevalence)
       }
 
       let days = _.map(_.range(this.days), d => d + 1)
 
-      this.chartWidgets.globalPrevalence.setTitle('Global Prevalence')
-      this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.globalPrevalence.updateDataset(0, days, this.globalPrevalence)
+      this.chartWidgets.globalPrevalenceSolution
+        .setTitle('Global Prevalence')
+      this.chartWidgets.globalPrevalenceSolution
+        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.globalPrevalenceSolution.updateDataset(
+        0, days, this.globalPrevalenceSolution)
 
-      this.chartWidgets.cumulativeIncidence.setTitle('Global Cumulative Incidence')
-      this.chartWidgets.cumulativeIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.cumulativeIncidence.updateDataset(0, days, acumulateValues(this.globalIncidence))
-
-      this.updateWatchCountry()
-
-      this.isRunning = false
-
-      let result = this.getPropKey('compartment', 'prevalence')
-      return [result, _.max(_.values(result))]
+      this.chartWidgets.cumulativeIncidenceSolution
+        .setTitle('Global Cumulative Incidence')
+      this.chartWidgets.cumulativeIncidenceSolution
+        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.cumulativeIncidenceSolution.updateDataset(
+        0, days, acumulateValues(this.globalIncidenceSolution))
     },
 
-    async updateWatchCountry () {
-      await util.delay(100)
+    updateWatchCountry () {
       if (this.iWatchCountry < 0) {
         return
       }
@@ -563,33 +552,44 @@ export default {
       }
       let solution = countryModel.solution
 
-      this.chartWidgets.prevalence.setTitle('Prevalence')
-      this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.prevalence
+        .setTitle('Prevalence')
+      this.chartWidgets.prevalence
+        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.prevalence.updateDataset(
         0, days, solution.prevalence)
 
-      this.chartWidgets.susceptible.setTitle('Susceptible')
-      this.chartWidgets.susceptible.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.susceptible.updateDataset(
-        0, days, solution.susceptible)
+      this.chartWidgets.susceptible
+        .setTitle('Susceptible')
+      this.chartWidgets.susceptible
+        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.susceptible
+        .updateDataset(0, days, solution.susceptible)
 
-      this.chartWidgets.inputIncidence.setTitle('Cumulative Input Incidence')
-      this.chartWidgets.inputIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.inputIncidence.updateDataset(
-        0, days, acumulateValues(solution.inputIncidence))
+      this.chartWidgets.inputIncidence
+        .setTitle('Cumulative Input Incidence')
+      this.chartWidgets.inputIncidence
+        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.inputIncidence
+        .updateDataset(0, days, acumulateValues(solution.inputIncidence))
     },
 
-    async loadCurrentSourceCountry () {
+    async asyncRecalculateGlobe () {
       let valuesById, maxValue
       if (_.startsWith(this.mode, 'risk')) {
         while (this.isRunning) {
           await util.delay(100)
         }
-        [valuesById, maxValue] = await this.calculateRiskOfCurrentSourceCountry()
+        this.isRunning = true
+        this.calculateRiskOfCurrentSourceCountry()
+        let valuesById = this.getPropKey('compartment', 'prevalence')
         valuesById[this.getId()] = 0
         maxValue = 100
+        this.isRunning = false
+
+        this.updateWatchCountry()
       } else {
-        valuesById = this.getTravelValuesById(this.mode)
+        valuesById = this.getTravelValuesById()
       }
       for (let [id, value] of _.toPairs(valuesById)) {
         this.globe.setCountryValue(id, value)
@@ -599,37 +599,38 @@ export default {
         'to': '#02386F',
         'risk': '#f0f'
       }
-      console.log('loadCurrentSourceCountry setcolors', this.mode)
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
       this.globe.setCountryColor(this.getId(), '#f00')
+      this.globe.draw()
       this.drawLegend()
     },
 
-    transitionToCountry (iCountry) {
+    rotateToCountry (iCountry) {
       let country = this.travelData.countries[iCountry]
       let id = country.id
       let coordinates = country.coordinates
-      console.log('> Home.transitionToCountry', id, country.name, '' + coordinates)
+      console.log('> Home.rotateToCountry', id, country.name, '' + coordinates)
       let countryTargetR = [-coordinates[1], -coordinates[0]]
       this.globe.rotateTransition(countryTargetR)
     },
 
-    async selectSourceCountry () {
+    async asyncSelectSourceCountry () {
       await util.delay(100)
-      this.loadCurrentSourceCountry()
-      this.transitionToCountry(this.iSourceCountry)
+      this.asyncRecalculateGlobe()
+      this.rotateToCountry(this.iSourceCountry)
     },
 
-    async selectWatchCountry () {
-      console.log('selectWatchCountry', util.jstr(this.iWatchCountry))
-      await this.updateWatchCountry()
-      this.transitionToCountry(this.iWatchCountry)
+    async asyncSelectWatchCountry () {
+      await util.delay(100)
+      console.log('> Home.asyncSelectWatchCountry', util.jstr(this.iWatchCountry))
+      this.updateWatchCountry()
+      this.rotateToCountry(this.iWatchCountry)
     },
 
     selectSourceCountryById (id) {
       let country = _.find(this.selectableCountries, c => c.id === id)
       this.iSourceCountry = country.iCountry
-      this.selectSourceCountry()
+      this.asyncSelectSourceCountry()
     },
 
     selectRandomSourceCountry () {
@@ -637,27 +638,23 @@ export default {
       let i = Math.floor(Math.random() * Math.floor(n))
       this.iSourceCountry = this.selectableCountries[i].iCountry
       this.iWatchCountry = this.iSourceCountry
-      this.selectSourceCountry()
+      this.asyncSelectSourceCountry()
     },
 
-    async selectMode (mode) {
+    async asyncSelectMode (mode) {
       await util.delay(100)
-      console.log('> Home.selectMode', mode)
+      console.log('> Home.asyncSelectMode', mode)
       this.mode = mode
-      this.loadCurrentSourceCountry()
-      this.globe.draw()
+      this.asyncRecalculateGlobe()
     },
 
     drawLegend () {
       this.globe.drawLegend()
     },
 
-    async calculateRisk () {
-      // a little delay to allow the data to update
+    async asyncCalculateRisk () {
       this.mode = 'risk'
-      await util.delay(100)
-      await this.loadCurrentSourceCountry()
-      this.globe.draw()
+      await this.asyncRecalculateGlobe()
     },
 
     loop () {
@@ -667,13 +664,12 @@ export default {
         } else {
           this.days = 1
         }
-        this.calculateRisk()
+        this.asyncCalculateRisk()
       }
     },
 
-    toggleLoop (p) {
-      console.log('> Home.toggleLoop', p)
-      this.isLoop = p
+    toggleLoop (boolValue) {
+      this.isLoop = boolValue
       if (this.isLoop) {
         this.mode = 'risk'
       }
