@@ -393,7 +393,7 @@ class SEIRSModel extends BaseModel {
     super(id)
     this.id = id
 
-    this.modelType = 'SEIR'
+    this.modelType = 'SEIRS'
 
     this.compartment = {
       prevalence: 0,
