@@ -23,7 +23,8 @@ class Globe {
 
     this.nullColor = '#CCB'
     this.borderColor = '#EEE'
-    this.outerBorderColor = '#999'
+    this.outerBorderColor = '#BBD'
+    this.fillColor = 'aliceblue'
 
     this.colors = []
     for (let i = 0; i < this.countryFeatures.length; i += 1) {
@@ -61,11 +62,11 @@ class Globe {
       .on('touchend', () => this.mouseup())
       .on('touchmove', () => this.mousemove())
 
-    // draw the encircling sphere
+    // draw the fill of sphere
     this.svg.append('path')
       .datum({type: 'Sphere'})
       .attr('class', 'water')
-      .style('fill', 'aliceblue')
+      .style('fill', this.fillColor)
       .style('stroke', 'none')
       .attr('d', this.path)
 
@@ -119,6 +120,7 @@ class Globe {
       })
 
     $(this.selector)
+      .contextmenu(() => false)
       .css({
         'user-select': 'none',
         'cursor': 'pointer'})

@@ -484,7 +484,7 @@ export default {
       this.asyncSelectMode(this.mode)
     },
 
-    calculateRiskOfCurrentSourceCountry () {
+    calculateRiskOfSourceCountry () {
       this.resetModels()
 
       for (let iDay = 0; iDay < this.days; iDay += 1) {
@@ -581,12 +581,11 @@ export default {
           await util.delay(100)
         }
         this.isRunning = true
-        this.calculateRiskOfCurrentSourceCountry()
+        this.calculateRiskOfSourceCountry()
         let valuesById = this.getPropKey('compartment', 'prevalence')
         valuesById[this.getId()] = 0
         maxValue = 100
         this.isRunning = false
-
         this.updateWatchCountry()
       } else {
         valuesById = this.getTravelValuesById()
