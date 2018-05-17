@@ -12,8 +12,7 @@
 
           <h3 class="md-title">Model Parameters</h3>
 
-          <!--<div>-->
-            <md-layout
+          <md-layout
               md-row
               md-vertical-align="center">
 
@@ -54,12 +53,10 @@
               </md-input-container>
 
             </md-layout>
-          <!--</div>-->
 
           <h3 class="md-title">Source Country</h3>
 
-          <div style="width: 100%">
-            <md-layout
+          <md-layout
               md-row
               style="margin-top: -1em"
               md-vertical-align="center">
@@ -104,12 +101,10 @@
                 md-value="risk">risk</md-radio>
 
             </md-layout>
-          </div>
 
           <h3 class="md-title">Risk Factor</h3>
 
-          <div>
-            <md-layout
+          <md-layout
               md-row
               md-vertical-align="center">
               <md-switch
@@ -144,20 +139,20 @@
               </md-input-container>
 
             </md-layout>
-          </div>
 
           <div
             v-show="mode === 'risk'"
             style="width: 100%">
-            <md-layout id="globalCharts">
-            </md-layout>
-          </div>
 
-          <h3 class="md-title" v-show="mode === 'risk'">Watch Country</h3>
+            <div
+              v-show="mode === 'risk'"
+              style="width: 100%">
+              <md-layout id="globalCharts">
+              </md-layout>
+            </div>
 
-          <div
-            v-show="mode === 'risk'"
-            style="width: 100%">
+            <h3 class="md-title" v-show="mode === 'risk'">Watch Country</h3>
+
             <div>
               <md-input-container
                 style="width: 140px">
@@ -197,15 +192,15 @@
             height: 100%;
             width: 100%;
             cursor: pointer">
-        </div>
-        <div
-          style="
-            position: absolute;
-            bottom: 0;
-            padding-left: 10px;
-            user-select: none;
-            pointer-events: none;">
-          <svg id="legend"></svg>
+          <div
+            style="
+              position: absolute;
+              bottom: 0;
+              padding-left: 10px;
+              user-select: none;
+              pointer-events: none;">
+            <svg id="legend"></svg>
+          </div>
         </div>
       </md-layout>
     </div>
@@ -318,7 +313,7 @@ export default {
 
     this.globe = new Globe(worldData, '#main')
     this.globe.getCountryPopupHtml = this.getCountryPopupHtml
-    this.globe.clickCountry = this.selectById
+    this.globe.clickCountry = this.selectSourceCountryById
 
     this.mode = 'to' // 'to' or 'risk'
 
@@ -568,18 +563,21 @@ export default {
 
       this.chartWidgets.prevalence.setTitle('Prevalence')
       this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.prevalence.updateDataset(0, days, solution.prevalence)
+      this.chartWidgets.prevalence.updateDataset(
+        0, days, solution.prevalence)
 
       this.chartWidgets.susceptible.setTitle('Susceptible')
       this.chartWidgets.susceptible.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.susceptible.updateDataset(0, days, solution.susceptible)
+      this.chartWidgets.susceptible.updateDataset(
+        0, days, solution.susceptible)
 
       this.chartWidgets.inputIncidence.setTitle('Cumulative Input Incidence')
       this.chartWidgets.inputIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.inputIncidence.updateDataset(0, days, acumulateValues(solution.inputIncidence))
+      this.chartWidgets.inputIncidence.updateDataset(
+        0, days, acumulateValues(solution.inputIncidence))
     },
 
-    async loadCountry () {
+    async loadCurrentSourceCountry () {
       let valuesById, maxValue
       if (_.startsWith(this.mode, 'risk')) {
         while (this.isRunning) {
@@ -599,6 +597,7 @@ export default {
         'to': '#02386F',
         'risk': '#f0f'
       }
+      console.log('loadCurrentSourceCountry setcolors', this.mode)
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
       this.globe.setCountryColor(this.getId(), '#f00')
       this.drawLegend()
@@ -606,6 +605,10 @@ export default {
 
     getId () {
       return this.travelData.countries[this.iSourceCountry].id
+    },
+
+    getCountry (id) {
+      return _.find(this.travelData.countries, c => c.id === id)
     },
 
     getICountry (id) {
@@ -617,28 +620,28 @@ export default {
       return null
     },
 
-    transition (iCountry) {
+    transitionToCountry (iCountry) {
       let country = this.travelData.countries[iCountry]
       let id = country.id
       let coordinates = country.coordinates
-      console.log('> Home.transition', id, country.name, '' + coordinates)
+      console.log('> Home.transitionToCountry', id, country.name, '' + coordinates)
       let countryTargetR = [-coordinates[1], -coordinates[0]]
       this.globe.rotateTransition(countryTargetR)
     },
 
     async selectSourceCountry () {
       await util.delay(100)
-      this.loadCountry()
-      this.transition(this.iSourceCountry)
+      this.loadCurrentSourceCountry()
+      this.transitionToCountry(this.iSourceCountry)
     },
 
     async selectWatchCountry () {
       console.log('selectWatchCountry', util.jstr(this.iWatchCountry))
       await this.updateWatchCountry()
-      this.transition(this.iWatchCountry)
+      this.transitionToCountry(this.iWatchCountry)
     },
 
-    selectById (id) {
+    selectSourceCountryById (id) {
       let country = _.find(this.selectableCountries, c => c.id === id)
       this.iSourceCountry = country.iCountry
       this.selectSourceCountry()
@@ -656,7 +659,7 @@ export default {
       await util.delay(100)
       console.log('> Home.selectMode', mode)
       this.mode = mode
-      this.loadCountry()
+      this.loadCurrentSourceCountry()
       this.globe.draw()
     },
 
@@ -674,8 +677,31 @@ export default {
         .call(colorLegend)
     },
 
-    getCountry (id) {
-      return _.find(this.travelData.countries, c => c.id === id)
+    async calculateRisk () {
+      // a little delay to allow the data to update
+      this.mode = 'risk'
+      await util.delay(100)
+      await this.loadCurrentSourceCountry()
+      this.globe.draw()
+    },
+
+    loop () {
+      if ((this.isLoop) && (_.startsWith(this.mode, 'risk'))) {
+        if (this.days < this.getMaxDays) {
+          this.days += 1
+        } else {
+          this.days = 1
+        }
+        this.calculateRisk()
+      }
+    },
+
+    changeLoop (p) {
+      console.log('> Home.changeLoop', p)
+      this.isLoop = p
+      if (this.isLoop) {
+        this.mode = 'risk'
+      }
     },
 
     getCountryPopupHtml (id) {
@@ -720,33 +746,6 @@ export default {
 
       s += `</div>`
       return s
-    },
-
-    async calculateRisk () {
-      // a little delay to allow the data to update
-      await util.delay(100)
-      this.mode = 'risk'
-      this.loadCountry()
-      this.globe.draw()
-    },
-
-    loop () {
-      if ((this.isLoop) && (_.startsWith(this.mode, 'risk'))) {
-        if (this.days < this.getMaxDays) {
-          this.days += 1
-        } else {
-          this.days = 1
-        }
-        this.calculateRisk()
-      }
-    },
-
-    changeLoop (p) {
-      console.log('> Home.changeLoop', p)
-      this.isLoop = p
-      if (this.isLoop) {
-        this.mode = 'risk'
-      }
     }
 
   }

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import $ from 'jquery'
 
 const d3 = require('d3')
 const topojson = require('topojson')
@@ -107,6 +108,18 @@ class Globe {
         let id = this.countryFeatures[i].id
         this.clickCountry(id)
       })
+
+    // $(this.selector).append(`
+    //   <div
+    //     style="
+    //     position: absolute;
+    //     bottom: 0;
+    //     padding-left: 10px;
+    //     user-select: none;
+    //     pointer-events: none;">
+    //     <svg id="legend"></svg>
+    //   </div>
+    // `)
   }
 
   clickCountry (id) {
