@@ -109,7 +109,7 @@
               md-vertical-align="center">
               <md-switch
                 v-model="isLoop"
-                @change="changeLoop">
+                @change="toggleLoop">
                 Play
               </md-switch>
 
@@ -188,19 +188,8 @@
           id="main"
           style="
             background-color: white;
-            user-select: none;
             height: 100%;
-            width: 100%;
-            cursor: pointer">
-          <div
-            style="
-              position: absolute;
-              bottom: 0;
-              padding-left: 10px;
-              user-select: none;
-              pointer-events: none;">
-            <svg id="legend"></svg>
-          </div>
+            width: 100%;">
         </div>
       </md-layout>
     </div>
@@ -241,11 +230,8 @@ import vueSlider from 'vue-slider-component'
 
 import util from '../modules/util'
 import Globe from '../modules/globe'
-import {legendColor} from 'd3-svg-legend'
 import {models} from '../modules/models'
 import ChartWidget from '../modules/chart-widget'
-
-const d3 = require('d3')
 
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
@@ -340,7 +326,7 @@ export default {
     this.setModel(this.modelType)
     this.isRunning = false
 
-    this.random()
+    this.selectRandomSourceCountry()
 
     this.chartWidgets = {}
     await this.newChartWidget('#globalCharts', 'globalPrevalence')
@@ -381,8 +367,34 @@ export default {
       return selector
     },
 
+    getId () {
+      return this.travelData.countries[this.iSourceCountry].id
+    },
+
+    getCountry (id) {
+      return _.find(this.travelData.countries, c => c.id === id)
+    },
+
+    getICountry (id) {
+      for (let i in _.range(this.travelData.countries.length)) {
+        if (this.travelData.countries[i].id === id) {
+          return i
+        }
+      }
+      return null
+    },
+
     getNameFromICountry (iCountry) {
       return this.travelData.countries[iCountry].name
+    },
+
+    getPropKey (prop, key) {
+      let result = {}
+      for (let iCountry of this.countryIndices) {
+        let id = this.travelData.countries[iCountry].id
+        result[id] = this.countryModel[iCountry][prop][key]
+      }
+      return result
     },
 
     async changeMaxDays () {
@@ -454,7 +466,6 @@ export default {
         }
       }
       let countryName = this.getNameFromICountry(this.iSourceCountry)
-      console.log('> Home.setModel', this.modelType, countryName)
       this.countryModel = {}
       let oldInputParams = {}
       for (let paramEntry of this.inputParamEntries) {
@@ -476,16 +487,7 @@ export default {
       this.selectMode(this.mode)
     },
 
-    getPropKey (prop, key) {
-      let result = {}
-      for (let iCountry of this.countryIndices) {
-        let id = this.travelData.countries[iCountry].id
-        result[id] = this.countryModel[iCountry][prop][key]
-      }
-      return result
-    },
-
-    async getRiskById () {
+    async calculateRiskOfCurrentSourceCountry () {
       this.isRunning = true
       this.globalPrevalence = []
       this.resetModels()
@@ -583,7 +585,7 @@ export default {
         while (this.isRunning) {
           await util.delay(100)
         }
-        [valuesById, maxValue] = await this.getRiskById()
+        [valuesById, maxValue] = await this.calculateRiskOfCurrentSourceCountry()
         valuesById[this.getId()] = 0
         maxValue = 100
       } else {
@@ -601,23 +603,6 @@ export default {
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
       this.globe.setCountryColor(this.getId(), '#f00')
       this.drawLegend()
-    },
-
-    getId () {
-      return this.travelData.countries[this.iSourceCountry].id
-    },
-
-    getCountry (id) {
-      return _.find(this.travelData.countries, c => c.id === id)
-    },
-
-    getICountry (id) {
-      for (let i in _.range(this.travelData.countries.length)) {
-        if (this.travelData.countries[i].id === id) {
-          return i
-        }
-      }
-      return null
     },
 
     transitionToCountry (iCountry) {
@@ -647,7 +632,7 @@ export default {
       this.selectSourceCountry()
     },
 
-    random () {
+    selectRandomSourceCountry () {
       let n = this.selectableCountries.length
       let i = Math.floor(Math.random() * Math.floor(n))
       this.iSourceCountry = this.selectableCountries[i].iCountry
@@ -664,17 +649,7 @@ export default {
     },
 
     drawLegend () {
-      let svg = d3.select('#legend')
-      svg.html('')
-      let colorLegend = legendColor()
-        .labelFormat(d3.format('.0f'))
-        .scale(this.globe.paletteScale)
-        .shapePadding(0)
-        .shapeWidth(20)
-        .shapeHeight(20)
-        .labelOffset(8)
-      svg.append('g')
-        .call(colorLegend)
+      this.globe.drawLegend()
     },
 
     async calculateRisk () {
@@ -696,8 +671,8 @@ export default {
       }
     },
 
-    changeLoop (p) {
-      console.log('> Home.changeLoop', p)
+    toggleLoop (p) {
+      console.log('> Home.toggleLoop', p)
       this.isLoop = p
       if (this.isLoop) {
         this.mode = 'risk'

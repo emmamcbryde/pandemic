@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import $ from 'jquery'
+import {legendColor} from 'd3-svg-legend'
 
 const d3 = require('d3')
 const topojson = require('topojson')
@@ -60,6 +61,14 @@ class Globe {
       .on('touchend', () => this.mouseup())
       .on('touchmove', () => this.mousemove())
 
+    // draw the encircling sphere
+    this.svg.append('path')
+      .datum({type: 'Sphere'})
+      .attr('class', 'water')
+      .style('fill', 'aliceblue')
+      .style('stroke', 'none')
+      .attr('d', this.path)
+
     // draw the countries, add change the colors
     this.svg.selectAll('.country')
       .data(this.countryFeatures)
@@ -109,17 +118,21 @@ class Globe {
         this.clickCountry(id)
       })
 
-    // $(this.selector).append(`
-    //   <div
-    //     style="
-    //     position: absolute;
-    //     bottom: 0;
-    //     padding-left: 10px;
-    //     user-select: none;
-    //     pointer-events: none;">
-    //     <svg id="legend"></svg>
-    //   </div>
-    // `)
+    $(this.selector)
+      .css({
+        'user-select': 'none',
+        'cursor': 'pointer'})
+      .append(`
+        <div
+          style="
+          position: absolute;
+          bottom: 0;
+          padding-left: 10px;
+          user-select: none;
+          pointer-events: none;">
+          <svg id="legend"></svg>
+        </div>
+      `)
   }
 
   clickCountry (id) {
@@ -301,6 +314,20 @@ class Globe {
     }
 
     this.resize()
+  }
+
+  drawLegend () {
+    let svg = d3.select('#legend')
+    svg.html('')
+    let colorLegend = legendColor()
+      .labelFormat(d3.format('.0f'))
+      .scale(this.paletteScale)
+      .shapePadding(0)
+      .shapeWidth(20)
+      .shapeHeight(20)
+      .labelOffset(8)
+    svg.append('g')
+      .call(colorLegend)
   }
 }
 
