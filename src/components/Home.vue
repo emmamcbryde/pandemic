@@ -146,14 +146,18 @@
             </md-layout>
           </div>
 
-          <div style="width: 100%">
+          <div
+            v-show="mode === 'risk'"
+            style="width: 100%">
             <md-layout id="globalCharts">
             </md-layout>
           </div>
 
-          <h3 class="md-title">Watch Country</h3>
+          <h3 class="md-title" v-show="mode === 'risk'">Watch Country</h3>
 
-          <div style="width: 100%">
+          <div
+            v-show="mode === 'risk'"
+            style="width: 100%">
             <div>
               <md-input-container
                 style="width: 140px">
@@ -174,6 +178,7 @@
                 </md-select>
               </md-input-container>
             </div>
+
             <md-layout id="localCharts">
             </md-layout>
           </div>
