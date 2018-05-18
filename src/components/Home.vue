@@ -567,7 +567,7 @@ export default {
         .updateDataset(0, days, solution.susceptible)
 
       this.chartWidgets.inputIncidence
-        .setTitle('Cumulative Input Incidence')
+        .setTitle('Cumulative Import Incidence')
       this.chartWidgets.inputIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.inputIncidence
