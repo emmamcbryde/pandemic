@@ -171,12 +171,7 @@ class SisModel extends BaseModel {
       ['prevalence', 'susceptible', 'recoverRate'])
 
     this.inputParamEntries = [
-      {
-        key: 'incubationPeriod',
-        value: 10,
-        placeHolder: '',
-        label: 'Incubation Period'
-      },
+     
       {
         key: 'infectiousPeriod',
         value: 10,
@@ -201,9 +196,7 @@ class SisModel extends BaseModel {
   init () {
     super.init()
 
-    this.params.period =
-      this.params.infectiousPeriod +
-      this.params.incubationPeriod
+    this.params.period = this.params.infectiousPeriod 
     this.params.recoverRate =
       1 / (this.params.period)
     this.params.contactRate =
@@ -238,7 +231,6 @@ class SirModel extends BaseModel {
 
     this.defaultParams = {
       initPopulation: 50000,
-      incubationPeriod: 10,
       infectiousPeriod: 10,
       prevalence: 3000,
       reproductionNumber: 50
@@ -250,12 +242,6 @@ class SirModel extends BaseModel {
     this.params = _.cloneDeep(this.defaultParams)
 
     this.inputParamEntries = [
-      {
-        key: 'incubationPeriod',
-        value: 10,
-        placeHolder: '',
-        label: 'Incubation Period'
-      },
       {
         key: 'infectiousPeriod',
         value: 10,
@@ -280,15 +266,9 @@ class SirModel extends BaseModel {
   init () {
     super.init()
 
-    this.params.period =
-      this.params.infectiousPeriod +
-      this.params.incubationPeriod
-    this.params.recoverRate =
-      1 / (this.params.period)
-    this.params.contactRate =
-      this.params.reproductionNumber *
-      this.params.recoverRate
-
+    this.params.period = this.params.infectiousPeriod
+    this.params.recoverRate = 1 / (this.params.period)
+    this.params.contactRate = this.params.reproductionNumber * this.params.recoverRate
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
       this.params.initPopulation - this.params.prevalence
@@ -336,19 +316,19 @@ class SEIRModel extends BaseModel {
         key: 'period',
         value: 30,
         placeHolder: '',
-        label: 'Period'
+        label: 'Infectious Period'
       },
       {
         key: 'incubation',
         value: 50,
         placeHolder: '',
-        label: 'Latency'
+        label: 'Latency Period'
       },
       {
         key: 'CaseFatality',
         value: 200,
         placeHolder: '',
-        label: 'Fatality'
+        label: 'Fatality '
       },
       {
         key: 'prevalence',
@@ -408,26 +388,28 @@ class SEIRSModel extends BaseModel {
       incubation: 50,
       caseFatality: 200,
       prevalence: 3000,
-      reproductionNumber: 50
+      reproductionNumber: 50,
+      immunityPeriod: 50
     }
     this.params = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
     this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
     this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
+    this.paramEvents.push(['recovered', 'susceptible', 'immunityLossRate'])
 
     this.inputParamEntries = [
       {
         key: 'period',
         value: 30,
         placeHolder: '',
-        label: 'Period'
+        label: 'Infectious Period'
       },
       {
         key: 'incubation',
         value: 50,
         placeHolder: '',
-        label: 'Latency'
+        label: 'Latency Period'
       },
       {
         key: 'CaseFatality',
@@ -440,6 +422,12 @@ class SEIRSModel extends BaseModel {
         value: 3000,
         placeHolder: '',
         label: 'Prevalence'
+      },
+      {
+        key: 'immunityPeriod',
+        value: 50,
+        placeHolder: '',
+        label: 'Immunity Period '
       },
       {
         key: 'reproductionNumber',
@@ -459,7 +447,7 @@ class SEIRSModel extends BaseModel {
     this.params.contactRate =
       this.params.reproductionNumber *
       (1 / this.params.period)
-
+    this.params.immunityLossRate = 1 / this.params.immunityPeriod
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
       this.params.initPopulation - this.params.prevalence
