@@ -15,6 +15,7 @@ class Globe {
     this.world = world
     this.selector = selector
     this.scaleFactor = 1 / 2.2
+    this.iHighlight = null
 
     this.countryFeatures = topojson.feature(
       this.world, this.world.objects.countries).features
@@ -32,8 +33,10 @@ class Globe {
     this.fillColor = 'aliceblue'
 
     this.colors = []
+    this.borderColors = []
     for (let i = 0; i < this.countryFeatures.length; i += 1) {
       this.colors.push(this.nullColor)
+      this.borderColors.push(this.borderColor)
     }
 
     this.values = []
@@ -83,6 +86,16 @@ class Globe {
       .attr('class', 'country')
       .attr('d', this.path)
       .style('stroke', this.borderColor)
+
+    // draw the country outlines
+    this.svg.selectAll('.highlightCountry')
+      .data(this.countryFeatures)
+      .enter()
+      .insert('path')
+      .attr('class', 'highlightCountry')
+      .attr('d', this.path)
+      .attr('fill', 'none')
+      .style('stroke', 'none')
 
     // draw the encircling sphere
     this.svg.append('path')
@@ -202,9 +215,25 @@ class Globe {
   draw () {
     this.svg.selectAll('path.water')
       .attr('d', this.path)
+    // draw country fills
     this.svg.selectAll('path.country')
       .attr('d', this.path)
       .style('fill', (d, i) => this.colors[i])
+      .style('stroke', this.borderColor)
+    this.drawHighlight()
+  }
+
+  drawHighlight () {
+    // draw the highlighted country outline
+    this.svg.selectAll('path.highlightCountry')
+      .attr('d', this.path)
+      .style('stroke', (d, i) => {
+        if (i === this.iHighlight) {
+          return 'green'
+        } else {
+          return 'none'
+        }
+      })
   }
 
   rotateTo (r) {

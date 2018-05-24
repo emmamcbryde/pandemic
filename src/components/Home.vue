@@ -13,49 +13,50 @@
           <h3 class="md-title">Model Parameters</h3>
 
           <md-layout
-              md-row
-              md-vertical-align="center">
+            md-row
+            md-vertical-align="center">
 
-              <md-input-container
-                style="
-                    margin-right: 1em;
-                    width: 120px">
-                <label>
-                  Model
-                </label>
-                <md-select
-                  style="width: 120px"
-                  name="modelType"
-                  id="modelType"
-                  v-model="modelType">
-                  <md-option
-                    :value="modelType"
-                    v-for="(modelType, i) in modelTypes"
-                    :key="i"
-                    @selected="asyncSelectNewModel">
-                    {{modelType}}
-                  </md-option>
-                </md-select>
-              </md-input-container>
+            <md-input-container
+              style="
+                  margin-right: 1em;
+                  width: 120px">
+              <label>
+                Model
+              </label>
+              <md-select
+                style="width: 120px"
+                name="modelType"
+                id="modelType"
+                v-model="modelType">
+                <md-option
+                  :value="modelType"
+                  v-for="(modelType, i) in modelTypes"
+                  :key="i"
+                  @selected="asyncSelectNewModel">
+                  {{modelType}}
+                </md-option>
+              </md-select>
+            </md-input-container>
 
-              <md-input-container
-                v-for="(entry, i) in inputParamEntries"
-                :key="i"
-                style="
-                    margin-right: 1em;
-                    width: 100px;">
-                <label>{{entry.label}}</label>
-                <md-input
-                  v-model="entry.value"
-                  type="number"
-                  :step="entry.step"
-                  :placeholder="entry.placeHolder"
-                  @change="asyncCalculateRisk"/>
-              </md-input-container>
+            <md-input-container
+              v-for="(entry, i) in inputParamEntries"
+              :key="i"
+              style="
+                  margin-right: 1em;
+                  width: 100px;">
+              <label>{{entry.label}}</label>
+              <md-input
+                v-model="entry.value"
+                type="number"
+                :step="entry.step"
+                :placeholder="entry.placeHolder"
+                @change="asyncCalculateRisk"/>
+            </md-input-container>
 
-            </md-layout>
+          </md-layout>
 
           <h3 class="md-title">
+            Source Country
             <div
               style="
                 display: inline;
@@ -63,7 +64,6 @@
                 color: red">
               &block;
             </div>
-            Source Country
           </h3>
 
           <md-layout
@@ -90,8 +90,16 @@
               </md-select>
             </md-input-container>
 
-            <span style="width:1em"></span>
-            &nbsp;
+          </md-layout>
+
+          <h3 class="md-title">
+            Map Mode
+          </h3>
+
+          <md-layout
+            md-row
+            style="margin-top: -1em"
+            md-vertical-align="center">
 
             <md-radio
               v-model="mode"
@@ -127,19 +135,28 @@
               risk
             </md-radio>
 
-            <md-switch
-              v-model="isLoop"
-              @change="toggleLoop">
-              play
-            </md-switch>
-
           </md-layout>
 
-          <h3 class="md-title">Risk Factor</h3>
+          <h3 class="md-title">
+            Risk Factor
+            <div
+              style="
+                display: inline;
+                height: 1em;
+                color: #f0f">
+              &block;
+            </div>
+          </h3>
 
           <md-layout
             md-row
             md-vertical-align="center">
+
+            play &nbsp;
+            <md-switch
+              v-model="isLoop"
+              @change="toggleLoop">
+            </md-switch>
 
             {{ days }} days
 
@@ -196,7 +213,18 @@
               </md-layout>
             </div>
 
-            <h3 class="md-title" v-show="mode === 'risk'">Watch Country</h3>
+            <h3
+              class="md-title"
+              v-show="mode === 'risk'">
+              Watch Country
+              <div
+                style="
+                display: inline;
+                height: 1em;
+                color: green">
+                &block;
+              </div>
+            </h3>
 
             <div>
               <md-input-container
@@ -330,7 +358,7 @@ export default {
       mode: 'destination', // or 'risk'
       days: 1,
       maxDays: 60,
-      maxPrevalence: 100,
+      maxPrevalence: 20,
       inputParamEntries: [],
       isLoop: false,
       modelType: modelTypes[0],
@@ -629,6 +657,7 @@ export default {
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.importIncidence
         .updateDataset(0, days, acumulateValues(solution.inputIncidence))
+
     },
 
     async asyncRecalculateGlobe () {
@@ -742,7 +771,12 @@ export default {
     getCountryPopupHtml (id) {
       let country = this.getCountry(id)
       this.iWatchCountry = parseInt(this.getICountry(id))
-      this.updateWatchCountry()
+      let iNewHighlight = this.globe.iCountryFromId[id]
+      if (iNewHighlight !== this.globe.iHighlight) {
+        this.globe.iHighlight = iNewHighlight
+        this.globe.drawHighlight()
+        this.updateWatchCountry()
+      }
 
       let name = ''
       let population = ''
