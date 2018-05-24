@@ -5,6 +5,11 @@ import {legendColor} from 'd3-svg-legend'
 const d3 = require('d3')
 const topojson = require('topojson')
 
+/**
+ * https://jorin.me/d3-canvas-globe-hover/
+ * http://bl.ocks.org/tlfrd/df1f1f705c7940a6a7c0dca47041fec8
+ * https://bl.ocks.org/mbostock/7ea1dde508cec6d2d95306f92642bc42
+ */
 class Globe {
   constructor (world, selector) {
     this.world = world
@@ -119,6 +124,7 @@ class Globe {
         this.clickCountry(id)
       })
 
+    // build the legend
     $(this.selector)
       .contextmenu(() => false)
       .css({
