@@ -9,7 +9,7 @@
     </h1>
 
     <p>
-      Tropical Partners app
+      Tropical Partners <a href="https://www.aithm.jcu.edu.au/research/tropical-partners/themes/theme-2/">link</a>
     </p>
 
   </div>

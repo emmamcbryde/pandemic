@@ -334,7 +334,7 @@ export default {
     await this.asyncMakeChartWidget('#globalCharts', 'cumulativeIncidence')
     await this.asyncMakeChartWidget('#localCharts', 'prevalence')
     await this.asyncMakeChartWidget('#localCharts', 'susceptible')
-    await this.asyncMakeChartWidget('#localCharts', 'inputIncidence')
+    await this.asyncMakeChartWidget('#localCharts', 'importIncidence')
 
     window.dispatchEvent(new Event('resize'))
 
@@ -496,7 +496,7 @@ export default {
       for (let iDay = 0; iDay < this.days; iDay += 1) {
         for (let iCountry of this.countryIndices) {
           this.countryModel[iCountry].clearDelta()
-          this.countryModel[iCountry].inputIncidence = 0
+          this.countryModel[iCountry].importIncidence = 0
         }
 
         for (let iFromCountry of this.countryIndices) {
@@ -508,7 +508,7 @@ export default {
               let delta = fromCountry.getExitPrevalence(travelPerDay)
               fromCountry.delta.prevalence -= delta
               toCountry.delta.prevalence += delta
-              toCountry.inputIncidence += delta
+              toCountry.importIncidence += delta
             }
           }
         }
@@ -522,7 +522,7 @@ export default {
 
           country.updateCompartment(dTimeInDay)
 
-          country.solution.inputIncidence.push(country.inputIncidence)
+          country.solution.inputIncidence.push(country.importIncidence)
           for (let key of ['prevalence', 'susceptible']) {
             country.solution[key].push(country.compartment[key])
           }
@@ -577,11 +577,11 @@ export default {
       this.chartWidgets.susceptible
         .updateDataset(0, days, solution.susceptible)
 
-      this.chartWidgets.inputIncidence
+      this.chartWidgets.importIncidence
         .setTitle('Cumulative Import Incidence')
-      this.chartWidgets.inputIncidence
+      this.chartWidgets.importIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.inputIncidence
+      this.chartWidgets.importIncidence
         .updateDataset(0, days, acumulateValues(solution.inputIncidence))
     },
 

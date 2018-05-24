@@ -8,13 +8,15 @@ class BaseModel {
     this.compartment = {}
     this.keys = []
 
+    this.params = {}
+
     this.var = {}
+    this.flow = {}
+    this.delta = {}
+
     this.events = []
     this.varEvents = []
     this.paramEvents = []
-    this.flow = {}
-    this.delta = {}
-    this.params = {}
 
     this.solution = {
       prevalence: [],
