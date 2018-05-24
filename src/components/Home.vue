@@ -55,7 +55,16 @@
 
             </md-layout>
 
-          <h3 class="md-title">Source Country</h3>
+          <h3 class="md-title">
+            <div
+              style="
+                display: inline;
+                height: 1em;
+                color: red">
+              &block;
+            </div>
+            Source Country
+          </h3>
 
           <md-layout
               md-row
@@ -82,6 +91,7 @@
             </md-input-container>
 
             <span style="width:1em"></span>
+            &nbsp;
 
             <md-radio
               v-model="mode"
@@ -89,17 +99,33 @@
               id="direction"
               name="direction"
               md-value="destination">
+              <div
+                style="
+                display: inline;
+                height: 1em;
+                color: #02386F">
+                &block;
+              </div>
               destinations
             </md-radio>
 
-            <span style="width:1em "></span>
+            <span style="width:1em"></span>
 
             <md-radio
               v-model="mode"
               @change="asyncSelectMode('risk')"
               id="direction"
               name="direction"
-              md-value="risk">risk</md-radio>
+              md-value="risk">
+              <div
+                style="
+                display: inline;
+                height: 1em;
+                color: #f0f">
+                &block;
+              </div>
+              risk
+            </md-radio>
 
             <md-switch
               v-model="isLoop"
