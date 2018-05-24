@@ -48,6 +48,7 @@
                 <md-input
                   v-model="entry.value"
                   type="number"
+                  :step="entry.step"
                   :placeholder="entry.placeHolder"
                   @change="asyncCalculateRisk"/>
               </md-input-container>
@@ -61,84 +62,85 @@
               style="margin-top: -1em"
               md-vertical-align="center">
 
-              <md-input-container
-                style="width: 160px">
-                <label>
-                  Source Country
-                </label>
-                <md-select
-                  name="country"
-                  id="country"
-                  v-model="iSourceCountry">
-                  <md-option
-                    :value="country.iCountry"
-                    v-for="(country, i) in selectableCountries"
-                    :key="i"
-                    @selected="asyncSelectSourceCountry()">
-                    {{country.name}}
-                  </md-option>
-                </md-select>
-              </md-input-container>
+            <md-input-container
+              style="width: 160px">
+              <label>
+                Source Country
+              </label>
+              <md-select
+                name="country"
+                id="country"
+                v-model="iSourceCountry">
+                <md-option
+                  :value="country.iCountry"
+                  v-for="(country, i) in selectableCountries"
+                  :key="i"
+                  @selected="asyncSelectSourceCountry()">
+                  {{country.name}}
+                </md-option>
+              </md-select>
+            </md-input-container>
 
-              <span style="width:1em"></span>
+            <span style="width:1em"></span>
 
-              <md-radio
-                v-model="mode"
-                @change="asyncSelectMode('destination')"
-                id="direction"
-                name="direction"
-                md-value="destination">
-                destinations
-              </md-radio>
+            <md-radio
+              v-model="mode"
+              @change="asyncSelectMode('destination')"
+              id="direction"
+              name="direction"
+              md-value="destination">
+              destinations
+            </md-radio>
 
-              <span style="width:1em "></span>
+            <span style="width:1em "></span>
 
-              <md-radio
-                v-model="mode"
-                @change="asyncSelectMode('risk')"
-                id="direction"
-                name="direction"
-                md-value="risk">risk</md-radio>
+            <md-radio
+              v-model="mode"
+              @change="asyncSelectMode('risk')"
+              id="direction"
+              name="direction"
+              md-value="risk">risk</md-radio>
 
-            </md-layout>
+            <md-switch
+              v-model="isLoop"
+              @change="toggleLoop">
+              play
+            </md-switch>
+
+          </md-layout>
 
           <h3 class="md-title">Risk Factor</h3>
 
           <md-layout
-              md-row
-              md-vertical-align="center">
-              <md-switch
-                v-model="isLoop"
-                @change="toggleLoop">
-                Play
-              </md-switch>
+            md-row
+            md-vertical-align="center">
 
-              for {{ days }} days
+            {{ days }} days
 
-              <div style="
-                  margin-left: 0.5em;
-                  width: 170px">
-                <vue-slider
-                  ref="slider"
-                  :interval="1"
-                  tooltip="none"
-                  @callback="asyncCalculateRisk"
-                  :min="1"
-                  :max="getMaxDays"
-                  v-model="days"/>
-              </div>
+            <div style="
+                    margin-left: 0.5em;
+                    width: 170px">
+              <vue-slider
+                ref="slider"
+                :interval="1"
+                tooltip="none"
+                @callback="asyncCalculateRisk"
+                :min="1"
+                :max="getMaxDays"
+                v-model="days"/>
+            </div>
 
-              <md-input-container
-                style="
+            <md-input-container
+              style="
                   margin-left: 1em;
                   width: 80px;">
-                <label>Max Days</label>
-                <md-input
-                  v-model="maxDays"
-                  type="number"/>
-              </md-input-container>
+              <label>Max Days</label>
+              <md-input
+                v-model="maxDays"
+                type="number"/>
+            </md-input-container>
 
-            </md-layout>
+          </md-layout>
 
           <div
             v-show="mode === 'risk'"

@@ -162,7 +162,7 @@ class SisModel extends BaseModel {
       incubationPeriod: 10,
       infectiousPeriod: 10,
       prevalence: 3000,
-      reproductionNumber: 50
+      reproductionNumber: 1.5
     }
 
     this.params = _.cloneDeep(this.defaultParams)
@@ -176,24 +176,28 @@ class SisModel extends BaseModel {
       {
         key: 'incubationPeriod',
         value: 10,
+        step: 1,
         placeHolder: '',
         label: 'Incubation Period'
       },
       {
         key: 'infectiousPeriod',
         value: 10,
+        step: 1,
         placeHolder: '',
         label: 'Infectious Period'
       },
       {
         key: 'prevalence',
         value: 3000,
+        step: 1,
         placeHolder: '',
         label: 'Prevalence'
       },
       {
         key: 'reproductionNumber',
         value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       }
@@ -243,7 +247,7 @@ class SirModel extends BaseModel {
       incubationPeriod: 10,
       infectiousPeriod: 10,
       prevalence: 3000,
-      reproductionNumber: 50
+      reproductionNumber: 1.5
     }
 
     this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
@@ -256,23 +260,27 @@ class SirModel extends BaseModel {
         key: 'incubationPeriod',
         value: 10,
         placeHolder: '',
+        step: 1,
         label: 'Incubation Period'
       },
       {
         key: 'infectiousPeriod',
         value: 10,
         placeHolder: '',
+        step: 1,
         label: 'Infectious Period'
       },
       {
         key: 'prevalence',
         value: 3000,
         placeHolder: '',
+        step: 1,
         label: 'Prevalence'
       },
       {
         key: 'reproductionNumber',
         value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       }
@@ -325,7 +333,7 @@ class SEIRModel extends BaseModel {
       incubation: 50,
       caseFatality: 200,
       prevalence: 3000,
-      reproductionNumber: 50
+      reproductionNumber: 1.5
     }
     this.params = _.cloneDeep(this.defaultParams)
 
@@ -338,11 +346,13 @@ class SEIRModel extends BaseModel {
         key: 'period',
         value: 30,
         placeHolder: '',
+        step: 1,
         label: 'Period'
       },
       {
         key: 'incubation',
         value: 50,
+        step: 1,
         placeHolder: '',
         label: 'Latency'
       },
@@ -350,17 +360,20 @@ class SEIRModel extends BaseModel {
         key: 'CaseFatality',
         value: 200,
         placeHolder: '',
+        step: 1,
         label: 'Fatality'
       },
       {
         key: 'prevalence',
         value: 3000,
+        step: 1,
         placeHolder: '',
         label: 'Prevalence'
       },
       {
         key: 'reproductionNumber',
-        value: 50,
+        value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       }
@@ -410,7 +423,7 @@ class SEIRSModel extends BaseModel {
       incubation: 50,
       caseFatality: 200,
       prevalence: 3000,
-      reproductionNumber: 50
+      reproductionNumber: 1.5
     }
     this.params = _.cloneDeep(this.defaultParams)
 
@@ -422,30 +435,35 @@ class SEIRSModel extends BaseModel {
       {
         key: 'period',
         value: 30,
+        step: 1,
         placeHolder: '',
         label: 'Period'
       },
       {
         key: 'incubation',
         value: 50,
+        step: 1,
         placeHolder: '',
         label: 'Latency'
       },
       {
         key: 'CaseFatality',
         value: 200,
+        step: 1,
         placeHolder: '',
         label: 'Fatality'
       },
       {
         key: 'prevalence',
         value: 3000,
+        step: 1,
         placeHolder: '',
         label: 'Prevalence'
       },
       {
         key: 'reproductionNumber',
-        value: 50,
+        value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       }
