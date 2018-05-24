@@ -118,26 +118,43 @@
             {{ days }} days
 
             <div style="
-                    margin-left: 0.5em;
-                    width: 170px">
+                    flex: 1;
+                    margin-left: 0.5em;">
               <vue-slider
                 ref="slider"
                 :interval="1"
                 tooltip="none"
-                @callback="asyncCalculateRisk"
+                @callback="asyncCalculateRisk()"
                 :min="1"
                 :max="getMaxDays"
                 v-model="days"/>
             </div>
 
+          </md-layout>
+
+          <md-layout
+            md-row
+            md-vertical-align="center">
+
             <md-input-container
               style="
-                  margin-left: 1em;
                   width: 80px;">
               <label>Max Days</label>
               <md-input
                 v-model="maxDays"
-                type="number"/>
+                type="number"
+                @change="asyncCalculateRisk()"/>
+            </md-input-container>
+
+            <md-input-container
+              style="
+                  margin-left: 1em;
+                  width: 130px;">
+              <label>Max Prevalence</label>
+              <md-input
+                v-model="maxPrevalence"
+                type="number"
+                @change="asyncCalculateRisk()"/>
             </md-input-container>
 
           </md-layout>
@@ -287,6 +304,7 @@ export default {
       mode: 'destination', // or 'risk'
       days: 1,
       maxDays: 60,
+      maxPrevalence: 100,
       inputParamEntries: [],
       isLoop: false,
       modelType: modelTypes[0],
@@ -597,7 +615,7 @@ export default {
         this.calculateRiskOfSourceCountry()
         valuesById = this.getPropKey('compartment', 'prevalence')
         valuesById[this.getId()] = 0
-        maxValue = 100
+        maxValue = this.maxPrevalence
         this.isRunning = false
         this.updateWatchCountry()
       } else {
@@ -672,6 +690,7 @@ export default {
     },
 
     async asyncCalculateRisk () {
+      await util.delay(100)
       this.mode = 'risk'
       await this.asyncRecalculateGlobe()
     },
