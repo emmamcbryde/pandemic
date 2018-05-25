@@ -716,6 +716,9 @@ export default {
       await util.delay(100)
       console.log('> Home.asyncSelectWatchCountry', util.jstr(this.iWatchCountry))
       this.updateWatchCountry()
+      let id = this.travelData.countries[this.iWatchCountry].id
+      this.globe.iHighlight = this.globe.iCountryFromId[id]
+      this.globe.drawHighlight()
       this.rotateToCountry(this.iWatchCountry)
     },
 
