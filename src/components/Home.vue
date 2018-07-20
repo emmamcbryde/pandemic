@@ -48,6 +48,9 @@
                 <md-input
                   v-model="entry.value"
                   type="number"
+                  onchange = "(function(el){el.value=parseFloat(el.value).toFixed(2);})(this)"
+                  min = "0"
+                  step = "0.01"
                   :placeholder="entry.placeHolder"
                   @change="asyncCalculateRisk"/>
               </md-input-container>
@@ -235,7 +238,14 @@ import ChartWidget from '../modules/chart-widget'
 
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
-
+/*
+allowing inputs to have decimals
+*/
+/*
+//function setTwoNumberDecimal(event) {
+ //   this.value = parseFloat(this.value).toFixed(2);
+//}
+*/
 function waitForElement (selector) {
   return new Promise(resolve => {
     function loop () {
