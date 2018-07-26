@@ -357,18 +357,32 @@ function copyArray (dest, source) {
 }
 
 class GlobalModel {
-  constructor () {
-    this.countryModel = {}
+  constructor (isIntervention) {
     this.countryIndices = []
+
+    this.isIntervention = !!isIntervention
+    console.log('GlobalModel.constructor isIntervention', this.isIntervention)
+
+    this.countryModel = {}
+
     this.vars = {
       incidence: 0,
       prevalence: 0
     }
+
     this.solution = {
       incidence: [],
       prevalence: []
     }
+
     this.getTravelPerDay = null
+
+    this.startTime = 0
+    this.time = 0
+    this.times = []
+
+    this.interventionDay = null
+    this.intervention = null
   }
 
   setCountryModel (countryIndices, ModelClass, sourceCountryName) {
@@ -381,17 +395,30 @@ class GlobalModel {
 
   getInputParamEntries () {
     if (_.keys(this.countryModel).length > 0) {
-      return this.countryModel[0].getInputParamEntries()
+      let result = this.countryModel[0].getInputParamEntries()
+      if (!this.isIntervention) {
+        let intervention = _.find(result, e => e.key === 'interventionDay')
+        if (intervention) {
+          console.log('GlobalModel.getInputParamEntries set intervention day', intervention.value)
+          this.interventionDay = intervention.value
+        }
+      }
+      return result
     } else {
       return []
     }
   }
 
-  clearDelta () {
-    for (let iCountry of this.countryIndices) {
-      this.countryModel[iCountry].clearDelta()
-      this.countryModel[iCountry].importIncidence = 0
+  makeIntervention () {
+    this.intervention = new this.constructor(true)
+    this.intervention.startTime = this.time
+    this.intervention.getTravelPerDay = this.getTravelPerDay
+    this.intervention.countryIndices = _.clone(this.countryIndices)
+    for (let i of this.countryIndices) {
+      this.intervention.countryModel[i] = _.cloneDeep(this.countryModel[i])
+      this.intervention.countryModel[i].applyIntervention()
     }
+    console.log('GlobalModel.makeIntervention', this, this.intervention)
   }
 
   transferPeople () {
@@ -411,25 +438,45 @@ class GlobalModel {
   }
 
   run (nDay) {
+    this.solution.incidence.length = 0
+    this.solution.prevalence.length = 0
+
+    this.times = []
+    this.time = this.startTime
     let dTimeInDay = 1
 
-    for (let iDay = 0; iDay < nDay; iDay += 1) {
-      this.clearDelta()
-      this.vars.incidence = 0
-      this.vars.prevalence = 0
+    for (let iDay of _.range(nDay)) {
+      this.time += dTimeInDay
+      this.times.push(this.time)
+
+      for (let countryModel of _.values(this.countryModel)) {
+        countryModel.clearDelta()
+        countryModel.importIncidence = 0
+      }
 
       this.transferPeople()
 
-      for (let iCountry of this.countryIndices) {
-        let country = this.countryModel[iCountry]
-        country.updateCompartment(dTimeInDay)
-        country.solution.inputIncidence.push(country.importIncidence)
-        this.vars.prevalence += country.compartment.prevalence
-        this.vars.incidence += _.last(country.solution.incidence)
+      this.vars.incidence = 0
+      this.vars.prevalence = 0
+
+      for (let countryModel of _.values(this.countryModel)) {
+        countryModel.updateCompartment(dTimeInDay)
+        countryModel.solution.inputIncidence.push(countryModel.importIncidence)
+        this.vars.prevalence += countryModel.compartment.prevalence
+        this.vars.incidence += _.last(countryModel.solution.incidence)
       }
 
       this.solution.incidence.push(this.vars.incidence)
       this.solution.prevalence.push(this.vars.prevalence)
+
+      if (this.time === this.interventionDay) {
+        this.makeIntervention()
+      }
+    }
+
+    if (this.intervention) {
+      this.intervention.run(nDay - this.interventionDay)
+      console.log('GlobalModel.run intervention times', this.intervention.times)
     }
   }
 }
@@ -546,6 +593,7 @@ export default {
       chartWidget.setXLabel('')
       chartWidget.setYLabel('')
       chartWidget.addDataset(id)
+      chartWidget.addDataset(id + '-intervention')
       chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = convertLabel
       this.chartWidgets[id] = chartWidget
       return selector
@@ -636,7 +684,7 @@ export default {
       }
     },
 
-    resetModels () {
+    parameterizeGlobalModelFromInput () {
       for (let param of this.inputParamEntries) {
         param.value = parseFloat(param.value)
       }
@@ -654,38 +702,39 @@ export default {
         }
         this.globalModel.countryModel[iCountry].resetParams(thisInputParams)
       }
-
-      this.globalModel.solution.incidence.length = 0
-      this.globalModel.solution.prevalence.length = 0
     },
 
     calculateRiskOfSourceCountry () {
-      this.resetModels()
+      this.parameterizeGlobalModelFromInput()
 
       this.globalModel.run(this.days)
-
-      let days = _.map(_.range(this.days), d => d + 1)
 
       this.chartWidgets.globalPrevalence
         .setTitle('Global Prevalence')
       this.chartWidgets.globalPrevalence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(
-        0, days, this.globalModel.solution.prevalence)
+        0, this.globalModel.times, this.globalModel.solution.prevalence)
+      if (this.globalModel.intervention) {
+        console.log('calculateRiskOfSourceCountry graph intervention',
+          this.globalModel.intervention.times,
+          this.globalModel.intervention.solution.prevalence)
+        this.chartWidgets.globalPrevalence.updateDataset(
+          1, this.globalModel.intervention.times, this.globalModel.intervention.solution.prevalence)
+      }
 
       this.chartWidgets.cumulativeIncidence
         .setTitle('Global Cumulative Incidence')
       this.chartWidgets.cumulativeIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.cumulativeIncidence.updateDataset(
-        0, days, acumulateValues(this.globalModel.solution.incidence))
+        0, this.globalModel.times, acumulateValues(this.globalModel.solution.incidence))
     },
 
     updateWatchCountry () {
       if (this.iWatchCountry < 0) {
         return
       }
-      let days = _.map(_.range(this.days), d => d + 1)
 
       let countryModel = this.globalModel.countryModel[this.iWatchCountry]
       if (_.isUndefined(countryModel)) {
@@ -698,21 +747,21 @@ export default {
       this.chartWidgets.prevalence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.prevalence.updateDataset(
-        0, days, solution.prevalence)
+        0, this.globalModel.times, solution.prevalence)
 
       this.chartWidgets.susceptible
         .setTitle('Susceptible')
       this.chartWidgets.susceptible
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.susceptible
-        .updateDataset(0, days, solution.susceptible)
+        .updateDataset(0, this.globalModel.times, solution.susceptible)
 
       this.chartWidgets.importIncidence
         .setTitle('Cumulative Import Incidence')
       this.chartWidgets.importIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.importIncidence
-        .updateDataset(0, days, acumulateValues(solution.inputIncidence))
+        .updateDataset(0, this.globalModel.times, acumulateValues(solution.inputIncidence))
     },
 
     async asyncRecalculateGlobe () {
@@ -748,7 +797,7 @@ export default {
     async asyncSelectNewModel () {
       await util.delay(100)
       this.setNewEpiModel()
-      this.resetModels()
+      this.parameterizeGlobalModelFromInput()
       await this.asyncRecalculateGlobe()
     },
 

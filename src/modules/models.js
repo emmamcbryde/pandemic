@@ -126,10 +126,8 @@ class BaseModel {
 
     if (this.times.length === 0) {
       this.time = this.startTime
-    } else {
-      this.time += dTime
     }
-
+    this.time += dTime
     this.times.push(this.time)
   }
 
@@ -302,7 +300,7 @@ class SirModel extends BaseModel {
       },
       {
         key: 'interventionDay',
-        value: 20,
+        value: 5,
         step: 1,
         placeHolder: '',
         label: 'intervention day'
@@ -334,6 +332,13 @@ class SirModel extends BaseModel {
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
       this.params.initPopulation - this.params.prevalence
+  }
+
+  applyIntervention () {
+    this.params.reproductionNumber = this.params.interventionReproductionNumber
+    console.log('SIRModel.applyIntervention', this.params)
+    this.params.contactRate =
+      this.params.reproductionNumber * this.params.recoverRate
   }
 
   updateCompartment (dTime) {
