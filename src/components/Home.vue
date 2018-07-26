@@ -343,11 +343,112 @@ function convertLabel (val) {
   }
 }
 
+function clearDict (aDict) {
+  for (let key of _.keys(aDict)) {
+    delete aDict[key]
+  }
+}
+
+function copyArray (dest, source) {
+  dest.length = 0
+  for (let v of source) {
+    dest.push(v)
+  }
+}
+
+class GlobalModel {
+  constructor () {
+    this.countryModel = {}
+    this.countryIndices = []
+    this.vars = {
+      incidence: 0,
+      prevalence: 0
+    }
+    this.solution = {
+      incidence: [],
+      prevalence: []
+    }
+    this.getTravelPerDay = null
+  }
+
+  setCountryModel (countryIndices, ModelClass, sourceCountryName) {
+    this.countryIndices = countryIndices
+    clearDict(this.countryModel)
+    for (let iCountry of this.countryIndices) {
+      this.countryModel[iCountry] = new ModelClass(sourceCountryName)
+    }
+  }
+
+  getInputParamEntries () {
+    if (_.keys(this.countryModel).length > 0) {
+      return this.countryModel[0].getInputParamEntries()
+    } else {
+      return []
+    }
+  }
+
+  clearDelta () {
+    for (let iCountry of this.countryIndices) {
+      this.countryModel[iCountry].clearDelta()
+      this.countryModel[iCountry].importIncidence = 0
+    }
+  }
+
+  transferPeople () {
+    for (let iFromCountry of this.countryIndices) {
+      for (let iToCountry of this.countryIndices) {
+        if (iFromCountry !== iToCountry) {
+          let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
+          let fromCountry = this.countryModel[iFromCountry]
+          let toCountry = this.countryModel[iToCountry]
+          let delta = fromCountry.getExitPrevalence(travelPerDay)
+          fromCountry.delta.prevalence -= delta
+          toCountry.delta.prevalence += delta
+          toCountry.importIncidence += delta
+        }
+      }
+    }
+  }
+
+  run (nDay) {
+    let dTimeInDay = 1
+
+    for (let iDay = 0; iDay < nDay; iDay += 1) {
+      this.clearDelta()
+      this.vars.incidence = 0
+      this.vars.prevalence = 0
+
+      this.transferPeople()
+
+      for (let iCountry of this.countryIndices) {
+        let country = this.countryModel[iCountry]
+        country.updateCompartment(dTimeInDay)
+        country.solution.inputIncidence.push(country.importIncidence)
+        this.vars.prevalence += country.compartment.prevalence
+        this.vars.incidence += _.last(country.solution.incidence)
+      }
+
+      this.solution.incidence.push(this.vars.incidence)
+      this.solution.prevalence.push(this.vars.prevalence)
+    }
+  }
+}
+
 export default {
 
   id: 'home',
 
   components: {vueSlider},
+
+  /**
+   * There are three indexes
+   * - country ID
+   * - iCountry based on countries
+   * - and an index based on the world.json files
+   *
+   * It's important to keep these distinguished with
+   * the correct variable names.
+   */
 
   data () {
     let modelTypes = _.map(models, 'name')
@@ -375,7 +476,7 @@ export default {
 
     this.globe = new Globe(worldData, '#main')
     this.globe.getCountryPopupHtml = this.getCountryPopupHtml
-    this.globe.clickCountry = this.selectSourceCountryById
+    this.globe.clickCountry = this.selectSourceCountryByCountryId
 
     this.mode = 'destination' // 'destination' or 'risk'
 
@@ -400,8 +501,10 @@ export default {
 
     this.countryIndices = _.map(countries, 'iCountry')
 
-    this.countryModel = {}
-    this.setNewModels()
+    this.globalModel = new GlobalModel()
+    this.globalModel.getTravelPerDay = this.getTravelPerDay
+
+    this.setNewEpiModel()
 
     this.chartWidgets = {}
     await this.asyncMakeChartWidget('#globalCharts', 'globalPrevalence')
@@ -448,17 +551,17 @@ export default {
       return selector
     },
 
-    getId () {
+    getSourceCountryId () {
       return this.travelData.countries[this.iSourceCountry].id
     },
 
-    getCountry (id) {
-      return _.find(this.travelData.countries, c => c.id === id)
+    getCountry (countryId) {
+      return _.find(this.travelData.countries, c => c.id === countryId)
     },
 
-    getICountry (id) {
+    getICountry (countryId) {
       for (let i in _.range(this.travelData.countries.length)) {
-        if (this.travelData.countries[i].id === id) {
+        if (this.travelData.countries[i].id === countryId) {
           return i
         }
       }
@@ -469,11 +572,12 @@ export default {
       return this.travelData.countries[iCountry].name
     },
 
-    getPropKey (prop, key) {
+    getPrevalenceByCountryId () {
       let result = {}
       for (let iCountry of this.countryIndices) {
         let id = this.travelData.countries[iCountry].id
-        result[id] = this.countryModel[iCountry][prop][key]
+        let countryModel = this.globalModel.countryModel[iCountry]
+        result[id] = countryModel.compartment.prevalence
       }
       return result
     },
@@ -491,16 +595,12 @@ export default {
       }
     },
 
-    getTravelPerDay (iFrom, iTo) {
+    getTravelPerDay (iCountryFrom, iCountryTo) {
       // data is for Feb, 2015
-      return this.travelData.travel[iFrom][iTo][1] / 28
+      return this.travelData.travel[iCountryFrom][iCountryTo][1] / 28
     },
 
-    getPopulation (iCountry) {
-      return travelData.countries[iCountry].population
-    },
-
-    getTravelValuesById () {
+    getTravelValuesByCountryId () {
       let values = {}
       let nCountry = this.travelData.countries.length
       for (let jCountry = 0; jCountry < nCountry; jCountry += 1) {
@@ -512,7 +612,7 @@ export default {
       return values
     },
 
-    setNewModels () {
+    setNewEpiModel () {
       let oldInputParams = {}
       for (let paramEntry of this.inputParamEntries) {
         oldInputParams[paramEntry.key] = paramEntry.value
@@ -525,15 +625,10 @@ export default {
         }
       }
 
-      let countryName = this.getNameFromICountry(this.iSourceCountry)
-      this.countryModel = {}
-      this.inputParamEntries.length = 0
-      for (let iCountry of this.countryIndices) {
-        this.countryModel[iCountry] = new ModelClass(countryName)
-        if (this.inputParamEntries.length === 0) {
-          this.inputParamEntries = this.countryModel[iCountry].getInputParamEntries()
-        }
-      }
+      let sourceCountryName = this.getNameFromICountry(this.iSourceCountry)
+      this.globalModel.setCountryModel(this.countryIndices, ModelClass, sourceCountryName)
+      copyArray(this.inputParamEntries, this.globalModel.getInputParamEntries())
+
       for (let paramEntry of this.inputParamEntries) {
         if (paramEntry.key in oldInputParams) {
           paramEntry.value = oldInputParams[paramEntry.key]
@@ -546,67 +641,28 @@ export default {
         param.value = parseFloat(param.value)
       }
 
-      for (let iCountry of this.countryIndices) {
-        let inputParams = {}
-        for (let param of this.inputParamEntries) {
-          inputParams[param.key] = param.value
-        }
-        inputParams.initPopulation = travelData.countries[iCountry].population
-        if (this.iSourceCountry !== iCountry) {
-          inputParams.prevalence = 0
-        }
-        this.countryModel[iCountry].resetParams(inputParams)
+      let inputParams = {}
+      for (let param of this.inputParamEntries) {
+        inputParams[param.key] = param.value
       }
 
-      this.solution = {
-        globalIncidence: [],
-        globalPrevalence: []
+      for (let iCountry of this.countryIndices) {
+        let thisInputParams = _.cloneDeep(inputParams)
+        thisInputParams.initPopulation = travelData.countries[iCountry].population
+        if (this.iSourceCountry !== iCountry) {
+          thisInputParams.prevalence = 0
+        }
+        this.globalModel.countryModel[iCountry].resetParams(thisInputParams)
       }
+
+      this.globalModel.solution.incidence.length = 0
+      this.globalModel.solution.prevalence.length = 0
     },
 
     calculateRiskOfSourceCountry () {
       this.resetModels()
 
-      for (let iDay = 0; iDay < this.days; iDay += 1) {
-        for (let iCountry of this.countryIndices) {
-          this.countryModel[iCountry].clearDelta()
-          this.countryModel[iCountry].importIncidence = 0
-        }
-
-        for (let iFromCountry of this.countryIndices) {
-          for (let iToCountry of this.countryIndices) {
-            if (iFromCountry !== iToCountry) {
-              let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
-              let fromCountry = this.countryModel[iFromCountry]
-              let toCountry = this.countryModel[iToCountry]
-              let delta = fromCountry.getExitPrevalence(travelPerDay)
-              fromCountry.delta.prevalence -= delta
-              toCountry.delta.prevalence += delta
-              toCountry.importIncidence += delta
-            }
-          }
-        }
-
-        let globalPrevalence = 0
-        let globalIncidence = 0
-        let dTimeInDay = 1
-
-        for (let iCountry of this.countryIndices) {
-          let country = this.countryModel[iCountry]
-
-          country.updateCompartment(dTimeInDay)
-
-          country.solution.inputIncidence.push(country.importIncidence)
-          for (let key of ['prevalence', 'susceptible']) {
-            country.solution[key].push(country.compartment[key])
-          }
-          globalPrevalence += country.compartment.prevalence
-          globalIncidence += _.last(country.solution.incidence)
-        }
-
-        this.solution.globalIncidence.push(globalIncidence)
-        this.solution.globalPrevalence.push(globalPrevalence)
-      }
+      this.globalModel.run(this.days)
 
       let days = _.map(_.range(this.days), d => d + 1)
 
@@ -615,14 +671,14 @@ export default {
       this.chartWidgets.globalPrevalence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(
-        0, days, this.solution.globalPrevalence)
+        0, days, this.globalModel.solution.prevalence)
 
       this.chartWidgets.cumulativeIncidence
         .setTitle('Global Cumulative Incidence')
       this.chartWidgets.cumulativeIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.cumulativeIncidence.updateDataset(
-        0, days, acumulateValues(this.solution.globalIncidence))
+        0, days, acumulateValues(this.globalModel.solution.incidence))
     },
 
     updateWatchCountry () {
@@ -631,7 +687,7 @@ export default {
       }
       let days = _.map(_.range(this.days), d => d + 1)
 
-      let countryModel = this.countryModel[this.iWatchCountry]
+      let countryModel = this.globalModel.countryModel[this.iWatchCountry]
       if (_.isUndefined(countryModel)) {
         return
       }
@@ -657,7 +713,6 @@ export default {
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.importIncidence
         .updateDataset(0, days, acumulateValues(solution.inputIncidence))
-
     },
 
     async asyncRecalculateGlobe () {
@@ -668,31 +723,31 @@ export default {
         }
         this.isRunning = true
         this.calculateRiskOfSourceCountry()
-        valuesById = this.getPropKey('compartment', 'prevalence')
-        valuesById[this.getId()] = 0
+        valuesById = this.getPrevalenceByCountryId()
+        valuesById[this.getSourceCountryId()] = 0
         maxValue = this.maxPrevalence
         this.isRunning = false
         this.updateWatchCountry()
       } else {
-        valuesById = this.getTravelValuesById()
+        valuesById = this.getTravelValuesByCountryId()
       }
       for (let [id, value] of _.toPairs(valuesById)) {
         this.globe.setCountryValue(id, value)
       }
-      this.globe.setCountryValue(this.getId(), 0)
+      this.globe.setCountryValue(this.getSourceCountryId(), 0)
       let modeColors = {
         'destination': '#02386F',
         'risk': '#f0f'
       }
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
-      this.globe.setCountryColor(this.getId(), '#f00')
+      this.globe.setCountryColor(this.getSourceCountryId(), '#f00')
       this.globe.draw()
       this.drawLegend()
     },
 
     async asyncSelectNewModel () {
       await util.delay(100)
-      this.setNewModels()
+      this.setNewEpiModel()
       this.resetModels()
       await this.asyncRecalculateGlobe()
     },
@@ -722,8 +777,8 @@ export default {
       this.rotateToCountry(this.iWatchCountry)
     },
 
-    selectSourceCountryById (id) {
-      let country = _.find(this.selectableCountries, c => c.id === id)
+    selectSourceCountryByCountryId (countryId) {
+      let country = _.find(this.selectableCountries, c => c.id === countryId)
       this.iSourceCountry = country.iCountry
       this.asyncSelectSourceCountry()
     },
@@ -810,7 +865,7 @@ export default {
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
           let countryId = this.travelData.countries[iCountry].id
           if (countryId === id) {
-            let prevalence = this.countryModel[iCountry].compartment.prevalence.toFixed(2)
+            let prevalence = this.globalModel.countryModel[iCountry].compartment.prevalence.toFixed(2)
             s += `<br>prevalence: ${prevalence}`
           }
         }

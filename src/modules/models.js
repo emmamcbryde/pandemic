@@ -1,12 +1,16 @@
 import _ from 'lodash'
 
 class BaseModel {
-  constructor (id) {
+  constructor (id, isIntervention) {
     this.id = id
 
     this.modelType = 'BASE'
     this.compartment = {}
     this.keys = []
+
+    this.startTime = 0
+    this.times = []
+    this.time = 0
 
     this.params = {}
 
@@ -41,25 +45,28 @@ class BaseModel {
     return _.cloneDeep(this.inputParamEntries)
   }
 
-  calcVar () {
-  }
+  calcVar () {}
 
   checkEvents () {
     this.calcVar()
     let varKeys = _.keys(this.var)
     for (let varEvent of this.varEvents) {
       let varEventKey = varEvent[2]
-      if (!(_.includes(varKeys, varEventKey))) {
-        console.log(`Error: ${varEventKey} of this.varEvents not` +
-          `found in this.calcVars`)
+      if (!_.includes(varKeys, varEventKey)) {
+        console.log(
+          `Error: ${varEventKey} of this.varEvents not` +
+          `found in this.calcVars`
+        )
       }
     }
     for (let paramEvent of this.paramEvents) {
       let paramEventKey = paramEvent[2]
       let paramKeys = _.keys(this.params)
-      if (!(_.includes(paramKeys, paramEventKey))) {
-        console.log(`Error: ${paramEventKey} of this.paramEvents not` +
-          `found in this.params`)
+      if (!_.includes(paramKeys, paramEventKey)) {
+        console.log(
+          `Error: ${paramEventKey} of this.paramEvents not` +
+          `found in this.params`
+        )
       }
     }
   }
@@ -71,7 +78,11 @@ class BaseModel {
       if (inputParams[key] !== this.params[key]) {
         console.log(
           `${this.modelType}-model.resetParams `,
-          this.id, 'error', inputParams[key], this.params[key])
+          this.id,
+          'error',
+          inputParams[key],
+          this.params[key]
+        )
       }
     }
     this.init()
@@ -109,6 +120,17 @@ class BaseModel {
       }
     }
     this.solution.incidence.push(incidence)
+    for (let key of ['prevalence', 'susceptible']) {
+      this.solution[key].push(this.compartment[key])
+    }
+
+    if (this.times.length === 0) {
+      this.time = this.startTime
+    } else {
+      this.time += dTime
+    }
+
+    this.times.push(this.time)
   }
 
   updateCompartment (dTime) {
@@ -140,8 +162,7 @@ class BaseModel {
   getExitPrevalence (travelPerDay) {
     this.calcVar()
     let probTravelPerDay = travelPerDay / this.var.population
-    let probSickTravelPerDay =
-      this.params.probSickCanTravel * probTravelPerDay
+    let probSickTravelPerDay = this.params.probSickCanTravel * probTravelPerDay
     return this.compartment.prevalence * probSickTravelPerDay
   }
 }
@@ -167,10 +188,8 @@ class SisModel extends BaseModel {
 
     this.params = _.cloneDeep(this.defaultParams)
 
-    this.varEvents.push(
-      ['susceptible', 'prevalence', 'rateForce'])
-    this.paramEvents.push(
-      ['prevalence', 'susceptible', 'recoverRate'])
+    this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
+    this.paramEvents.push(['prevalence', 'susceptible', 'recoverRate'])
 
     this.inputParamEntries = [
       {
@@ -208,13 +227,10 @@ class SisModel extends BaseModel {
     super.init()
 
     this.params.period =
-      this.params.infectiousPeriod +
-      this.params.incubationPeriod
-    this.params.recoverRate =
-      1 / (this.params.period)
+      this.params.infectiousPeriod + this.params.incubationPeriod
+    this.params.recoverRate = 1 / this.params.period
     this.params.contactRate =
-      this.params.reproductionNumber *
-      this.params.recoverRate
+      this.params.reproductionNumber * this.params.recoverRate
 
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
@@ -225,8 +241,8 @@ class SisModel extends BaseModel {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       this.params.contactRate /
-        this.var.population *
-          this.compartment.prevalence
+      this.var.population *
+      this.compartment.prevalence
   }
 }
 
@@ -283,25 +299,63 @@ class SirModel extends BaseModel {
         step: 0.01,
         placeHolder: '',
         label: 'R0'
+      },
+      {
+        key: 'interventionDay',
+        value: 20,
+        step: 1,
+        placeHolder: '',
+        label: 'intervention day'
+      },
+      {
+        key: 'interventionReproductionNumber',
+        value: 20,
+        step: 1,
+        placeHolder: '',
+        label: 'intervention R0'
       }
     ]
+
+    if (this.id) {
+      this.intervention = new this.constructor()
+    }
+    this.hasIntervention = !!this.intervention
   }
 
   init () {
     super.init()
 
     this.params.period =
-      this.params.infectiousPeriod +
-      this.params.incubationPeriod
-    this.params.recoverRate =
-      1 / (this.params.period)
+      this.params.infectiousPeriod + this.params.incubationPeriod
+    this.params.recoverRate = 1 / this.params.period
     this.params.contactRate =
-      this.params.reproductionNumber *
-      this.params.recoverRate
+      this.params.reproductionNumber * this.params.recoverRate
 
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
       this.params.initPopulation - this.params.prevalence
+  }
+
+  updateCompartment (dTime) {
+    super.updateCompartment(dTime)
+
+    if (this.hasIntervention) {
+      if (this.time === this.params.interventionDay) {
+        this.intervention.startDay = this.params.interventionDay
+        for (let key of _.keys(this.params)) {
+          this.intervention.params[key] = this.params[key]
+        }
+        this.intervention.params.reproductionNumber =
+          this.params.interventionReproductionNumber
+        for (let key of _.keys(this.compartment)) {
+          this.intervention.compartment[key] = this.compartment[key]
+        }
+        this.intervention.init()
+      } else if (this.time > this.params.interventionDay) {
+        this.intervention.inputIncidence = this.inputIncidence
+        this.intervention.updateCompartment(dTime)
+      }
+    }
   }
 
   calcVar () {
@@ -384,11 +438,10 @@ class SEIRModel extends BaseModel {
     super.init()
 
     this.params.recoverRate =
-      (1 - 1 / (this.params.caseFatality)) / (this.params.period)
-    this.params.incubationRate = 1 / (this.params.incubation)
+      (1 - 1 / this.params.caseFatality) / this.params.period
+    this.params.incubationRate = 1 / this.params.incubation
     this.params.contactRate =
-      this.params.reproductionNumber *
-      (1 / this.params.period)
+      this.params.reproductionNumber * (1 / this.params.period)
 
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
@@ -403,6 +456,7 @@ class SEIRModel extends BaseModel {
       this.compartment.prevalence
   }
 }
+
 class SEIRSModel extends BaseModel {
   constructor (id) {
     super(id)
@@ -474,11 +528,10 @@ class SEIRSModel extends BaseModel {
     super.init()
 
     this.params.recoverRate =
-      (1 - 1 / (this.params.caseFatality)) / (this.params.period)
-    this.params.incubationRate = 1 / (this.params.incubation)
+      (1 - 1 / this.params.caseFatality) / this.params.period
+    this.params.incubationRate = 1 / this.params.incubation
     this.params.contactRate =
-      this.params.reproductionNumber *
-      (1 / this.params.period)
+      this.params.reproductionNumber * (1 / this.params.period)
 
     this.compartment.prevalence = this.params.prevalence
     this.compartment.susceptible =
@@ -496,12 +549,12 @@ class SEIRSModel extends BaseModel {
 
 let models = [
   {
-    class: SisModel,
-    name: 'SIS'
-  },
-  {
     class: SirModel,
     name: 'SIR'
+  },
+  {
+    class: SisModel,
+    name: 'SIS'
   },
   {
     class: SEIRModel,
@@ -511,7 +564,6 @@ let models = [
     class: SEIRSModel,
     name: 'SEIRS'
   }
-
 ]
 
 export { models }
