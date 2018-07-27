@@ -206,6 +206,17 @@
             v-show="mode === 'risk'"
             style="width: 100%">
 
+            <div>
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #4ABDAC">
+                &block;
+              </div>
+              intervention
+            </div>
+
             <div
               v-show="mode === 'risk'"
               style="width: 100%">
@@ -716,9 +727,6 @@ export default {
       this.chartWidgets.globalPrevalence.updateDataset(
         0, this.globalModel.times, this.globalModel.solution.prevalence)
       if (this.globalModel.intervention) {
-        console.log('calculateRiskOfSourceCountry graph intervention',
-          this.globalModel.intervention.times,
-          this.globalModel.intervention.solution.prevalence)
         this.chartWidgets.globalPrevalence.updateDataset(
           1, this.globalModel.intervention.times, this.globalModel.intervention.solution.prevalence)
       }
@@ -729,6 +737,10 @@ export default {
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.cumulativeIncidence.updateDataset(
         0, this.globalModel.times, acumulateValues(this.globalModel.solution.incidence))
+      if (this.globalModel.intervention) {
+        this.chartWidgets.cumulativeIncidence.updateDataset(
+          1, this.globalModel.intervention.times, acumulateValues(this.globalModel.intervention.solution.incidence))
+      }
     },
 
     updateWatchCountry () {
@@ -742,12 +754,23 @@ export default {
       }
       let solution = countryModel.solution
 
+      let interventionSolution = null
+      if (this.globalModel.intervention) {
+        interventionSolution = this.globalModel.intervention.countryModel[this.iWatchCountry].solution
+      }
+
+      console.log('updateWatchCountry intervention', interventionSolution)
+
       this.chartWidgets.prevalence
         .setTitle('Prevalence')
       this.chartWidgets.prevalence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.prevalence.updateDataset(
         0, this.globalModel.times, solution.prevalence)
+      if (interventionSolution) {
+        this.chartWidgets.prevalence.updateDataset(
+          1, this.globalModel.intervention.times, interventionSolution.prevalence)
+      }
 
       this.chartWidgets.susceptible
         .setTitle('Susceptible')
@@ -755,6 +778,10 @@ export default {
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.susceptible
         .updateDataset(0, this.globalModel.times, solution.susceptible)
+      if (interventionSolution) {
+        this.chartWidgets.susceptible.updateDataset(
+          1, this.globalModel.intervention.times, interventionSolution.susceptible)
+      }
 
       this.chartWidgets.importIncidence
         .setTitle('Cumulative Import Incidence')
@@ -762,6 +789,10 @@ export default {
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.importIncidence
         .updateDataset(0, this.globalModel.times, acumulateValues(solution.inputIncidence))
+      if (interventionSolution) {
+        this.chartWidgets.importIncidence.updateDataset(
+          1, this.globalModel.intervention.times, interventionSolution.inputIncidence)
+      }
     },
 
     async asyncRecalculateGlobe () {
