@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
 class BaseModel {
-  constructor (id, isIntervention) {
+  constructor (id) {
     this.id = id
 
     this.modelType = 'BASE'
@@ -110,7 +110,7 @@ class BaseModel {
     }
   }
 
-  placeSolution (dTime) {
+  saveToSolution (dTime) {
     let incidence = 0
     for (let event of this.events) {
       let to = event[1]
@@ -154,7 +154,7 @@ class BaseModel {
       }
     }
 
-    this.placeSolution(dTime)
+    this.saveToSolution(dTime)
   }
 
   getExitPrevalence (travelPerDay) {
@@ -307,17 +307,12 @@ class SirModel extends BaseModel {
       },
       {
         key: 'interventionReproductionNumber',
-        value: 20,
+        value: 2.0,
         step: 1,
         placeHolder: '',
         label: 'intervention R0'
       }
     ]
-
-    if (this.id) {
-      this.intervention = new this.constructor()
-    }
-    this.hasIntervention = !!this.intervention
   }
 
   init () {
@@ -343,24 +338,6 @@ class SirModel extends BaseModel {
 
   updateCompartment (dTime) {
     super.updateCompartment(dTime)
-
-    if (this.hasIntervention) {
-      if (this.time === this.params.interventionDay) {
-        this.intervention.startDay = this.params.interventionDay
-        for (let key of _.keys(this.params)) {
-          this.intervention.params[key] = this.params[key]
-        }
-        this.intervention.params.reproductionNumber =
-          this.params.interventionReproductionNumber
-        for (let key of _.keys(this.compartment)) {
-          this.intervention.compartment[key] = this.compartment[key]
-        }
-        this.intervention.init()
-      } else if (this.time > this.params.interventionDay) {
-        this.intervention.inputIncidence = this.inputIncidence
-        this.intervention.updateCompartment(dTime)
-      }
-    }
   }
 
   calcVar () {

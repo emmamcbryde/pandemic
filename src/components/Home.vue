@@ -428,6 +428,9 @@ class GlobalModel {
     for (let i of this.countryIndices) {
       this.intervention.countryModel[i] = _.cloneDeep(this.countryModel[i])
       this.intervention.countryModel[i].applyIntervention()
+      for (let sol of _.values(this.intervention.countryModel[i].solution)) {
+        sol.length = 0
+      }
     }
     console.log('GlobalModel.makeIntervention', this, this.intervention)
   }
@@ -456,7 +459,7 @@ class GlobalModel {
     this.time = this.startTime
     let dTimeInDay = 1
 
-    for (let iDay of _.range(nDay)) {
+    _.times(nDay, () => {
       this.time += dTimeInDay
       this.times.push(this.time)
 
@@ -465,6 +468,7 @@ class GlobalModel {
         countryModel.importIncidence = 0
       }
 
+      // sets countryModel.delta and countryModel.importIncidence
       this.transferPeople()
 
       this.vars.incidence = 0
@@ -483,7 +487,7 @@ class GlobalModel {
       if (this.time === this.interventionDay) {
         this.makeIntervention()
       }
-    }
+    })
 
     if (this.intervention) {
       this.intervention.run(nDay - this.interventionDay)
@@ -685,7 +689,8 @@ export default {
       }
 
       let sourceCountryName = this.getNameFromICountry(this.iSourceCountry)
-      this.globalModel.setCountryModel(this.countryIndices, ModelClass, sourceCountryName)
+      this.globalModel.setCountryModel(
+        this.countryIndices, ModelClass, sourceCountryName)
       copyArray(this.inputParamEntries, this.globalModel.getInputParamEntries())
 
       for (let paramEntry of this.inputParamEntries) {
@@ -735,11 +740,15 @@ export default {
         .setTitle('Global Cumulative Incidence')
       this.chartWidgets.cumulativeIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      let values = acumulateValues(this.globalModel.solution.incidence)
       this.chartWidgets.cumulativeIncidence.updateDataset(
-        0, this.globalModel.times, acumulateValues(this.globalModel.solution.incidence))
+        0, this.globalModel.times, values)
       if (this.globalModel.intervention) {
+        let startIncidence = values[this.globalModel.interventionDay]
+        let newValues = acumulateValues(this.globalModel.intervention.solution.incidence)
+        newValues = _.map(newValues, v => v + startIncidence)
         this.chartWidgets.cumulativeIncidence.updateDataset(
-          1, this.globalModel.intervention.times, acumulateValues(this.globalModel.intervention.solution.incidence))
+          1, this.globalModel.intervention.times, newValues)
       }
     },
 
@@ -758,8 +767,6 @@ export default {
       if (this.globalModel.intervention) {
         interventionSolution = this.globalModel.intervention.countryModel[this.iWatchCountry].solution
       }
-
-      console.log('updateWatchCountry intervention', interventionSolution)
 
       this.chartWidgets.prevalence
         .setTitle('Prevalence')
@@ -787,11 +794,15 @@ export default {
         .setTitle('Cumulative Import Incidence')
       this.chartWidgets.importIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      let values = acumulateValues(solution.inputIncidence)
       this.chartWidgets.importIncidence
-        .updateDataset(0, this.globalModel.times, acumulateValues(solution.inputIncidence))
+        .updateDataset(0, this.globalModel.times, values)
       if (interventionSolution) {
+        let startValue = values[this.globalModel.interventionDay]
+        let newValues = acumulateValues(interventionSolution.inputIncidence)
+        newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
-          1, this.globalModel.intervention.times, interventionSolution.inputIncidence)
+          1, this.globalModel.intervention.times, newValues)
       }
     },
 
