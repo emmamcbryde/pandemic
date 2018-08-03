@@ -48,9 +48,8 @@
               <md-input
                 v-model="entry.value"
                 type="number"
-                onchange = "(function(el){el.value=parseFloat(el.value).toFixed(2);})(this)"
                 min = "0"
-                step = "0.01"
+                :step = "entry.step"
                 @change="asyncCalculateRisk"/>
             </md-input-container>
 
@@ -321,14 +320,8 @@ import {GlobalModel} from '../modules/global-model'
 
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
-/*
-allowing inputs to have decimals
-*/
-/*
-//function setTwoNumberDecimal(event) {
- //   this.value = parseFloat(this.value).toFixed(2);
-//}
-*/
+
+
 function waitForElement (selector) {
   return new Promise(resolve => {
     function loop () {
@@ -570,6 +563,9 @@ export default {
       for (let paramEntry of this.inputParamEntries) {
         if (paramEntry.key in oldInputParams) {
           paramEntry.value = oldInputParams[paramEntry.key]
+        }
+        if (paramEntry.step === 0.01) {
+          paramEntry.value = parseFloat(paramEntry.value).toFixed(2)
         }
       }
     },

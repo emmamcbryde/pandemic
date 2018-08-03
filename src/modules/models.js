@@ -333,12 +333,14 @@ class SisModel extends BaseModel {
       {
         key: 'reproductionNumber',
         value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       },
       {
         key: 'infectiousPeriod',
         value: 0.1,
+        step: 0.01,
         placeHolder: '',
         label: 'Recovery Rate'
       },
@@ -400,12 +402,14 @@ class SirModel extends BaseModel {
       {
         key: 'reproductionNumber',
         value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       },
       {
         key: 'infectiousPeriod',
         value: 0.1,
+        step: 0.01,
         placeHolder: '',
         label: 'Recovery Rate'
       },
@@ -493,18 +497,21 @@ class SEIRModel extends BaseModel {
       {
         key: 'reproductionNumber',
         value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       },
       {
         key: 'period',
         value: 0.1,
+        step: 0.01,
         placeHolder: '',
         label: 'Recovery Rate'
       },
       {
         key: 'CaseFatality',
         value: 0.2,
+        step: 0.01,
         placeHolder: '',
         label: 'Case-Fatality Rate'
       },
@@ -574,30 +581,35 @@ class SEIRSModel extends BaseModel {
       {
         key: 'reproductionNumber',
         value: 1.5,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       },
       {
         key: 'period',
         value: 0.1,
+        step: 0.01,
         placeHolder: '',
         label: 'Recovery Rate'
       },
       {
         key: 'CaseFatality',
         value: 0.2,
+        step: 0.01,
         placeHolder: '',
         label: 'Case-Fatality Rate'
       },
       {
         key: 'immunityPeriod',
         value: 50,
+        step: 1,
         placeHolder: '',
         label: 'Immunity Period '
       },
       {
         key: 'prevalence',
         value: 3000,
+        step: 1,
         placeHolder: '',
         label: 'Prevalence'
       }
@@ -676,36 +688,42 @@ class EbolaModel extends BaseModel {
       {
         key: 'reproduction',
         value: 1.6,
+        step: 0.01,
         placeHolder: '',
         label: 'R0'
       },
       {
         key: 'ascerProb',
         value: 0.2,
+        step: 0.01,
         placeHolder: '',
         label: 'Case-Ascertain. '
       },
       {
         key: 'hospitalCapacity',
         value: 10000,
+        step: 1,
         placeHolder: '',
         label: 'Hospital Capacity'
       },
       {
         key: 'CaseFatalityHosp',
         value: 0.35,
+        step: 0.01,
         placeHolder: '',
         label: ' Case-Fat.Hosp.'
       },
       {
         key: 'preBurialPeriod',
         value: 3,
+        step: 1,
         placeHolder: '',
         label: 'Burial Period'
       },
       {
         key: 'prev',
         value: 5000,
+        step: 1,
         placeHolder: '',
         label: 'Prevalence'
       }
