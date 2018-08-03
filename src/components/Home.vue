@@ -592,6 +592,13 @@ export default {
         }
         this.globalModel.countryModel[iCountry].resetParams(thisInputParams)
       }
+
+      this.globalModel.intervention = null
+      if (!this.globalModel.isIntervention) {
+        if ('interventionDay' in inputParams) {
+          this.globalModel.interventionDay = inputParams.interventionDay
+        }
+      }
     },
 
     calculateRiskOfSourceCountry () {
