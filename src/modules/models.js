@@ -430,7 +430,7 @@ class SirModel extends BaseModel {
       {
         key: 'interventionReproductionNumber',
         value: 2.0,
-        step: 1,
+        step: 0.01,
         placeHolder: '',
         label: 'intervention R0'
       }
