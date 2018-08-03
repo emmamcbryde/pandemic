@@ -13,139 +13,210 @@
           <h3 class="md-title">Model Parameters</h3>
 
           <md-layout
-              md-row
-              md-vertical-align="center">
+            md-row
+            md-vertical-align="center">
 
-              <md-input-container
-                style="
-                    margin-right: 1em;
-                    width: 120px">
-                <label>
-                  Model
-                </label>
-                <md-select
-                  style="width: 120px"
-                  name="modelType"
-                  id="modelType"
-                  v-model="modelType">
-                  <md-option
-                    :value="modelType"
-                    v-for="(modelType, i) in modelTypes"
-                    :key="i"
-                    @selected="asyncSelectNewModel">
-                    {{modelType}}
-                  </md-option>
-                </md-select>
-              </md-input-container>
+            <md-input-container
+              style="
+                  margin-right: 1em;
+                  width: 120px">
+              <label>
+                Model
+              </label>
+              <md-select
+                style="width: 120px"
+                name="modelType"
+                id="modelType"
+                v-model="modelType">
+                <md-option
+                  :value="modelType"
+                  v-for="(modelType, i) in modelTypes"
+                  :key="i"
+                  @selected="asyncSelectNewModel">
+                  {{modelType}}
+                </md-option>
+              </md-select>
+            </md-input-container>
 
-              <md-input-container
-                v-for="(entry, i) in inputParamEntries"
-                :key="i"
-                style="
-                    margin-right: 1em;
-                    width: 100px;">
-                <label>{{entry.label}}</label>
-                <md-input
-                  v-model="entry.value"
-                  type="number"
-                  onchange = "(function(el){el.value=parseFloat(el.value).toFixed(2);})(this)"
-                  min = "0"
-                  step = "0.01"
-                  :placeholder="entry.placeHolder"
-                  @change="asyncCalculateRisk"/>
-              </md-input-container>
+            <md-input-container
+              v-for="(entry, i) in inputParamEntries"
+              :key="i"
+              style="
+                  margin-right: 1em;
+                  width: 100px;">
+              <label>{{entry.label}}</label>
+              <md-input
+                v-model="entry.value"
+                type="number"
+                onchange = "(function(el){el.value=parseFloat(el.value).toFixed(2);})(this)"
+                min = "0"
+                step = "0.01"
+                @change="asyncCalculateRisk"/>
+            </md-input-container>
 
-            </md-layout>
+          </md-layout>
 
-          <h3 class="md-title">Source Country</h3>
+          <h3 class="md-title">
+            Source Country
+            <div
+              style="
+                display: inline;
+                height: 1em;
+                color: red">
+              &block;
+            </div>
+          </h3>
 
           <md-layout
               md-row
               style="margin-top: -1em"
               md-vertical-align="center">
 
-              <md-input-container
-                style="width: 160px">
-                <label>
-                  Source Country
-                </label>
-                <md-select
-                  name="country"
-                  id="country"
-                  v-model="iSourceCountry">
-                  <md-option
-                    :value="country.iCountry"
-                    v-for="(country, i) in selectableCountries"
-                    :key="i"
-                    @selected="asyncSelectSourceCountry()">
-                    {{country.name}}
-                  </md-option>
-                </md-select>
-              </md-input-container>
+            <md-input-container
+              style="width: 160px">
+              <label>
+                Source Country
+              </label>
+              <md-select
+                name="country"
+                id="country"
+                v-model="iSourceCountry">
+                <md-option
+                  :value="country.iCountry"
+                  v-for="(country, i) in selectableCountries"
+                  :key="i"
+                  @selected="asyncSelectSourceCountry()">
+                  {{country.name}}
+                </md-option>
+              </md-select>
+            </md-input-container>
 
-              <span style="width:1em"></span>
+          </md-layout>
 
-              <md-radio
-                v-model="mode"
-                @change="asyncSelectMode('to')"
-                id="direction"
-                name="direction"
-                md-value="to">
-                destinations
-              </md-radio>
-
-              <span style="width:1em "></span>
-
-              <md-radio
-                v-model="mode"
-                @change="asyncSelectMode('risk')"
-                id="direction"
-                name="direction"
-                md-value="risk">risk</md-radio>
-
-            </md-layout>
-
-          <h3 class="md-title">Risk Factor</h3>
+          <h3 class="md-title">
+            Map Mode
+          </h3>
 
           <md-layout
-              md-row
-              md-vertical-align="center">
-              <md-switch
-                v-model="isLoop"
-                @change="toggleLoop">
-                Play
-              </md-switch>
+            md-row
+            style="margin-top: -1em"
+            md-vertical-align="center">
 
-              for {{ days }} days
-
-              <div style="
-                  margin-left: 0.5em;
-                  width: 170px">
-                <vue-slider
-                  ref="slider"
-                  :interval="1"
-                  tooltip="none"
-                  @callback="asyncCalculateRisk"
-                  :min="1"
-                  :max="getMaxDays"
-                  v-model="days"/>
-              </div>
-
-              <md-input-container
+            <md-radio
+              v-model="mode"
+              @change="asyncSelectMode('destination')"
+              id="direction"
+              name="direction"
+              md-value="destination">
+              <div
                 style="
-                  margin-left: 1em;
-                  width: 80px;">
-                <label>Max Days</label>
-                <md-input
-                  v-model="maxDays"
-                  type="number"/>
-              </md-input-container>
+                display: inline;
+                height: 1em;
+                color: #02386F">
+                &block;
+              </div>
+              destinations
+            </md-radio>
 
-            </md-layout>
+            <span style="width:1em"></span>
+
+            <md-radio
+              v-model="mode"
+              @change="asyncSelectMode('risk')"
+              id="direction"
+              name="direction"
+              md-value="risk">
+              <div
+                style="
+                display: inline;
+                height: 1em;
+                color: #f0f">
+                &block;
+              </div>
+              risk
+            </md-radio>
+
+          </md-layout>
+
+          <h3 class="md-title">
+            Risk Factor
+            <div
+              style="
+                display: inline;
+                height: 1em;
+                color: #f0f">
+              &block;
+            </div>
+          </h3>
+
+          <md-layout
+            md-row
+            md-vertical-align="center">
+
+            play &nbsp;
+            <md-switch
+              v-model="isLoop"
+              @change="toggleLoop">
+            </md-switch>
+
+            {{ days }} days
+
+            <div style="
+                    flex: 1;
+                    margin-left: 0.5em;">
+              <vue-slider
+                ref="slider"
+                :interval="1"
+                tooltip="none"
+                @callback="asyncCalculateRisk()"
+                :min="1"
+                :max="getMaxDays"
+                v-model="days"/>
+            </div>
+
+          </md-layout>
+
+          <md-layout
+            md-row
+            md-vertical-align="center">
+
+            <md-input-container
+              style="
+                  width: 80px;">
+              <label>Max Days</label>
+              <md-input
+                v-model="maxDays"
+                type="number"
+                @change="asyncCalculateRisk()"/>
+            </md-input-container>
+
+            <md-input-container
+              style="
+                  margin-left: 1em;
+                  width: 130px;">
+              <label>Max Prevalence</label>
+              <md-input
+                v-model="maxPrevalence"
+                type="number"
+                @change="asyncCalculateRisk()"/>
+            </md-input-container>
+
+          </md-layout>
 
           <div
             v-show="mode === 'risk'"
             style="width: 100%">
+
+            <div>
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #4ABDAC">
+                &block;
+              </div>
+              intervention
+            </div>
 
             <div
               v-show="mode === 'risk'"
@@ -154,7 +225,18 @@
               </md-layout>
             </div>
 
-            <h3 class="md-title" v-show="mode === 'risk'">Watch Country</h3>
+            <h3
+              class="md-title"
+              v-show="mode === 'risk'">
+              Watch Country
+              <div
+                style="
+                display: inline;
+                height: 1em;
+                color: green">
+                &block;
+              </div>
+            </h3>
 
             <div>
               <md-input-container
@@ -235,6 +317,7 @@ import util from '../modules/util'
 import Globe from '../modules/globe'
 import {models} from '../modules/models'
 import ChartWidget from '../modules/chart-widget'
+import {GlobalModel} from '../modules/global-model'
 
 const travelData = require('../data/travel')
 const worldData = require('../data/world')
@@ -280,11 +363,28 @@ function convertLabel (val) {
   }
 }
 
+function copyArray (dest, source) {
+  dest.length = 0
+  for (let v of source) {
+    dest.push(v)
+  }
+}
+
 export default {
 
   id: 'home',
 
   components: {vueSlider},
+
+  /**
+   * There are three indexes
+   * - country ID
+   * - iCountry based on countries
+   * - and an index based on the world.json files
+   *
+   * It's important to keep these distinguished with
+   * the correct variable names.
+   */
 
   data () {
     let modelTypes = _.map(models, 'name')
@@ -292,9 +392,10 @@ export default {
       selectableCountries: [],
       iSourceCountry: -1,
       iWatchCountry: -1,
-      mode: 'to', // or 'risk'
+      mode: 'destination', // or 'risk'
       days: 1,
       maxDays: 60,
+      maxPrevalence: 20,
       inputParamEntries: [],
       isLoop: false,
       modelType: modelTypes[0],
@@ -303,19 +404,21 @@ export default {
   },
 
   async mounted () {
+    this.isRunning = true
+
     this.$element = $('#main')
     this.resize()
-    window.addEventListener('resize', this.resize)
+    window.addEventListener('resize', () => this.resize())
 
     this.globe = new Globe(worldData, '#main')
     this.globe.getCountryPopupHtml = this.getCountryPopupHtml
-    this.globe.clickCountry = this.selectSourceCountryById
+    this.globe.clickCountry = this.selectSourceCountryByCountryId
 
-    this.mode = 'to' // 'to' or 'risk'
+    this.mode = 'destination' // 'destination' or 'risk'
 
     this.travelData = travelData
     this.travelData.countries[177].population = 39000000
-    this.iSourceCountry = 0
+
     let countries = []
     let nCountry = this.travelData.countries.length
     for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
@@ -330,24 +433,31 @@ export default {
     }
     this.selectableCountries = _.sortBy(countries, a => a.name)
 
+    this.iSourceCountry = 0
+
     this.countryIndices = _.map(countries, 'iCountry')
 
-    this.countryModel = {}
-    this.asyncSelectNewModel(this.modelType)
-    this.isRunning = false
+    this.globalModel = new GlobalModel()
+    this.globalModel.getTravelPerDay = this.getTravelPerDay
 
-    this.selectRandomSourceCountry()
+    this.setNewEpiModel()
 
     this.chartWidgets = {}
-    await this.asyncMakeChartWidget('#globalCharts', 'globalPrevalenceSolution')
-    await this.asyncMakeChartWidget('#globalCharts', 'cumulativeIncidenceSolution')
+    await this.asyncMakeChartWidget('#globalCharts', 'globalPrevalence')
+    await this.asyncMakeChartWidget('#globalCharts', 'cumulativeIncidence')
     await this.asyncMakeChartWidget('#localCharts', 'prevalence')
     await this.asyncMakeChartWidget('#localCharts', 'susceptible')
-    await this.asyncMakeChartWidget('#localCharts', 'inputIncidence')
+    await this.asyncMakeChartWidget('#localCharts', 'importIncidence')
 
     window.dispatchEvent(new Event('resize'))
 
-    setInterval(this.loop, 2000)
+    await this.asyncSelectRandomSourceCountry()
+
+    this.loopTimeStepMs = 2000
+
+    setInterval(this.loop, this.loopTimeStepMs)
+
+    this.isRunning = false
   },
 
   computed: {
@@ -372,22 +482,23 @@ export default {
       chartWidget.setXLabel('')
       chartWidget.setYLabel('')
       chartWidget.addDataset(id)
+      chartWidget.addDataset(id + '-intervention')
       chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = convertLabel
       this.chartWidgets[id] = chartWidget
       return selector
     },
 
-    getId () {
+    getSourceCountryId () {
       return this.travelData.countries[this.iSourceCountry].id
     },
 
-    getCountry (id) {
-      return _.find(this.travelData.countries, c => c.id === id)
+    getCountry (countryId) {
+      return _.find(this.travelData.countries, c => c.id === countryId)
     },
 
-    getICountry (id) {
+    getICountry (countryId) {
       for (let i in _.range(this.travelData.countries.length)) {
-        if (this.travelData.countries[i].id === id) {
+        if (this.travelData.countries[i].id === countryId) {
           return i
         }
       }
@@ -398,11 +509,12 @@ export default {
       return this.travelData.countries[iCountry].name
     },
 
-    getPropKey (prop, key) {
+    getPrevalenceByCountryId () {
       let result = {}
       for (let iCountry of this.countryIndices) {
         let id = this.travelData.countries[iCountry].id
-        result[id] = this.countryModel[iCountry][prop][key]
+        let countryModel = this.globalModel.countryModel[iCountry]
+        result[id] = countryModel.compartment.prevalence
       }
       return result
     },
@@ -420,16 +532,12 @@ export default {
       }
     },
 
-    getTravelPerDay (iFrom, iTo) {
+    getTravelPerDay (iCountryFrom, iCountryTo) {
       // data is for Feb, 2015
-      return this.travelData.travel[iFrom][iTo][1] / 28
+      return this.travelData.travel[iCountryFrom][iCountryTo][1] / 28
     },
 
-    getPopulation (iCountry) {
-      return travelData.countries[iCountry].population
-    },
-
-    getTravelValuesById () {
+    getTravelValuesByCountryId () {
       let values = {}
       let nCountry = this.travelData.countries.length
       for (let jCountry = 0; jCountry < nCountry; jCountry += 1) {
@@ -441,30 +549,11 @@ export default {
       return values
     },
 
-    resetModels () {
-      for (let param of this.inputParamEntries) {
-        param.value = parseFloat(param.value)
+    setNewEpiModel () {
+      let oldInputParams = {}
+      for (let paramEntry of this.inputParamEntries) {
+        oldInputParams[paramEntry.key] = paramEntry.value
       }
-
-      for (let iCountry of this.countryIndices) {
-        let inputParams = {}
-        for (let param of this.inputParamEntries) {
-          inputParams[param.key] = param.value
-        }
-        inputParams.initPopulation = travelData.countries[iCountry].population
-        if (this.iSourceCountry !== iCountry) {
-          inputParams.prevalence = 0
-        }
-        this.countryModel[iCountry].resetParams(inputParams)
-      }
-
-      this.globalIncidenceSolution = []
-      this.globalPrevalenceSolution = []
-      this.cumulativeIncidenceSolution = []
-    },
-
-    async asyncSelectNewModel () {
-      await util.delay(100)
 
       let ModelClass
       for (let model of models) {
@@ -472,116 +561,123 @@ export default {
           ModelClass = model.class
         }
       }
-      let countryName = this.getNameFromICountry(this.iSourceCountry)
-      this.countryModel = {}
-      let oldInputParams = {}
-      for (let paramEntry of this.inputParamEntries) {
-        oldInputParams[paramEntry.key] = paramEntry.value
-      }
-      this.inputParamEntries.length = 0
-      for (let iCountry of this.countryIndices) {
-        this.countryModel[iCountry] = new ModelClass(countryName)
-        if (this.inputParamEntries.length === 0) {
-          this.inputParamEntries = this.countryModel[iCountry].getInputParamEntries()
-        }
-      }
+
+      let sourceCountryName = this.getNameFromICountry(this.iSourceCountry)
+      this.globalModel.setCountryModel(
+        this.countryIndices, ModelClass, sourceCountryName)
+      copyArray(this.inputParamEntries, this.globalModel.getInputParamEntries())
+
       for (let paramEntry of this.inputParamEntries) {
         if (paramEntry.key in oldInputParams) {
           paramEntry.value = oldInputParams[paramEntry.key]
         }
       }
-      this.resetModels()
-      this.asyncSelectMode(this.mode)
+    },
+
+    parameterizeGlobalModelFromInput () {
+      for (let param of this.inputParamEntries) {
+        param.value = parseFloat(param.value)
+      }
+
+      let inputParams = {}
+      for (let param of this.inputParamEntries) {
+        inputParams[param.key] = param.value
+      }
+
+      for (let iCountry of this.countryIndices) {
+        let thisInputParams = _.cloneDeep(inputParams)
+        thisInputParams.initPopulation = travelData.countries[iCountry].population
+        if (this.iSourceCountry !== iCountry) {
+          thisInputParams.prevalence = 0
+        }
+        this.globalModel.countryModel[iCountry].resetParams(thisInputParams)
+      }
     },
 
     calculateRiskOfSourceCountry () {
-      this.resetModels()
+      this.parameterizeGlobalModelFromInput()
 
-      for (let iDay = 0; iDay < this.days; iDay += 1) {
-        for (let iCountry of this.countryIndices) {
-          this.countryModel[iCountry].clearDelta()
-          this.countryModel[iCountry].inputIncidence = 0
-        }
+      this.globalModel.run(this.days)
 
-        for (let iFromCountry of this.countryIndices) {
-          for (let iToCountry of this.countryIndices) {
-            if (iFromCountry !== iToCountry) {
-              let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
-              let fromCountry = this.countryModel[iFromCountry]
-              let toCountry = this.countryModel[iToCountry]
-              let delta = fromCountry.getExitPrevalence(travelPerDay)
-              fromCountry.delta.prevalence -= delta
-              toCountry.delta.prevalence += delta
-              toCountry.inputIncidence += delta
-            }
-          }
-        }
-
-        let globalPrevalence = 0
-        let globalIncidence = 0
-        for (let iCountry of this.countryIndices) {
-          let country = this.countryModel[iCountry]
-          country.updateCompartment(1)
-          country.solution.inputIncidence.push(country.inputIncidence)
-          for (let key of ['prevalence', 'susceptible']) {
-            country.solution[key].push(country.compartment[key])
-          }
-          globalPrevalence += country.compartment.prevalence
-          globalIncidence += _.last(country.solution.incidence)
-        }
-
-        this.globalIncidenceSolution.push(globalIncidence)
-        this.globalPrevalenceSolution.push(globalPrevalence)
+      this.chartWidgets.globalPrevalence
+        .setTitle('Global Prevalence')
+      this.chartWidgets.globalPrevalence
+        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.globalPrevalence.updateDataset(
+        0, this.globalModel.times, this.globalModel.solution.prevalence)
+      if (this.globalModel.intervention) {
+        this.chartWidgets.globalPrevalence.updateDataset(
+          1, this.globalModel.intervention.times, this.globalModel.intervention.solution.prevalence)
       }
 
-      let days = _.map(_.range(this.days), d => d + 1)
-
-      this.chartWidgets.globalPrevalenceSolution
-        .setTitle('Global Prevalence')
-      this.chartWidgets.globalPrevalenceSolution
-        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.globalPrevalenceSolution.updateDataset(
-        0, days, this.globalPrevalenceSolution)
-
-      this.chartWidgets.cumulativeIncidenceSolution
+      this.chartWidgets.cumulativeIncidence
         .setTitle('Global Cumulative Incidence')
-      this.chartWidgets.cumulativeIncidenceSolution
+      this.chartWidgets.cumulativeIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.cumulativeIncidenceSolution.updateDataset(
-        0, days, acumulateValues(this.globalIncidenceSolution))
+      let values = acumulateValues(this.globalModel.solution.incidence)
+      this.chartWidgets.cumulativeIncidence.updateDataset(
+        0, this.globalModel.times, values)
+      if (this.globalModel.intervention) {
+        let startIncidence = values[this.globalModel.interventionDay]
+        let newValues = acumulateValues(this.globalModel.intervention.solution.incidence)
+        newValues = _.map(newValues, v => v + startIncidence)
+        this.chartWidgets.cumulativeIncidence.updateDataset(
+          1, this.globalModel.intervention.times, newValues)
+      }
     },
 
     updateWatchCountry () {
       if (this.iWatchCountry < 0) {
         return
       }
-      let days = _.map(_.range(this.days), d => d + 1)
-      let countryModel = this.countryModel[this.iWatchCountry]
+
+      let countryModel = this.globalModel.countryModel[this.iWatchCountry]
       if (_.isUndefined(countryModel)) {
         return
       }
       let solution = countryModel.solution
+
+      let interventionSolution = null
+      if (this.globalModel.intervention) {
+        interventionSolution = this.globalModel.intervention.countryModel[this.iWatchCountry].solution
+      }
 
       this.chartWidgets.prevalence
         .setTitle('Prevalence')
       this.chartWidgets.prevalence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.prevalence.updateDataset(
-        0, days, solution.prevalence)
+        0, this.globalModel.times, solution.prevalence)
+      if (interventionSolution) {
+        this.chartWidgets.prevalence.updateDataset(
+          1, this.globalModel.intervention.times, interventionSolution.prevalence)
+      }
 
       this.chartWidgets.susceptible
         .setTitle('Susceptible')
       this.chartWidgets.susceptible
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.susceptible
-        .updateDataset(0, days, solution.susceptible)
+        .updateDataset(0, this.globalModel.times, solution.susceptible)
+      if (interventionSolution) {
+        this.chartWidgets.susceptible.updateDataset(
+          1, this.globalModel.intervention.times, interventionSolution.susceptible)
+      }
 
-      this.chartWidgets.inputIncidence
+      this.chartWidgets.importIncidence
         .setTitle('Cumulative Import Incidence')
-      this.chartWidgets.inputIncidence
+      this.chartWidgets.importIncidence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.inputIncidence
-        .updateDataset(0, days, acumulateValues(solution.inputIncidence))
+      let values = acumulateValues(solution.importIncidence)
+      this.chartWidgets.importIncidence
+        .updateDataset(0, this.globalModel.times, values)
+      if (interventionSolution) {
+        let startValue = values[this.globalModel.interventionDay]
+        let newValues = acumulateValues(interventionSolution.importIncidence)
+        newValues = _.map(newValues, v => v + startValue)
+        this.chartWidgets.importIncidence.updateDataset(
+          1, this.globalModel.intervention.times, newValues)
+      }
     },
 
     async asyncRecalculateGlobe () {
@@ -592,26 +688,33 @@ export default {
         }
         this.isRunning = true
         this.calculateRiskOfSourceCountry()
-        let valuesById = this.getPropKey('compartment', 'prevalence')
-        valuesById[this.getId()] = 0
-        maxValue = 100
+        valuesById = this.getPrevalenceByCountryId()
+        valuesById[this.getSourceCountryId()] = 0
+        maxValue = this.maxPrevalence
         this.isRunning = false
         this.updateWatchCountry()
       } else {
-        valuesById = this.getTravelValuesById()
+        valuesById = this.getTravelValuesByCountryId()
       }
       for (let [id, value] of _.toPairs(valuesById)) {
         this.globe.setCountryValue(id, value)
       }
-      this.globe.setCountryValue(this.getId(), 0)
+      this.globe.setCountryValue(this.getSourceCountryId(), 0)
       let modeColors = {
-        'to': '#02386F',
+        'destination': '#02386F',
         'risk': '#f0f'
       }
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
-      this.globe.setCountryColor(this.getId(), '#f00')
+      this.globe.setCountryColor(this.getSourceCountryId(), '#f00')
       this.globe.draw()
       this.drawLegend()
+    },
+
+    async asyncSelectNewModel () {
+      await util.delay(100)
+      this.setNewEpiModel()
+      this.parameterizeGlobalModelFromInput()
+      await this.asyncRecalculateGlobe()
     },
 
     rotateToCountry (iCountry) {
@@ -633,21 +736,24 @@ export default {
       await util.delay(100)
       console.log('> Home.asyncSelectWatchCountry', util.jstr(this.iWatchCountry))
       this.updateWatchCountry()
+      let id = this.travelData.countries[this.iWatchCountry].id
+      this.globe.iHighlight = this.globe.iCountryFromId[id]
+      this.globe.drawHighlight()
       this.rotateToCountry(this.iWatchCountry)
     },
 
-    selectSourceCountryById (id) {
-      let country = _.find(this.selectableCountries, c => c.id === id)
+    selectSourceCountryByCountryId (countryId) {
+      let country = _.find(this.selectableCountries, c => c.id === countryId)
       this.iSourceCountry = country.iCountry
       this.asyncSelectSourceCountry()
     },
 
-    selectRandomSourceCountry () {
+    async asyncSelectRandomSourceCountry () {
       let n = this.selectableCountries.length
       let i = Math.floor(Math.random() * Math.floor(n))
       this.iSourceCountry = this.selectableCountries[i].iCountry
       this.iWatchCountry = this.iSourceCountry
-      this.asyncSelectSourceCountry()
+      await this.asyncSelectSourceCountry()
     },
 
     async asyncSelectMode (mode) {
@@ -662,6 +768,7 @@ export default {
     },
 
     async asyncCalculateRisk () {
+      await util.delay(100)
       this.mode = 'risk'
       await this.asyncRecalculateGlobe()
     },
@@ -687,7 +794,12 @@ export default {
     getCountryPopupHtml (id) {
       let country = this.getCountry(id)
       this.iWatchCountry = parseInt(this.getICountry(id))
-      this.updateWatchCountry()
+      let iNewHighlight = this.globe.iCountryFromId[id]
+      if (iNewHighlight !== this.globe.iHighlight) {
+        this.globe.iHighlight = iNewHighlight
+        this.globe.drawHighlight()
+        this.updateWatchCountry()
+      }
 
       let name = ''
       let population = ''
@@ -718,7 +830,7 @@ export default {
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
           let countryId = this.travelData.countries[iCountry].id
           if (countryId === id) {
-            let prevalence = this.countryModel[iCountry].compartment.prevalence.toFixed(2)
+            let prevalence = this.globalModel.countryModel[iCountry].compartment.prevalence.toFixed(2)
             s += `<br>prevalence: ${prevalence}`
           }
         }

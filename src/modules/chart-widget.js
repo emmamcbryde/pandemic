@@ -48,6 +48,7 @@ function makeLineChartData (title, xAxisLabel, yAxisLabel) {
 }
 
 const colors = [
+  'green',
   '#4ABDAC', // fresh
   '#FC4A1A', // vermilion
   '#F78733', // sunshine
