@@ -11,7 +11,6 @@ class GlobalModel {
     this.countryIndices = []
 
     this.isIntervention = !!isIntervention
-    console.log('GlobalModel.constructor isIntervention', this.isIntervention)
 
     this.countryModel = {}
 
@@ -30,9 +29,9 @@ class GlobalModel {
     this.startTime = 0
     this.time = 0
     this.times = []
+    this.dTimeInDay = 1
 
     this.interventionDay = null
-    this.intervention = null
   }
 
   setCountryModel (countryIndices, ModelClass, sourceCountryName) {
@@ -58,20 +57,35 @@ class GlobalModel {
     }
   }
 
-  makeIntervention () {
-    this.intervention = new this.constructor(true)
-    this.intervention.startTime = this.time
-    this.intervention.getTravelPerDay = this.getTravelPerDay
-    this.intervention.countryIndices = _.clone(this.countryIndices)
-    for (let i of this.countryIndices) {
-      this.intervention.countryModel[i] = _.cloneDeep(this.countryModel[i])
-      if ('applyIntervention' in this.intervention.countryModel[i]) {
-        this.intervention.countryModel[i].applyIntervention()
+  getInterventionInputParamEntries () {
+    if (_.keys(this.countryModel).length > 0) {
+      let result = this.countryModel[0].getInterventionInputParamEntries()
+      if (!this.isIntervention) {
+        let intervention = _.find(result, e => e.key === 'interventionDay')
+        if (intervention) {
+          this.interventionDay = intervention.value
+        }
       }
-      for (let sol of _.values(this.intervention.countryModel[i].solution)) {
-        sol.length = 0
+      return result
+    } else {
+      return []
+    }
+  }
+
+  makeIntervention (inputParams) {
+    let intervention = new this.constructor(true)
+    intervention.startTime = this.time
+    intervention.times.length = 0
+    intervention.getTravelPerDay = this.getTravelPerDay
+    intervention.countryIndices = _.clone(this.countryIndices)
+    for (let i of this.countryIndices) {
+      let countryModel = _.cloneDeep(this.countryModel[i])
+      intervention.countryModel[i] = countryModel
+      if ('applyIntervention' in countryModel) {
+        countryModel.applyIntervention(inputParams)
       }
     }
+    return intervention
   }
 
   transferPeople () {
@@ -105,49 +119,41 @@ class GlobalModel {
     }
   }
 
-  run (nDay) {
-    // Clear run
+  clearSolutions () {
     this.solution.incidence.length = 0
     this.solution.prevalence.length = 0
-    this.times = []
+    this.times.length = 0
     this.time = this.startTime
-
-    let dTimeInDay = 1
-
-    _.times(nDay, () => {
-      this.time += dTimeInDay
-      this.times.push(this.time)
-
-      for (let countryModel of _.values(this.countryModel)) {
-        countryModel.clearDeltas()
-        countryModel.importIncidence = 0
-      }
-
-      // sets countryModel.delta and countryModel.importIncidence
-      this.transferPeople()
-
-      this.vars.incidence = 0
-      this.vars.prevalence = 0
-
-      for (let countryModel of _.values(this.countryModel)) {
-        countryModel.runStep(dTimeInDay)
-
-        countryModel.solution.importIncidence.push(countryModel.importIncidence)
-        this.vars.prevalence += countryModel.compartment.prevalence
-        this.vars.incidence += _.last(countryModel.solution.incidence)
-      }
-
-      this.solution.incidence.push(this.vars.incidence)
-      this.solution.prevalence.push(this.vars.prevalence)
-
-      if (this.time === this.interventionDay) {
-        this.makeIntervention()
-      }
-    })
-
-    if (this.intervention) {
-      this.intervention.run(nDay - this.interventionDay)
+    for (let iCountry of this.countryIndices) {
+      this.countryModel[iCountry].clearSolutions()
     }
+  }
+
+  update () {
+    this.time += this.dTimeInDay
+    this.times.push(this.time)
+
+    for (let countryModel of _.values(this.countryModel)) {
+      countryModel.clearDeltas()
+      countryModel.importIncidence = 0
+    }
+
+    // sets countryModel.delta and countryModel.importIncidence
+    this.transferPeople()
+
+    this.vars.incidence = 0
+    this.vars.prevalence = 0
+
+    for (let countryModel of _.values(this.countryModel)) {
+      countryModel.runStep(this.dTimeInDay)
+
+      countryModel.solution.importIncidence.push(countryModel.importIncidence)
+      this.vars.prevalence += countryModel.compartment.prevalence
+      this.vars.incidence += _.last(countryModel.solution.incidence)
+    }
+
+    this.solution.incidence.push(this.vars.incidence)
+    this.solution.prevalence.push(this.vars.prevalence)
   }
 }
 

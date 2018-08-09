@@ -44,12 +44,12 @@ class BaseModel {
    *    to be saved in this.solutions
    */
   constructor (id) {
+    // Name of the particular instance of the model
     this.id = id
 
     this.modelType = 'BASE'
 
-    // Keys are the names of all the compartments
-    // in the model
+    // Keys are names of the compartments in the model
     this.keys = []
 
     // Dictionary to hold the population of each
@@ -69,8 +69,70 @@ class BaseModel {
 
     // Parameters are constant values that are used in
     // the calculation of the differentials in the
-    // time propagation
+    // time propagation. Each parameter will be referred
+    // by a key
     this.params = {}
+
+    // List of parameters that will be exported to a
+    // GUI and used as a template to return values
+    // to input into this.params
+    this.inputParamEntries = [
+      {
+        key: 'reproductionNumber',
+        value: 1.5,
+        step: 0.01,
+        placeHolder: '',
+        label: 'R0'
+      },
+      {
+        key: 'infectiousPeriod',
+        value: 0.1,
+        step: 0.01,
+        placeHolder: '',
+        label: 'Recovery Rate'
+      },
+      {
+        key: 'prevalence',
+        value: 3000,
+        step: 1,
+        placeHolder: '',
+        label: 'Prevalence'
+      }
+    ]
+
+    // List of parameters that will be exported to a
+    // GUI and used as a template to return values
+    // to input into this.params
+    this.interventionParamEntries = [
+      {
+        key: 'interventionDay',
+        value: 5,
+        step: 1,
+        placeHolder: '',
+        label: 'Intervertion Start Day'
+      },
+      {
+        key: 'reproductionNumber',
+        value: 1.5,
+        step: 0.01,
+        placeHolder: '',
+        label: 'R0'
+      },
+      {
+        key: 'infectiousPeriod',
+        value: 0.1,
+        step: 0.01,
+        placeHolder: '',
+        label: 'Recovery Rate'
+      },
+      {
+        key: 'prevalence',
+        value: 3000,
+        step: 1,
+        placeHolder: '',
+        label: 'Prevalence'
+      }
+    ]
 
     // Stores any variables that need to be dynamically
     // calculated from the compartments at a time-step
@@ -119,49 +181,58 @@ class BaseModel {
   }
 
   /**
+   * Convenient function to return GUI-friendly
+   * list of parameters to modify
+   *
+   * @returns list[{}] paramEntries
+   */
+  getInterventionInputParamEntries () {
+    if (this.interventionInputParamEntries) {
+      return _.cloneDeep(this.interventionInputParamEntries)
+    } else {
+      return []
+    }
+  }
+
+  /**
    * Allows GUI-control of the simulation, where
    * this.params are set to values provided by
    * inputParams
    *
-   * @param inputParams
+   * @param inputParamEntries
    */
-  resetParams (inputParams) {
+  injestInputParamEntries (inputParamEntries) {
     this.params = _.cloneDeep(this.defaultParams)
-    _.assign(this.params, inputParams)
-    for (let key of _.keys(inputParams)) {
-      if (inputParams[key] !== this.params[key]) {
-        console.log(
-          `${this.modelType}-model.resetParams `,
-          this.id,
-          'error',
-          inputParams[key],
-          this.params[key]
-        )
-      }
+    for (let param of inputParamEntries) {
+      this.params[param.key] = parseFloat(param.value)
+      console.log('BaseModel.injestInputParamEntries', param.key, this.params[param.key])
     }
-    this.clear()
-    this.initParams()
+  }
+
+  initCompartments () {
+    for (let key of this.keys) {
+      this.compartment[key] = 0
+    }
+    this.initParamsAndCompartments()
     this.checkEvents()
   }
 
   /**
-   * To be overriden. Initializations of this.params,
-   * where new this.parmas can be calculated
+   * To be overridden. Initializations of this.params,
+   * where new this.params can be calculated from exiting
+   * this.params.
    */
-  initParams () {
+  initParamsAndCompartments () {
   }
 
   /**
    * Clears solutions, compartments and times for
    * re-running the simulation from the beginning
    */
-  clear () {
+  clearSolutions () {
     this.keys = _.keys(this.compartment)
     for (let key of _.keys(this.solution)) {
       this.solution[key].length = 0
-    }
-    for (let key of this.keys) {
-      this.compartment[key] = 0
     }
     this.times.length = 0
   }
@@ -354,7 +425,7 @@ class SisModel extends BaseModel {
     ]
   }
 
-  initParams () {
+  initParamsAndCompartments () {
     this.params.period = this.params.infectiousPeriod
     this.params.recoverRate = this.params.period
     this.params.contactRate =
@@ -419,7 +490,10 @@ class SirModel extends BaseModel {
         placeHolder: '',
         step: 1,
         label: 'Prevalence'
-      },
+      }
+    ]
+
+    this.interventionInputParamEntries = [
       {
         key: 'interventionDay',
         value: 5,
@@ -428,16 +502,16 @@ class SirModel extends BaseModel {
         label: 'intervention day'
       },
       {
-        key: 'interventionReproductionNumber',
+        key: 'reproductionNumber',
         value: 2.0,
         step: 0.01,
         placeHolder: '',
-        label: 'intervention R0'
+        label: 'R0'
       }
     ]
   }
 
-  initParams () {
+  initParamsAndCompartments () {
     this.params.period = this.params.infectiousPeriod
     this.params.recoverRate = this.params.period
     this.params.contactRate = this.params.reproductionNumber * this.params.recoverRate
@@ -446,8 +520,10 @@ class SirModel extends BaseModel {
       this.params.initPopulation - this.params.prevalence
   }
 
-  applyIntervention () {
-    this.params.reproductionNumber = this.params.interventionReproductionNumber
+  applyIntervention (inputParamEntries) {
+    for (let param of inputParamEntries) {
+      this.params[param.key] = parseFloat(param.value)
+    }
     this.params.contactRate =
       this.params.reproductionNumber * this.params.recoverRate
   }
@@ -525,7 +601,7 @@ class SEIRModel extends BaseModel {
     ]
   }
 
-  initParams () {
+  initParamsAndCompartments () {
     this.params.recoverRate = (1 - this.params.caseFatality) * (this.params.period)
     this.params.disDeath = (-1) * this.params.caseFatality * this.params.period
     this.params.incubationRate = this.params.incubation
@@ -616,7 +692,7 @@ class SEIRSModel extends BaseModel {
     ]
   }
 
-  initParams () {
+  initParamsAndCompartments () {
     this.params.recoverRate =
       (1 - this.params.caseFatality) * (this.params.period)
     this.params.incubationRate = this.params.incubation
@@ -730,7 +806,7 @@ class EbolaModel extends BaseModel {
     ]
   }
 
-  initParams () {
+  initParamsAndCompartments () {
     this.params.incubationRate = this.params.latency
     this.params.recoverRate1 =
     (1 - this.params.caseFatality) * this.params.postDetection
