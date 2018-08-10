@@ -113,7 +113,7 @@ class GlobalModel {
 
           let toCountry = this.countryModel[iToCountry]
           toCountry.delta.prevalence += delta
-          toCountry.importIncidence += delta
+          toCountry.var.importIncidence += delta
         }
       }
     }
@@ -135,7 +135,7 @@ class GlobalModel {
 
     for (let countryModel of _.values(this.countryModel)) {
       countryModel.clearDeltas()
-      countryModel.importIncidence = 0
+      countryModel.var.importIncidence = 0
     }
 
     // sets countryModel.delta and countryModel.importIncidence
@@ -147,7 +147,7 @@ class GlobalModel {
     for (let countryModel of _.values(this.countryModel)) {
       countryModel.runStep(this.dTimeInDay)
 
-      countryModel.solution.importIncidence.push(countryModel.importIncidence)
+      countryModel.solution.importIncidence.push(countryModel.var.importIncidence)
       this.vars.prevalence += countryModel.compartment.prevalence
       this.vars.incidence += _.last(countryModel.solution.incidence)
     }

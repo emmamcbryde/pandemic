@@ -79,7 +79,7 @@
               md-vertical-align="center">
 
               <md-input-container
-                v-for="(entry, i) in inputParamEntries"
+                v-for="(entry, i) in guiParams"
                 :key="i"
                 style="
                     margin-right: 1em;
@@ -98,7 +98,7 @@
           </md-card>
 
           <md-card
-            v-if="interventionInputParamEntries.length > 0"
+            v-if="interventionParams.length > 0"
             style="padding: 1em; margin-top: 1em">
 
             <h3 class="md-title">Intervention Parameters</h3>
@@ -108,7 +108,7 @@
               md-vertical-align="center">
 
               <md-input-container
-                v-for="(entry, i) in interventionInputParamEntries"
+                v-for="(entry, i) in interventionParams"
                 :key="i"
                 style="
                     margin-right: 1em;
@@ -404,8 +404,8 @@ export default {
       days: 1,
       maxDays: 60,
       maxPrevalence: 20,
-      inputParamEntries: [],
-      interventionInputParamEntries: [],
+      guiParams: [],
+      interventionParams: [],
       isLoop: false,
       modelType: modelTypes[0],
       modelTypes: modelTypes
@@ -560,12 +560,12 @@ export default {
 
     setNewEpiModel () {
       let oldInputParams = {}
-      for (let paramEntry of this.inputParamEntries) {
+      for (let paramEntry of this.guiParams) {
         oldInputParams[paramEntry.key] = paramEntry.value
       }
 
       let oldInterventionInputParams = {}
-      for (let paramEntry of this.interventionInputParamEntries) {
+      for (let paramEntry of this.interventionParams) {
         oldInterventionInputParams[paramEntry.key] = paramEntry.value
       }
 
@@ -579,10 +579,10 @@ export default {
       let sourceCountryName = this.getNameFromICountry(this.iSourceCountry)
       this.globalModel.setCountryModel(
         this.countryIndices, ModelClass, sourceCountryName)
-      copyArray(this.inputParamEntries, this.globalModel.getInputParamEntries())
-      copyArray(this.interventionInputParamEntries, this.globalModel.getInterventionInputParamEntries())
+      copyArray(this.guiParams, this.globalModel.getInputParamEntries())
+      copyArray(this.interventionParams, this.globalModel.getInterventionInputParamEntries())
 
-      for (let paramEntry of this.inputParamEntries) {
+      for (let paramEntry of this.guiParams) {
         if (paramEntry.key in oldInputParams) {
           paramEntry.value = oldInputParams[paramEntry.key]
         }
@@ -591,7 +591,7 @@ export default {
         }
       }
 
-      for (let paramEntry of this.interventionInputParamEntries) {
+      for (let paramEntry of this.interventionParams) {
         if (paramEntry.key in oldInterventionInputParams) {
           paramEntry.value = oldInterventionInputParams[paramEntry.key]
         }
@@ -604,15 +604,15 @@ export default {
     parameterizeGlobalModelFromInput () {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
-        countryModel.injestInputParamEntries(this.inputParamEntries)
+        countryModel.injestInputParamEntries(this.guiParams)
         countryModel.params.initPopulation = travelData.countries[iCountry].population
         if (this.iSourceCountry !== iCountry) {
-          countryModel.params.prevalence = 0
+          countryModel.params.initPrevalence = 0
         }
       }
 
       this.intervention = null
-      let entry = _.find(this.interventionInputParamEntries, e => e.key === 'interventionDay')
+      let entry = _.find(this.interventionParams, e => e.key === 'interventionDay')
       if (entry) {
         this.globalModel.interventionDay = entry.value
       }
@@ -634,7 +634,7 @@ export default {
         this.globalModel.update()
         if (this.globalModel.time === this.globalModel.interventionDay) {
           this.intervention = this.globalModel.makeIntervention(
-            this.interventionInputParamEntries)
+            this.interventionParams)
         }
       })
 
