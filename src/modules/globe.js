@@ -136,6 +136,10 @@ class Globe {
         let id = this.countryFeatures[i].id
         this.dblclickCountry(id)
       })
+      .on('click', (d, i) => {
+        let id = this.countryFeatures[i].id
+        this.clickCountry(id)
+      })
 
     // build the legend
     $(this.selector)
@@ -161,6 +165,14 @@ class Globe {
    * @param id
    */
   dblclickCountry (id) {
+    console.log('> Globe.dblclickCountry', id, d3.event.pageX, d3.event.pageY)
+  }
+
+  /**
+   * To be overridden
+   * @param id
+   */
+  clickCountry (id) {
     console.log('> Globe.clickCountry', id, d3.event.pageX, d3.event.pageY)
   }
 

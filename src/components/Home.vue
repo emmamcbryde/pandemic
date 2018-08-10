@@ -422,6 +422,7 @@ export default {
     this.globe = new Globe(worldData, '#main')
     this.globe.getCountryPopupHtml = this.getCountryPopupHtml
     this.globe.dblclickCountry = this.selectSourceCountryByCountryId
+    this.globe.clickCountry = this.selectWatchCountry
 
     this.mode = 'destination' // 'destination' or 'risk'
 
@@ -779,6 +780,17 @@ export default {
       this.rotateToCountry(this.iSourceCountry)
     },
 
+    selectWatchCountry (id) {
+      let iCountry = parseInt(this.getICountry(id))
+      this.iWatchCountry = iCountry
+      let iNewHighlight = this.globe.iCountryFromId[id]
+      if (iNewHighlight !== this.globe.iHighlight) {
+        this.globe.iHighlight = iNewHighlight
+        this.globe.drawHighlight()
+        this.updateWatchCountry()
+      }
+    },
+
     async asyncSelectWatchCountry () {
       await util.delay(100)
       console.log('> Home.asyncSelectWatchCountry', util.jstr(this.iWatchCountry))
@@ -840,14 +852,6 @@ export default {
 
     getCountryPopupHtml (id) {
       let country = this.getCountry(id)
-      this.iWatchCountry = parseInt(this.getICountry(id))
-      let iNewHighlight = this.globe.iCountryFromId[id]
-      if (iNewHighlight !== this.globe.iHighlight) {
-        this.globe.iHighlight = iNewHighlight
-        this.globe.drawHighlight()
-        this.updateWatchCountry()
-      }
-
       let name = ''
       let population = ''
       if (country) {
