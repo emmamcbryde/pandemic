@@ -132,9 +132,9 @@ class Globe {
           .style('opacity', 0)
           .style('display', 'none')
       })
-      .on('click', (d, i) => {
+      .on('dblclick', (d, i) => {
         let id = this.countryFeatures[i].id
-        this.clickCountry(id)
+        this.dblclickCountry(id)
       })
 
     // build the legend
@@ -156,7 +156,11 @@ class Globe {
       `)
   }
 
-  clickCountry (id) {
+  /**
+   * To be overridden
+   * @param id
+   */
+  dblclickCountry (id) {
     console.log('> Globe.clickCountry', id, d3.event.pageX, d3.event.pageY)
   }
 
@@ -184,6 +188,11 @@ class Globe {
     return this.colors[iCountry]
   }
 
+  /**
+   * To be overridden
+   * @param id
+   * @returns String - contains HTML to write to popup
+   */
   getCountryPopupHtml (id) {
     let value = this.getCountryValue(id)
     if (value === null) {

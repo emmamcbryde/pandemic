@@ -97,7 +97,9 @@
 
           </md-card>
 
-          <md-card style="padding: 1em; margin-top: 1em">
+          <md-card
+            v-if="interventionInputParamEntries.length > 0"
+            style="padding: 1em; margin-top: 1em">
 
             <h3 class="md-title">Intervention Parameters</h3>
 
@@ -137,8 +139,6 @@
             <md-radio
               v-model="mode"
               @change="asyncSelectMode('destination')"
-              id="direction"
-              name="direction"
               md-value="destination">
               <div
                 style="
@@ -155,8 +155,6 @@
             <md-radio
               v-model="mode"
               @change="asyncSelectMode('risk')"
-              id="direction"
-              name="direction"
               md-value="risk">
               <div
                 style="
@@ -423,7 +421,7 @@ export default {
 
     this.globe = new Globe(worldData, '#main')
     this.globe.getCountryPopupHtml = this.getCountryPopupHtml
-    this.globe.clickCountry = this.selectSourceCountryByCountryId
+    this.globe.dblclickCountry = this.selectSourceCountryByCountryId
 
     this.mode = 'destination' // 'destination' or 'risk'
 
