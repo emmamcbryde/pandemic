@@ -99,7 +99,7 @@
 
           <md-card style="padding: 1em; margin-top: 1em">
 
-            <h3 class="md-title">Intervention Model Parameters</h3>
+            <h3 class="md-title">Intervention Parameters</h3>
 
             <md-layout
               md-row
@@ -126,7 +126,7 @@
 
           <md-card style="padding: 1em; margin-top: 1em">
           <h3 class="md-title">
-            Output
+            Prediction
           </h3>
 
           <md-layout
@@ -147,7 +147,7 @@
                 color: #02386F">
                 &block;
               </div>
-              destinations
+              Destinations
             </md-radio>
 
             <span style="width:1em"></span>
@@ -165,7 +165,7 @@
                 color: #f0f">
                 &block;
               </div>
-              risk
+              Risk
             </md-radio>
 
           </md-layout>
@@ -174,13 +174,13 @@
             md-row
             md-vertical-align="center">
 
-            play &nbsp;
+            Play &nbsp;
             <md-switch
               v-model="isLoop"
               @change="toggleLoop">
             </md-switch>
 
-            {{ days }} days
+            {{ days }} Day
 
             <div style="
                     flex: 1;
@@ -614,7 +614,7 @@ export default {
       }
 
       this.intervention = null
-      let entry = _.find(this.inputInterventionParamEntries, e => e.key === 'interventionDay')
+      let entry = _.find(this.interventionInputParamEntries, e => e.key === 'interventionDay')
       if (entry) {
         this.globalModel.interventionDay = entry.value
       }
@@ -667,7 +667,7 @@ export default {
       this.chartWidgets.cumulativeIncidence.updateDataset(
         0, this.globalModel.times, values)
       if (this.intervention) {
-        let startIncidence = values[this.interventionDay]
+        let startIncidence = values[this.globalModel.interventionDay]
         let newValues = acumulateValues(this.intervention.solution.incidence)
         newValues = _.map(newValues, v => v + startIncidence)
         this.chartWidgets.cumulativeIncidence.updateDataset(
@@ -721,7 +721,7 @@ export default {
       this.chartWidgets.importIncidence
         .updateDataset(0, this.globalModel.times, values)
       if (interventionSolution) {
-        let startValue = values[this.interventionDay]
+        let startValue = values[this.globalModel.interventionDay]
         let newValues = acumulateValues(interventionSolution.importIncidence)
         newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(

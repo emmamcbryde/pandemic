@@ -205,7 +205,6 @@ class BaseModel {
     this.params = _.cloneDeep(this.defaultParams)
     for (let param of inputParamEntries) {
       this.params[param.key] = parseFloat(param.value)
-      console.log('BaseModel.injestInputParamEntries', param.key, this.params[param.key])
     }
   }
 
@@ -499,11 +498,11 @@ class SirModel extends BaseModel {
         value: 5,
         step: 1,
         placeHolder: '',
-        label: 'intervention day'
+        label: 'Start Day'
       },
       {
         key: 'reproductionNumber',
-        value: 2.0,
+        value: 1.2,
         step: 0.01,
         placeHolder: '',
         label: 'R0'
