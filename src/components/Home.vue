@@ -616,19 +616,19 @@ export default {
       this.globalModel.interventionDay = null
       let entry = _.find(this.interventionParams, e => e.key === 'interventionDay')
       if (entry) {
-        this.globalModel.interventionDay = entry.value
+        this.globalModel.interventionDay = parseInt(entry.value)
       }
     },
 
     calculateRiskOfSourceCountry () {
       this.parameterizeGlobalModelFromInput()
 
-      console.log('Home.calculateRiskOfSourceCountry', this.globalModel.interventionDay, this.intervention)
       this.globalModel.clearSolutions()
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.initCompartments()
       }
+          console.log('Home.calculateRiskOfSourceCountry intervention', this.globalModel.interventionDay, this.intervention)
       _.times(this.days, () => {
         this.globalModel.update()
         if (this.globalModel.time === this.globalModel.interventionDay) {
@@ -637,7 +637,8 @@ export default {
         }
       })
 
-      if (this.intervention) {
+
+if (this.intervention) {
         this.intervention.clearSolutions()
         let interventionDays = this.days - this.globalModel.interventionDay
         _.times(interventionDays, () => {
