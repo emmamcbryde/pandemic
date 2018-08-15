@@ -282,17 +282,18 @@ class BaseModel {
    * Clears this.delta which can store changes to
    * compartments extrinsic to the model.
    */
-  clearDeltas () {
+  clearBeforeTransfer () {
     for (let key of this.keys) {
       this.delta[key] = 0
     }
+    this.var.importIncidence = 0
   }
 
   /**
-   * Moves people out of this to toCountryModel, given
-   * the base number of people travel between the two
-   * models by travelPerDay. This function determines
-   * which compartments gets moved to which
+   * Can be overridden. Moves people out of this to toCountryModel,
+   * given the base number of people travel between the two
+   * models by travelPerDay. This function determines which
+   * compartments gets moved.
    *
    * @param toCountryModel - another BaseModel
    * @param travelPerDay
@@ -304,7 +305,7 @@ class BaseModel {
     let delta = this.compartment.prevalence * probSickTravelPerDay
     this.delta.prevalence -= delta
     toCountryModel.delta.prevalence += delta
-    toCountryModel.importIncidence += delta
+    toCountryModel.var.importIncidence += delta
   }
 
   /**
