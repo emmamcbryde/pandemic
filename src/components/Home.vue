@@ -628,7 +628,7 @@ export default {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.initCompartments()
       }
-          console.log('Home.calculateRiskOfSourceCountry intervention', this.globalModel.interventionDay, this.intervention)
+
       _.times(this.days, () => {
         this.globalModel.update()
         if (this.globalModel.time === this.globalModel.interventionDay) {
@@ -637,8 +637,7 @@ export default {
         }
       })
 
-
-if (this.intervention) {
+      if (this.intervention) {
         this.intervention.clearSolutions()
         let interventionDays = this.days - this.globalModel.interventionDay
         _.times(interventionDays, () => {
@@ -660,7 +659,7 @@ if (this.intervention) {
       if (this.intervention) {
         this.chartWidgets.globalPrevalence.updateDataset(
           1, this.intervention.times, this.intervention.solution.prevalence)
-      } 
+      }
 
       this.chartWidgets.cumulativeIncidence
         .setTitle('Global Cumulative Incidence')
@@ -729,7 +728,7 @@ if (this.intervention) {
         newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
           1, this.intervention.times, newValues)
-      } 
+      }
     },
 
     async asyncRecalculateGlobe () {

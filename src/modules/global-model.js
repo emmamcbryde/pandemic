@@ -91,27 +91,13 @@ class GlobalModel {
       throw new Error('GlobalModel.getTravelPerDay function not set!')
     }
 
-    let probSickCanTravel = 1
-
     for (let iFromCountry of this.countryIndices) {
       let fromCountry = this.countryModel[iFromCountry]
-
-      fromCountry.calcVars()
-      let fromPopulation = fromCountry.var.population
-
       for (let iToCountry of this.countryIndices) {
         if (iFromCountry !== iToCountry) {
-          let travelPerDay = this.getTravelPerDay(iFromCountry, iToCountry)
-          let probTravelPerDay = travelPerDay / fromPopulation
-          let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
-
-          let delta = fromCountry.compartment.prevalence * probSickTravelPerDay
-
-          fromCountry.delta.prevalence -= delta
-
-          let toCountry = this.countryModel[iToCountry]
-          toCountry.delta.prevalence += delta
-          toCountry.importIncidence += delta
+          fromCountry.transferTo(
+            this.countryModel[iToCountry],
+            this.getTravelPerDay(iFromCountry, iToCountry))
         }
       }
     }

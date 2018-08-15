@@ -219,7 +219,7 @@ class BaseModel {
   /**
    * Takes user-input of intervention parameters to load into the model
    * to calculate an intervention
-   * 
+   *
    * @param [params] - a param folds a dictionary for a value and its bounds and step
    */
   applyIntervention (guiParams) {
@@ -286,6 +286,25 @@ class BaseModel {
     for (let key of this.keys) {
       this.delta[key] = 0
     }
+  }
+
+  /**
+   * Moves people out of this to toCountryModel, given
+   * the base number of people travel between the two
+   * models by travelPerDay. This function determines
+   * which compartments gets moved to which
+   *
+   * @param toCountryModel - another BaseModel
+   * @param travelPerDay
+   */
+  transferTo (toCountryModel, travelPerDay) {
+    let probSickCanTravel = 1
+    let probTravelPerDay = travelPerDay / this.var.population
+    let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
+    let delta = this.compartment.prevalence * probSickTravelPerDay
+    this.delta.prevalence -= delta
+    toCountryModel.delta.prevalence += delta
+    toCountryModel.importIncidence += delta
   }
 
   /**
