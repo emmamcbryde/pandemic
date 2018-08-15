@@ -34,9 +34,28 @@ If you are ready to make changes to the source code in the `src` directory, you 
 
 This will open up the page in the browser at the url `localhost:8080`. Any changes in the `src` directory will cause the app to be recompiled and automatically reloaded in the browser.
 
-This command is conveniently stored in `hot_reload.sh` for mac and linux.
+This command is conveniently stored in `hot_reload.sh` for Mac and Linux.
+
+If there is a conflict with port 8000, then in `package.json`, look for the lines with `webpack-dev-server`, and replace with the following line:
+
+```
+"dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js --port 3000",
+```
+
+Then open in the browser with: `localhost:3000`.
 
 ## Framework
 
-The app is written in `vue` framework using the `basegui` template skeletion.
+The app is written in `vue` framework using the `plasticgui` template skeletion.
+
+## Program flow
+
+1. The entry point is the `index.html` file.
+2. `index.html` will open `src/main.js`
+3. `src/main.js` will set up Vue and load the Vue app.
+4. Vue looks for the home page is in `src/components/Home.vue`.
+5. The models are loaded from there, where the global model is in `src/modules/global-model.js`, which will attempt to load different epi-models.
+6. The individual epi-models are in `src/modules/models.js`
+7. The data for travel is in `src/data/travel.js`, which is stored in a javascript data module format.
+8. The data for country borders and coordinates are stored in `src/data.world.js`.
 

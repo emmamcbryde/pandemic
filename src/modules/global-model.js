@@ -42,9 +42,9 @@ class GlobalModel {
     }
   }
 
-  getInputParamEntries () {
+  getGuiParams () {
     if (_.keys(this.countryModel).length > 0) {
-      let result = this.countryModel[0].getInputParamEntries()
+      let result = this.countryModel[0].getGuiParams()
       if (!this.isIntervention) {
         let intervention = _.find(result, e => e.key === 'interventionDay')
         if (intervention) {
@@ -57,9 +57,9 @@ class GlobalModel {
     }
   }
 
-  getInterventionInputParamEntries () {
+  getInterventionParams () {
     if (_.keys(this.countryModel).length > 0) {
-      let result = this.countryModel[0].getInterventionInputParamEntries()
+      let result = this.countryModel[0].getInterventionParams()
       if (!this.isIntervention) {
         let intervention = _.find(result, e => e.key === 'interventionDay')
         if (intervention) {

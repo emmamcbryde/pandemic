@@ -580,8 +580,8 @@ export default {
       let sourceCountryName = this.getNameFromICountry(this.iSourceCountry)
       this.globalModel.setCountryModel(
         this.countryIndices, ModelClass, sourceCountryName)
-      copyArray(this.guiParams, this.globalModel.getInputParamEntries())
-      copyArray(this.interventionParams, this.globalModel.getInterventionInputParamEntries())
+      copyArray(this.guiParams, this.globalModel.getGuiParams())
+      copyArray(this.interventionParams, this.globalModel.getInterventionParams())
 
       for (let paramEntry of this.guiParams) {
         if (paramEntry.key in oldInputParams) {
@@ -605,14 +605,15 @@ export default {
     parameterizeGlobalModelFromInput () {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
-        countryModel.injestInputParamEntries(this.guiParams)
-        countryModel.params.initPopulation = travelData.countries[iCountry].population
+        countryModel.importGuiParams(this.guiParams)
+        countryModel.param.initPopulation = travelData.countries[iCountry].population
         if (this.iSourceCountry !== iCountry) {
-          countryModel.params.initPrevalence = 0
+          countryModel.param.initPrevalence = 0
         }
       }
 
       this.intervention = null
+      this.globalModel.interventionDay = null
       let entry = _.find(this.interventionParams, e => e.key === 'interventionDay')
       if (entry) {
         this.globalModel.interventionDay = entry.value
@@ -622,14 +623,11 @@ export default {
     calculateRiskOfSourceCountry () {
       this.parameterizeGlobalModelFromInput()
 
+      console.log('Home.calculateRiskOfSourceCountry', this.globalModel.interventionDay, this.intervention)
       this.globalModel.clearSolutions()
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.initCompartments()
-        // countryModel.calcVars()
-        // console.log('Home.calculateRiskOfSourceCountry',
-        //   this.getNameFromICountry(iCountry),
-        //   humanize.intword(countryModel.var.population))
       }
       _.times(this.days, () => {
         this.globalModel.update()
@@ -647,16 +645,22 @@ export default {
         })
       }
 
+      // clear intervention graphs
+      for (let chart of _.values(this.chartWidgets)) {
+        chart.updateDataset(1, [], [])
+      }
+
       this.chartWidgets.globalPrevalence
         .setTitle('Global Prevalence')
       this.chartWidgets.globalPrevalence
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(
         0, this.globalModel.times, this.globalModel.solution.prevalence)
+      console.log('Home.calculateRiskOfSourceCountry', this.globalModel.interventionDay, this.intervention)
       if (this.intervention) {
         this.chartWidgets.globalPrevalence.updateDataset(
           1, this.intervention.times, this.intervention.solution.prevalence)
-      }
+      } 
 
       this.chartWidgets.cumulativeIncidence
         .setTitle('Global Cumulative Incidence')
@@ -725,7 +729,7 @@ export default {
         newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
           1, this.intervention.times, newValues)
-      }
+      } 
     },
 
     async asyncRecalculateGlobe () {

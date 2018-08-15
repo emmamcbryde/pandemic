@@ -26,9 +26,9 @@ class BaseModel {
    *
    * 1) externally add to this.delta of compartments
    *    due to extrinsic import of people
-   * 2) recalculate this.vars - should
-   *    depends only on params and
-   *    current compartment values
+   * 2) recalculate this.var - should
+   *    depends only on this.param and
+   *    current this.compartment values
    * 3) Generate all events - single changes to
    *    to compartments, or paired changes to two
    *    compartments. The amount of changes in each
@@ -61,7 +61,7 @@ class BaseModel {
     //   2. susceptible
     this.compartment = {
       prevalence: 0,
-      susceptible: 0,
+      susceptible: 0
     }
 
     // Current time point of the simulation
@@ -78,38 +78,24 @@ class BaseModel {
     // the calculation of the differentials in the
     // time propagation. Each parameter will be referred
     // by a key
-    this.params = {}
+    this.param = {}
 
     // List of parameters that will be exported to a
     // GUI and used as a template to return values
-    // to input into this.params
+    // to input into this.param
     this.guiParams = [
-      {
-        key: 'reproductionNumber',
-        value: 1.5,
-        step: 0.01,
-        placeHolder: '',
-        label: 'R0'
-      },
-      {
-        key: 'infectiousPeriod',
-        value: 0.1,
-        step: 0.01,
-        placeHolder: '',
-        label: 'Recovery Rate'
-      },
-      {
-        key: 'prevalence',
-        value: 3000,
-        step: 1,
-        placeHolder: '',
-        label: 'Prevalence'
-      }
+      // {
+      //   key: 'initPrevalence',
+      //   value: 3000,
+      //   step: 1,
+      //   placeHolder: '',
+      //   label: 'Prevalence'
+      // }
     ]
 
     // List of parameters that will be exported to a
     // GUI and used as a template to return values
-    // to input into this.params
+    // to input into this.param
     this.interventionParams = [
       // {
       //   key: 'interventionDay',
@@ -125,20 +111,6 @@ class BaseModel {
       //   placeHolder: '',
       //   label: 'R0'
       // },
-      // {
-      //   key: 'infectiousPeriod',
-      //   value: 0.1,
-      //   step: 0.01,
-      //   placeHolder: '',
-      //   label: 'Recovery Rate'
-      // },
-      // {
-      //   key: 'prevalence',
-      //   value: 3000,
-      //   step: 1,
-      //   placeHolder: '',
-      //   label: 'Prevalence'
-      // }
     ]
 
     // Stores any variables that need to be dynamically
@@ -156,7 +128,7 @@ class BaseModel {
     this.varEvents = []
 
     // List of all events between compartments
-    // that are proportional to constants in this.params
+    // that are proportional to constants in this.param
     this.paramEvents = []
 
     // This is a list of all transfers between
@@ -183,7 +155,7 @@ class BaseModel {
    *
    * @returns list[{}] paramEntries
    */
-  getInputParamEntries () {
+  getGuiParams () {
     return _.cloneDeep(this.guiParams)
   }
 
@@ -193,8 +165,8 @@ class BaseModel {
    *
    * @returns list[{}] paramEntries
    */
-  getInterventionInputParamEntries () {
-    if (this.interventionParams) {
+  getInterventionParams () {
+    if (this.interventionParams.length > 0) {
       return _.cloneDeep(this.interventionParams)
     } else {
       return []
@@ -203,33 +175,32 @@ class BaseModel {
 
   /**
    * Allows GUI-control of the simulation, where
-   * this.params are set to values provided by
-   * inputParams
+   * this.param are set to values provided by
+   * guiParams
    *
    * @param guiParams
    */
-  injestInputParamEntries (guiParams) {
-    this.params = _.cloneDeep(this.defaultParams)
+  importGuiParams (guiParams) {
+    this.param = _.cloneDeep(this.defaultParams)
     for (let param of guiParams) {
-      this.params[param.key] = parseFloat(param.value)
+      this.param[param.key] = parseFloat(param.value)
     }
   }
 
   /**
-   * To be overridden. Initializations of this.params,
-   * where new this.params can be calculated from exiting
-   * this.params.
+   * To be overridden. Calculates new this.param from
+   * existing this.param.
    */
   calcExtraParams () {
   }
 
   /**
    * To be overridden. Initializations of compartments
-   * from this.params
+   * from this.param
    */
   initCompartmentsByParams () {
-    this.compartment.prevalence = this.params.initPrevalence
-    this.compartment.susceptible = this.params.initPopulation - this.params.initPrevalence
+    this.compartment.prevalence = this.param.initPrevalence
+    this.compartment.susceptible = this.param.initPopulation - this.param.initPrevalence
   }
 
   initCompartments () {
@@ -263,7 +234,7 @@ class BaseModel {
 
   /**
    * Sanity check to make sure that there are suitable
-   * this.vars and this.params for the varEvents and
+   * this.vars and this.param for the varEvents and
    * paramEvents that are defined.
    */
   checkEvents () {
@@ -280,11 +251,11 @@ class BaseModel {
     }
     for (let paramEvent of this.paramEvents) {
       let paramEventKey = paramEvent[2]
-      let paramKeys = _.keys(this.params)
+      let paramKeys = _.keys(this.param)
       if (!_.includes(paramKeys, paramEventKey)) {
         console.log(
           `Error: ${paramEventKey} of this.paramEvents not ` +
-          `found in this.params`
+          `found in this.param`
         )
       }
     }
@@ -317,7 +288,7 @@ class BaseModel {
     }
 
     for (let [from, to, paramKey] of this.paramEvents) {
-      let val = this.params[paramKey] * this.compartment[from]
+      let val = this.param[paramKey] * this.compartment[from]
       this.events.push([from, to, val])
     }
   }
@@ -405,12 +376,12 @@ class SisModel extends BaseModel {
 
     this.defaultParams = {
       initPopulation: 50000,
-      recoverRate: 0.1,
       initPrevalence: 3000,
+      recoverRate: 0.1,
       reproductionNumber: 1.5
     }
 
-    this.params = _.cloneDeep(this.defaultParams)
+    this.param = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
     this.paramEvents.push(['prevalence', 'susceptible', 'recoverRate'])
@@ -441,14 +412,14 @@ class SisModel extends BaseModel {
   }
 
   calcExtraParams () {
-    this.params.contactRate =
-      this.params.reproductionNumber * this.params.recoverRate
+    this.param.contactRate =
+      this.param.reproductionNumber * this.param.recoverRate
   }
 
   calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      this.params.contactRate /
+      this.param.contactRate /
       this.var.population *
       this.compartment.prevalence
   }
@@ -468,15 +439,15 @@ class SirModel extends BaseModel {
 
     this.defaultParams = {
       initPopulation: 50000,
-      recoverRate: 0.1,
       initPrevalence: 3000,
+      recoverRate: 0.1,
       reproductionNumber: 1.5
     }
 
     this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
     this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
 
-    this.params = _.cloneDeep(this.defaultParams)
+    this.param = _.cloneDeep(this.defaultParams)
 
     this.guiParams = [
       {
@@ -521,12 +492,12 @@ class SirModel extends BaseModel {
   }
 
   calcExtraParams () {
-    this.params.contactRate = this.params.reproductionNumber * this.params.recoverRate
+    this.param.contactRate = this.param.reproductionNumber * this.param.recoverRate
   }
 
   applyIntervention (guiParams) {
     for (let param of guiParams) {
-      this.params[param.key] = parseFloat(param.value)
+      this.param[param.key] = parseFloat(param.value)
     }
     this.calcExtraParams()
   }
@@ -534,7 +505,7 @@ class SirModel extends BaseModel {
   calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      this.params.contactRate /
+      this.param.contactRate /
       this.var.population *
       this.compartment.prevalence
   }
@@ -562,7 +533,7 @@ class SEIRModel extends BaseModel {
       initPrevalence: 5000,
       reproductionNumber: 4
     }
-    this.params = _.cloneDeep(this.defaultParams)
+    this.param = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
     this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
@@ -602,17 +573,17 @@ class SEIRModel extends BaseModel {
   }
 
   calcExtraParams () {
-    this.params.recoverRate = (1 - this.params.caseFatality) * (this.params.period)
-    this.params.disDeath = (-1) * this.params.caseFatality * this.params.period
-    this.params.incubationRate = this.params.incubation
-    this.params.contactRate =
-      this.params.reproductionNumber * this.params.period
+    this.param.recoverRate = (1 - this.param.caseFatality) * (this.param.period)
+    this.param.disDeath = (-1) * this.param.caseFatality * this.param.period
+    this.param.incubationRate = this.param.incubation
+    this.param.contactRate =
+      this.param.reproductionNumber * this.param.period
   }
 
   calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      this.params.contactRate /
+      this.param.contactRate /
       this.var.population *
       this.compartment.prevalence
   }
@@ -641,7 +612,7 @@ class SEIRSModel extends BaseModel {
       reproductionNumber: 50,
       immunityPeriod: 50
     }
-    this.params = _.cloneDeep(this.defaultParams)
+    this.param = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
     this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
@@ -689,19 +660,19 @@ class SEIRSModel extends BaseModel {
   }
 
   calcExtraParams () {
-    this.params.recoverRate =
-      (1 - this.params.caseFatality) * (this.params.period)
-    this.params.incubationRate = this.params.incubation
-    this.params.disDeath = (-1) * this.params.caseFatality * this.params.period
-    this.params.contactRate =
-      this.params.reproductionNumber * this.params.period
-    this.params.immunityLossRate = 1 / this.params.immunityPeriod
+    this.param.recoverRate =
+      (1 - this.param.caseFatality) * (this.param.period)
+    this.param.incubationRate = this.param.incubation
+    this.param.disDeath = (-1) * this.param.caseFatality * this.param.period
+    this.param.contactRate =
+      this.param.reproductionNumber * this.param.period
+    this.param.immunityLossRate = 1 / this.param.immunityPeriod
   }
 
   calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      this.params.contactRate /
+      this.param.contactRate /
       this.var.population *
       this.compartment.prevalence
   }
@@ -742,7 +713,7 @@ class EbolaModel extends BaseModel {
       caseFatality: 0.7,
       preBurialPeriod: 3
     }
-    this.params = _.cloneDeep(this.defaultParams)
+    this.param = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
     this.paramEvents.push(['exposed', 'infectedEarly', 'incubationRate'])
@@ -801,34 +772,34 @@ class EbolaModel extends BaseModel {
   }
 
   calcExtraParams () {
-    this.params.incubationRate = this.params.latency
-    this.params.recoverRate1 =
-      (1 - this.params.caseFatality) * this.params.postDetection
-    this.params.recoverRate2 =
-      (1 - this.params.caseFatalityHosp) * this.params.postDetection
-    this.params.deathRate1 =
-      this.params.caseFatality * this.params.postDetection
-    this.params.deathRate2 = this.params.caseFatalityHosp * this.params.postDetection
-    this.params.burialRate = 1 / this.params.preBurialPeriod
-    this.params.foi = this.params.preDetection * (this.params.reproduction - (this.params.foiZero * (1 - this.params.ascerProb) +
-      this.params.foiTwo * this.params.ascerProb) / this.params.postDetection - (this.params.foiThree *
-      (this.params.caseFatalityHosp * (1 - this.params.ascerProb) + this.params.caseFatality * this.params.ascerProb) *
-      this.params.preBurialPeriod))
+    this.param.incubationRate = this.param.latency
+    this.param.recoverRate1 =
+      (1 - this.param.caseFatality) * this.param.postDetection
+    this.param.recoverRate2 =
+      (1 - this.param.caseFatalityHosp) * this.param.postDetection
+    this.param.deathRate1 =
+      this.param.caseFatality * this.param.postDetection
+    this.param.deathRate2 = this.param.caseFatalityHosp * this.param.postDetection
+    this.param.burialRate = 1 / this.param.preBurialPeriod
+    this.param.foi = this.param.preDetection * (this.param.reproduction - (this.param.foiZero * (1 - this.param.ascerProb) +
+      this.param.foiTwo * this.param.ascerProb) / this.param.postDetection - (this.param.foiThree *
+      (this.param.caseFatalityHosp * (1 - this.param.ascerProb) + this.param.caseFatality * this.param.ascerProb) *
+      this.param.preBurialPeriod))
   }
 
   calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-       (this.params.foi * this.compartment.prevalence + this.params.foiZero * this.compartment.infectedEarly +
-        this.params.foiTwo * this.compartment.hospitalised + this.params.foiThree * this.compartment.dead) /
+       (this.param.foi * this.compartment.prevalence + this.param.foiZero * this.compartment.infectedEarly +
+        this.param.foiTwo * this.compartment.hospitalised + this.param.foiThree * this.compartment.dead) /
         this.var.population
     /*
     console.log(this.var.rateForce)
     */
-    this.var.rateForce1 = (1 - this.params.ascerProb * (1 - this.compartment.hospitalised / this.params.hospitalCapacity)) *
-       this.params.preDetection
-    this.var.rateForce2 = this.params.ascerProb * (1 - this.compartment.hospitalised / this.params.hospitalCapacity) *
-       this.params.preDetection
+    this.var.rateForce1 = (1 - this.param.ascerProb * (1 - this.compartment.hospitalised / this.param.hospitalCapacity)) *
+       this.param.preDetection
+    this.var.rateForce2 = this.param.ascerProb * (1 - this.compartment.hospitalised / this.param.hospitalCapacity) *
+       this.param.preDetection
   }
 }
 

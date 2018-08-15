@@ -6,6 +6,10 @@ const d3 = require('d3')
 const topojson = require('topojson')
 
 /**
+ * A Rotating Globe widget that can be parameterized by
+ * country ID colors, using a value-mapped color scheme
+ * that is displayed in a legend.
+ *
  * https://jorin.me/d3-canvas-globe-hover/
  * http://bl.ocks.org/tlfrd/df1f1f705c7940a6a7c0dca47041fec8
  * https://bl.ocks.org/mbostock/7ea1dde508cec6d2d95306f92642bc42
