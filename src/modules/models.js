@@ -196,13 +196,17 @@ class BaseModel {
 
   /**
    * To be overridden. Initializations of compartments
-   * from this.param
+   * from this.param, used at the beginning of a run and typically
+   * called by this.initCompartments
    */
   initCompartmentsByParams () {
     this.compartment.prevalence = this.param.initPrevalence
     this.compartment.susceptible = this.param.initPopulation - this.param.initPrevalence
   }
 
+  /**
+   * Called before running a simulation
+   */
   initCompartments () {
     for (let key of this.keys) {
       this.compartment[key] = 0
@@ -210,6 +214,19 @@ class BaseModel {
     this.calcExtraParams()
     this.initCompartmentsByParams()
     this.checkEvents()
+  }
+
+  /**
+   * Takes user-input of intervention parameters to load into the model
+   * to calculate an intervention
+   * 
+   * @param [params] - a param folds a dictionary for a value and its bounds and step
+   */
+  applyIntervention (guiParams) {
+    for (let param of guiParams) {
+      this.param[param.key] = parseFloat(param.value)
+    }
+    this.calcExtraParams()
   }
 
   /**
@@ -493,13 +510,6 @@ class SirModel extends BaseModel {
 
   calcExtraParams () {
     this.param.contactRate = this.param.reproductionNumber * this.param.recoverRate
-  }
-
-  applyIntervention (guiParams) {
-    for (let param of guiParams) {
-      this.param[param.key] = parseFloat(param.value)
-    }
-    this.calcExtraParams()
   }
 
   calcVars () {

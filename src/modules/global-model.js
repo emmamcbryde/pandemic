@@ -81,9 +81,7 @@ class GlobalModel {
     for (let i of this.countryIndices) {
       let countryModel = _.cloneDeep(this.countryModel[i])
       intervention.countryModel[i] = countryModel
-      if ('applyIntervention' in countryModel) {
-        countryModel.applyIntervention(inputParams)
-      }
+      countryModel.applyIntervention(inputParams)
     }
     return intervention
   }

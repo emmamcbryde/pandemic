@@ -656,7 +656,6 @@ export default {
         .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(
         0, this.globalModel.times, this.globalModel.solution.prevalence)
-      console.log('Home.calculateRiskOfSourceCountry', this.globalModel.interventionDay, this.intervention)
       if (this.intervention) {
         this.chartWidgets.globalPrevalence.updateDataset(
           1, this.intervention.times, this.intervention.solution.prevalence)
