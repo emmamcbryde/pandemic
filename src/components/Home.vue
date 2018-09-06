@@ -334,7 +334,8 @@ import {models} from '../modules/models'
 import ChartWidget from '../modules/chart-widget'
 import {GlobalModel} from '../modules/global-model'
 
-const travelData = require('../data/travel')
+const flightData = require('../data/flight-data')
+const adjacentData = require('../data/adjacent-data')
 const worldData = require('../data/world')
 
 function waitForElement (selector) {
@@ -426,13 +427,36 @@ export default {
 
     this.mode = 'destination' // 'destination' or 'risk'
 
-    this.travelData = travelData
-    this.travelData.countries[177].population = 39000000
+    this.flightData = flightData
+    this.flightData.countries[177].population = 39000000
+
+    // Resultant data written to data_js_fname: {
+    //   'travel': [
+    //     # i'th country
+    //     [
+    //       ['AUS', 33, 444],
+    //       ...
+    //     ],
+    //     ...
+    //   ],
+    // ...
+    // ],
+    //   'series': [
+    //     ['AUS', 333.],
+    //     ...
+    //   ],
+    //     'countries': {
+    //     'name': 'Australia',
+    //       'coordinates': [333, 444],
+    //       'id': '781',
+    //       'population': 400000,
+    //   }
+    // }
 
     let countries = []
-    let nCountry = this.travelData.countries.length
+    let nCountry = this.flightData.countries.length
     for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
-      let country = travelData.countries[iCountry]
+      let country = flightData.countries[iCountry]
       let id = country.id
       let coordinates = country.coordinates
       if (coordinates && (id in this.globe.iCountryFromId)) {
@@ -446,6 +470,73 @@ export default {
     this.iSourceCountry = 0
 
     this.countryIndices = _.map(countries, 'iCountry')
+
+    function getICountryFromId (id) {
+      for (let country of countries) {
+        if (parseInt(id) === country.id) {
+          return country.iCountry
+        }
+      }
+      return null
+    }
+
+    this.adjacentData = adjacentData
+    this.adjacent = {}
+    // To produce this structure {
+    //   country_iso: [country_iso, ...],
+    //   ...
+    // }
+    for (let entry of this.adjacentData.neighbours) {
+      let key = getICountryFromId(entry.country)
+      if (_.isNil(key)) {
+        continue
+      }
+      this.adjacent[key] = _.reject(
+        _.map(entry.neighbours, getICountryFromId), _.isNil)
+      console.log('landNeighbours of',
+        this.getNameFromICountry(key),
+        _.map(this.adjacent[key], this.getNameFromICountry)
+      )
+    }
+
+    // The structure is [
+    //   ...,
+    //   // iFromCountry
+    //   [
+    //     ...,
+    //     // iToCountry
+    //     <travelPerDay>,
+    //     ...
+    //   ],
+    //   ...
+    // ]
+
+    this.travel = Array(nCountry)
+    for (let iCountryFrom of _.range(nCountry)) {
+      this.travel[iCountryFrom] = _.fill(Array(nCountry), 0)
+      for (let iCountryTo of this.countryIndices) {
+        this.travel[iCountryFrom][iCountryTo] =
+          this.flightData.travel[iCountryFrom][iCountryTo][1] / 28
+      }
+
+      // hack to simulate land neighbors
+      let maxFlightTravel = _.max(this.travel[iCountryFrom])
+      let landNeighbors = this.adjacent[iCountryFrom]
+      if (_.isNil(landNeighbors)) {
+        continue
+      }
+      for (let iCountryTo of landNeighbors) {
+        console.log(
+          'add due to land',
+          this.getNameFromICountry(iCountryFrom),
+          '->',
+          this.getNameFromICountry(iCountryTo),
+          maxFlightTravel)
+        this.travel[iCountryFrom][iCountryTo] += maxFlightTravel
+      }
+    }
+
+    console.log(this.travel)
 
     this.globalModel = new GlobalModel()
     this.globalModel.getTravelPerDay = this.getTravelPerDay
@@ -499,16 +590,16 @@ export default {
     },
 
     getSourceCountryId () {
-      return this.travelData.countries[this.iSourceCountry].id
+      return this.flightData.countries[this.iSourceCountry].id
     },
 
     getCountry (countryId) {
-      return _.find(this.travelData.countries, c => c.id === countryId)
+      return _.find(this.flightData.countries, c => c.id === countryId)
     },
 
     getICountry (countryId) {
-      for (let i in _.range(this.travelData.countries.length)) {
-        if (this.travelData.countries[i].id === countryId) {
+      for (let i in _.range(this.flightData.countries.length)) {
+        if (this.flightData.countries[i].id === countryId) {
           return i
         }
       }
@@ -516,22 +607,17 @@ export default {
     },
 
     getNameFromICountry (iCountry) {
-      return this.travelData.countries[iCountry].name
+      return this.flightData.countries[iCountry].name
     },
 
     getPrevalenceByCountryId () {
       let result = {}
       for (let iCountry of this.countryIndices) {
-        let id = this.travelData.countries[iCountry].id
+        let id = this.flightData.countries[iCountry].id
         let countryModel = this.globalModel.countryModel[iCountry]
         result[id] = countryModel.compartment.prevalence
       }
       return result
-    },
-
-    async asyncChangeMaxDays () {
-      await util.delay(20)
-      this.asyncCalculateRisk()
     },
 
     resize () {
@@ -544,16 +630,19 @@ export default {
 
     getTravelPerDay (iCountryFrom, iCountryTo) {
       // data is for Feb, 2015
-      return this.travelData.travel[iCountryFrom][iCountryTo][1] / 28
+      // let result = this.flightData.travel[iCountryFrom][iCountryTo][1] / 28
+      let result = this.travel[iCountryFrom][iCountryTo]
+      // console.log('getTravelPerDay', iCountryFrom, iCountryTo, result)
+      return result
     },
 
     getTravelValuesByCountryId () {
       let values = {}
-      let nCountry = this.travelData.countries.length
+      let nCountry = this.flightData.countries.length
       for (let jCountry = 0; jCountry < nCountry; jCountry += 1) {
         let value
         value = this.getTravelPerDay(this.iSourceCountry, jCountry)
-        let id = this.travelData.countries[jCountry].id
+        let id = this.flightData.countries[jCountry].id
         values[id] = value
       }
       return values
@@ -606,7 +695,7 @@ export default {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.importGuiParams(this.guiParams)
-        countryModel.param.initPopulation = travelData.countries[iCountry].population
+        countryModel.param.initPopulation = flightData.countries[iCountry].population
         if (this.iSourceCountry !== iCountry) {
           countryModel.param.initPrevalence = 0
         }
@@ -769,7 +858,7 @@ export default {
     },
 
     rotateToCountry (iCountry) {
-      let country = this.travelData.countries[iCountry]
+      let country = this.flightData.countries[iCountry]
       let id = country.id
       let coordinates = country.coordinates
       console.log('> Home.rotateToCountry', id, country.name, '' + coordinates)
@@ -798,7 +887,7 @@ export default {
       await util.delay(100)
       console.log('> Home.asyncSelectWatchCountry', util.jstr(this.iWatchCountry))
       this.updateWatchCountry()
-      let id = this.travelData.countries[this.iWatchCountry].id
+      let id = this.flightData.countries[this.iWatchCountry].id
       this.globe.iHighlight = this.globe.iCountryFromId[id]
       this.globe.drawHighlight()
       this.rotateToCountry(this.iWatchCountry)
@@ -880,9 +969,9 @@ export default {
       }
 
       if (this.mode === 'risk') {
-        let nCountry = this.travelData.countries.length
+        let nCountry = this.flightData.countries.length
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
-          let countryId = this.travelData.countries[iCountry].id
+          let countryId = this.flightData.countries[iCountry].id
           if (countryId === id) {
             let prevalence = this.globalModel.countryModel[iCountry].compartment.prevalence.toFixed(2)
             s += `<br>prevalence: ${prevalence}`

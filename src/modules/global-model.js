@@ -97,7 +97,8 @@ class GlobalModel {
         if (iFromCountry !== iToCountry) {
           fromCountry.transferTo(
             this.countryModel[iToCountry],
-            this.getTravelPerDay(iFromCountry, iToCountry))
+            this.getTravelPerDay(iFromCountry, iToCountry)
+          )
         }
       }
     }
@@ -130,7 +131,9 @@ class GlobalModel {
     for (let countryModel of _.values(this.countryModel)) {
       countryModel.runStep(this.dTimeInDay)
 
-      countryModel.solution.importIncidence.push(countryModel.var.importIncidence)
+      countryModel.solution.importIncidence.push(
+        countryModel.var.importIncidence
+      )
       this.vars.prevalence += countryModel.compartment.prevalence
       this.vars.incidence += _.last(countryModel.solution.incidence)
     }
