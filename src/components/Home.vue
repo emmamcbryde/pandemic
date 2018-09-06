@@ -107,6 +107,13 @@
               md-row
               md-vertical-align="center">
 
+              <md-switch
+                  v-model="isInterventionAllCountries"
+                  @change="asyncCalculateRisk"
+                  style="margin-right: 1em">
+                All Countries
+              </md-switch>
+
               <md-input-container
                 v-for="(entry, i) in interventionParams"
                 :key="i"
@@ -127,104 +134,110 @@
           </md-card>
 
           <md-card style="padding: 1em; margin-top: 1em">
-          <h3 class="md-title">
-            Prediction
-          </h3>
 
-          <md-layout
-            md-row
-            style="margin-top: -1em"
-            md-vertical-align="center">
+            <h3 class="md-title">
+              Prediction
+            </h3>
 
-            <md-radio
-              v-model="mode"
-              @change="asyncSelectMode('destination')"
-              md-value="destination">
-              <div
-                style="
-                display: inline;
-                height: 1em;
-                color: #02386F">
-                &block;
+            <md-layout
+              md-row
+              style="margin-top: -1em"
+              md-vertical-align="center">
+
+              <md-radio
+                v-model="mode"
+                @change="asyncSelectMode('destination')"
+                md-value="destination">
+                <div
+                  style="
+                  display: inline;
+                  height: 1em;
+                  color: #02386F">
+                  &block;
+                </div>
+                Destinations
+              </md-radio>
+
+              <span style="width:1em"></span>
+
+              <md-radio
+                v-model="mode"
+                @change="asyncSelectMode('risk')"
+                md-value="risk">
+                <div
+                  style="
+                  display: inline;
+                  height: 1em;
+                  color: #f0f">
+                  &block;
+                </div>
+                Risk
+              </md-radio>
+
+            </md-layout>
+
+            <md-layout
+              md-row
+              md-vertical-align="center">
+
+              Play &nbsp;
+              <md-switch
+                v-model="isLoop"
+                @change="toggleLoop">
+              </md-switch>
+
+              {{ days }} Day
+
+              <div style="
+                      flex: 1;
+                      margin-left: 0.5em;">
+                <vue-slider
+                  ref="slider"
+                  :interval="1"
+                  tooltip="none"
+                  @callback="asyncCalculateRisk()"
+                  :min="1"
+                  :max="getMaxDays"
+                  v-model="days"/>
               </div>
-              Destinations
-            </md-radio>
 
-            <span style="width:1em"></span>
+            </md-layout>
 
-            <md-radio
-              v-model="mode"
-              @change="asyncSelectMode('risk')"
-              md-value="risk">
-              <div
+            <md-layout
+              md-row
+              md-vertical-align="center">
+
+              <md-input-container
                 style="
-                display: inline;
-                height: 1em;
-                color: #f0f">
-                &block;
-              </div>
-              Risk
-            </md-radio>
+                    width: 80px;">
+                <label>Max Days</label>
+                <md-input
+                  v-model="maxDays"
+                  type="number"
+                  @change="asyncCalculateRisk()"/>
+              </md-input-container>
 
-          </md-layout>
+              <md-input-container
+                style="
+                    margin-left: 1em;
+                    width: 130px;">
+                <label>Max Prevalence</label>
+                <md-input
+                  v-model="maxPrevalence"
+                  type="number"
+                  @change="asyncCalculateRisk()"/>
+              </md-input-container>
 
-          <md-layout
-            md-row
-            md-vertical-align="center">
+            </md-layout>
 
-            Play &nbsp;
-            <md-switch
-              v-model="isLoop"
-              @change="toggleLoop">
-            </md-switch>
+          </md-card>
 
-            {{ days }} Day
+          <md-card
+            style="padding: 1em; margin-top: 1em">
 
-            <div style="
-                    flex: 1;
-                    margin-left: 0.5em;">
-              <vue-slider
-                ref="slider"
-                :interval="1"
-                tooltip="none"
-                @callback="asyncCalculateRisk()"
-                :min="1"
-                :max="getMaxDays"
-                v-model="days"/>
-            </div>
-
-          </md-layout>
-
-          <md-layout
-            md-row
-            md-vertical-align="center">
-
-            <md-input-container
-              style="
-                  width: 80px;">
-              <label>Max Days</label>
-              <md-input
-                v-model="maxDays"
-                type="number"
-                @change="asyncCalculateRisk()"/>
-            </md-input-container>
-
-            <md-input-container
-              style="
-                  margin-left: 1em;
-                  width: 130px;">
-              <label>Max Prevalence</label>
-              <md-input
-                v-model="maxPrevalence"
-                type="number"
-                @change="asyncCalculateRisk()"/>
-            </md-input-container>
-
-          </md-layout>
-
-          <div
-            v-show="mode === 'risk'"
-            style="width: 100%">
+            <h3 class="md-title">
+              Global Risk
+            </h3>
 
             <div>
               <div
@@ -244,13 +257,22 @@
               </md-layout>
             </div>
 
+          </md-card>
+
+          <md-card
+            style="padding: 1em; margin-top: 1em">
+
+            <h3 class="md-title">
+              Watch Country Risk
+            </h3>
+
             <md-layout md-row>
               <div
                 style="
-                display: inline;
-                height: 1em;
-                color: green;
-                margin-right: 1em; ">
+                  display: inline;
+                  height: 1em;
+                  color: green;
+                  margin-right: 1em; ">
                 &block;
               </div>
 
@@ -274,10 +296,24 @@
               </md-input-container>
             </md-layout>
 
-            <md-layout id="localCharts">
+            <div>
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #4ABDAC">
+                &block;
+              </div>
+              intervention
+            </div>
+
+            <md-layout
+              v-show="mode === 'risk'"
+              id="localCharts">
             </md-layout>
-          </div>
+
           </md-card>
+
         </md-layout>
       </div>
     </div>
@@ -405,6 +441,7 @@ export default {
       days: 1,
       maxDays: 60,
       maxPrevalence: 20,
+      isInterventionAllCountries: true,
       guiParams: [],
       interventionParams: [],
       isLoop: false,
@@ -429,7 +466,7 @@ export default {
 
     this.flightData = flightData
     this.flightData.countries[177].population = 39000000
-
+    // data is for Feb, 2015
     // Resultant data written to data_js_fname: {
     //   'travel': [
     //     # i'th country
@@ -526,17 +563,9 @@ export default {
         continue
       }
       for (let iCountryTo of landNeighbors) {
-        console.log(
-          'add due to land',
-          this.getNameFromICountry(iCountryFrom),
-          '->',
-          this.getNameFromICountry(iCountryTo),
-          maxFlightTravel)
         this.travel[iCountryFrom][iCountryTo] += maxFlightTravel
       }
     }
-
-    console.log(this.travel)
 
     this.globalModel = new GlobalModel()
     this.globalModel.getTravelPerDay = this.getTravelPerDay
@@ -629,11 +658,7 @@ export default {
     },
 
     getTravelPerDay (iCountryFrom, iCountryTo) {
-      // data is for Feb, 2015
-      // let result = this.flightData.travel[iCountryFrom][iCountryTo][1] / 28
-      let result = this.travel[iCountryFrom][iCountryTo]
-      // console.log('getTravelPerDay', iCountryFrom, iCountryTo, result)
-      return result
+      return this.travel[iCountryFrom][iCountryTo]
     },
 
     getTravelValuesByCountryId () {
@@ -721,8 +746,13 @@ export default {
       _.times(this.days, () => {
         this.globalModel.update()
         if (this.globalModel.time === this.globalModel.interventionDay) {
-          this.intervention = this.globalModel.makeIntervention(
-            this.interventionParams)
+          if (this.isInterventionAllCountries) {
+            this.intervention = this.globalModel.makeIntervention(
+              this.interventionParams)
+          } else {
+            this.intervention = this.globalModel.makeSingleCountryIntervention(
+              this.interventionParams, this.iSourceCountry)
+          }
         }
       })
 
