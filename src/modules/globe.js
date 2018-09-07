@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import $ from 'jquery'
-import {legendColor} from 'd3-svg-legend'
+import { legendColor } from 'd3-svg-legend'
 
 const d3 = require('d3')
 const topojson = require('topojson')
@@ -9,6 +9,11 @@ const topojson = require('topojson')
  * A Rotating Globe widget that can be parameterized by
  * country ID colors, using a value-mapped color scheme
  * that is displayed in a legend.
+ *
+ * Country borders are taken from
+ * Use world json from:
+ *   https://github.com/topojson/world-atlas
+ *   https://unpkg.com/world-atlas@1.1.4/world/110m.json
  *
  * Countries id use ISO numeric for each country
  *
@@ -56,7 +61,9 @@ class Globe {
     this.iHighlight = null
 
     this.countryFeatures = topojson.feature(
-      this.world, this.world.objects.countries).features
+      this.world,
+      this.world.objects.countries
+    ).features
 
     // look-up country from numeric ISO country ID
     this.iCountryFromId = {}
@@ -83,22 +90,24 @@ class Globe {
       this.values.push(null)
     }
 
-    this.pos = {x: 0, y: 0}
-    this.savePos = {x: 0, y: 0}
+    this.pos = { x: 0, y: 0 }
+    this.savePos = { x: 0, y: 0 }
     this.isMouseDown = false
 
     this.getCurrentSize()
 
-    this.projection = d3.geoOrthographic()
+    this.projection = d3
+      .geoOrthographic()
       .translate([this.centerX, this.centerY])
       .scale(this.scale)
       .clipAngle(90)
       .precision(0.6)
 
-    this.path = d3.geoPath()
-      .projection(this.projection)
+    this.path = d3.geoPath().projection(this.projection)
 
-    this.svg = d3.select(this.selector).append('svg')
+    this.svg = d3
+      .select(this.selector)
+      .append('svg')
       .attr('width', this.width)
       .attr('height', this.height)
       .on('mousedown', () => this.mousedown())
@@ -110,15 +119,17 @@ class Globe {
       .on('touchmove', () => this.mousemove())
 
     // draw the fill of sphere
-    this.svg.append('path')
-      .datum({type: 'Sphere'})
+    this.svg
+      .append('path')
+      .datum({ type: 'Sphere' })
       .attr('class', 'water')
       .style('fill', this.fillColor)
       .style('stroke', 'none')
       .attr('d', this.path)
 
     // draw the countries, add change the colors
-    this.svg.selectAll('.country')
+    this.svg
+      .selectAll('.country')
       .data(this.countryFeatures)
       .enter()
       .insert('path')
@@ -127,7 +138,8 @@ class Globe {
       .style('stroke', this.borderColor)
 
     // draw the country outlines
-    this.svg.selectAll('.highlightCountry')
+    this.svg
+      .selectAll('.highlightCountry')
       .data(this.countryFeatures)
       .enter()
       .insert('path')
@@ -137,17 +149,21 @@ class Globe {
       .style('stroke', 'none')
 
     // draw the encircling sphere
-    this.svg.append('path')
-      .datum({type: 'Sphere'})
+    this.svg
+      .append('path')
+      .datum({ type: 'Sphere' })
       .attr('class', 'water')
       .style('fill', 'none')
       .style('stroke', this.outerBorderColor)
       .attr('d', this.path)
 
-    this.tooltip = d3.select(this.selector).append('div')
+    this.tooltip = d3
+      .select(this.selector)
+      .append('div')
       .attr('class', 'countryTooltip')
 
-    this.svg.selectAll('path.country')
+    this.svg
+      .selectAll('path.country')
       .on('mouseover', (d, i) => {
         let id = this.countryFeatures[i].id
         let html = this.getCountryPopupHtml(id)
@@ -158,18 +174,14 @@ class Globe {
             .style('opacity', 1)
           this.moveTooltip()
         } else {
-          this.tooltip
-            .style('opacity', 0)
-            .style('display', 'none')
+          this.tooltip.style('opacity', 0).style('display', 'none')
         }
       })
       .on('mousemove', () => {
         this.moveTooltip()
       })
       .on('mouseout', () => {
-        this.tooltip
-          .style('opacity', 0)
-          .style('display', 'none')
+        this.tooltip.style('opacity', 0).style('display', 'none')
       })
       .on('dblclick', (d, i) => {
         let id = this.countryFeatures[i].id
@@ -185,12 +197,10 @@ class Globe {
     let elementId = element.attr('id')
     this.legendId = `${elementId}-legend`
 
-    element
-      .contextmenu(() => false)
-      .css({
-        'user-select': 'none',
-        'cursor': 'pointer'})
-      .append(`
+    element.contextmenu(() => false).css({
+      'user-select': 'none',
+      cursor: 'pointer'
+    }).append(`
         <div
           style="
           position: absolute;
@@ -221,8 +231,8 @@ class Globe {
 
   moveTooltip () {
     this.tooltip
-      .style('left', (d3.event.pageX + 7) + 'px')
-      .style('top', (d3.event.pageY - 15) + 'px')
+      .style('left', d3.event.pageX + 7 + 'px')
+      .style('top', d3.event.pageY - 15 + 'px')
   }
 
   setCountryValue (id, value) {
@@ -257,7 +267,10 @@ class Globe {
   }
 
   getCurrentSize () {
-    let rect = d3.select(this.selector).node().getBoundingClientRect()
+    let rect = d3
+      .select(this.selector)
+      .node()
+      .getBoundingClientRect()
     this.width = rect.width
     this.height = rect.height
     this.scale = Math.min(this.width, this.height) * this.scaleFactor
@@ -267,20 +280,16 @@ class Globe {
 
   resize () {
     this.getCurrentSize()
-    this.svg
-      .attr('width', this.width)
-      .attr('height', this.height)
-    this.projection
-      .translate([this.centerX, this.centerY])
-      .scale(this.scale)
+    this.svg.attr('width', this.width).attr('height', this.height)
+    this.projection.translate([this.centerX, this.centerY]).scale(this.scale)
     this.draw()
   }
 
   draw () {
-    this.svg.selectAll('path.water')
-      .attr('d', this.path)
+    this.svg.selectAll('path.water').attr('d', this.path)
     // draw country fills
-    this.svg.selectAll('path.country')
+    this.svg
+      .selectAll('path.country')
       .attr('d', this.path)
       .style('fill', (d, i) => this.colors[i])
       .style('stroke', this.borderColor)
@@ -289,7 +298,8 @@ class Globe {
 
   drawHighlight () {
     // draw the highlighted country outline
-    this.svg.selectAll('path.highlightCountry')
+    this.svg
+      .selectAll('path.highlightCountry')
       .attr('d', this.path)
       .style('stroke', (d, i) => {
         if (i === this.iHighlight) {
@@ -322,7 +332,8 @@ class Globe {
     if (maxValue === null) {
       maxValue = Math.max.apply(null, this.values)
     }
-    this.paletteScale = d3.scaleLinear()
+    this.paletteScale = d3
+      .scaleLinear()
       .domain([0, maxValue])
       .range([minColor, maxColor])
 
@@ -362,14 +373,14 @@ class Globe {
       y = event.clientY
     }
 
-    let rect = d3.select(this.selector).node().getBoundingClientRect()
+    let rect = d3
+      .select(this.selector)
+      .node()
+      .getBoundingClientRect()
 
-    x += document.body.scrollLeft +
-      document.documentElement.scrollLeft -
-      rect.left
-    y += document.body.scrollTop +
-      document.documentElement.scrollTop -
-      rect.top
+    x +=
+      document.body.scrollLeft + document.documentElement.scrollLeft - rect.left
+    y += document.body.scrollTop + document.documentElement.scrollTop - rect.top
 
     this.pos.x = x
     this.pos.y = y
@@ -427,8 +438,7 @@ class Globe {
       .shapeWidth(20)
       .shapeHeight(20)
       .labelOffset(8)
-    svg.append('g')
-      .call(colorLegend)
+    svg.append('g').call(colorLegend)
   }
 }
 
