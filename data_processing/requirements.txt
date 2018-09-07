@@ -1,6 +1,0 @@
-pycountry>=18.5.26
-xlrd>=1.1.0
-numpy>=1.14.0
-geopy>=1.16.0
-beautifulsoup4
-pyyaml

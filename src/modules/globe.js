@@ -10,11 +10,45 @@ const topojson = require('topojson')
  * country ID colors, using a value-mapped color scheme
  * that is displayed in a legend.
  *
- * https://jorin.me/d3-canvas-globe-hover/
- * http://bl.ocks.org/tlfrd/df1f1f705c7940a6a7c0dca47041fec8
- * https://bl.ocks.org/mbostock/7ea1dde508cec6d2d95306f92642bc42
+ * Countries id use ISO numeric for each country
+ *
+ * Colors for countries are either set implicitly with
+ * country values:
+ *   this.setCountryValue (id, value)
+ * Or directly with:
+ *   this.setCountryColor (color)
+ * where color is a hex-string color
+ *
+ * Allows a highlighted country that is drawn with
+ * a different border color
+ *
+ * Resize function that can be called by your resize function
+ *
+ * Zoom based on this.scaleFactor
+ *
+ * Automatic legend from maximum values to 0
+ * and mapped from light-grey to this.fillColor
+ *
+ * Overrridable methods:
+ *   - this.clickCountry (id)
+ *   - this.dbclickCoutnry (id)
+ *   - this.getCountryPopupHtml (id)
+ *
+ * Based on the following D3 globe code snippets:
+ *  - https://jorin.me/d3-canvas-globe-hover/
+ *  - http://bl.ocks.org/tlfrd/df1f1f705c7940a6a7c0dca47041fec8
+ *  - https://bl.ocks.org/mbostock/7ea1dde508cec6d2d95306f92642bc42
  */
 class Globe {
+  /**
+   *
+   *
+   * Use world json from:
+   *   https://unpkg.com/world-atlas@1.1.4/world/110m.json
+   *
+   * @param world - topojson data structure to be loaded in from geojson
+   * @param selector - jquery div tag to insert the globe
+   */
   constructor (world, selector) {
     this.world = world
     this.selector = selector
@@ -35,6 +69,7 @@ class Globe {
     this.borderColor = '#EEE'
     this.outerBorderColor = '#BBD'
     this.fillColor = 'aliceblue'
+    this.highlightColor = 'green'
 
     this.colors = []
     this.borderColors = []
@@ -146,7 +181,11 @@ class Globe {
       })
 
     // build the legend
-    $(this.selector)
+    let element = $(this.selector)
+    let elementId = element.attr('id')
+    this.legendId = `${elementId}-legend`
+
+    element
       .contextmenu(() => false)
       .css({
         'user-select': 'none',
@@ -159,7 +198,7 @@ class Globe {
           padding-left: 10px;
           user-select: none;
           pointer-events: none;">
-          <svg id="legend"></svg>
+          <svg id="${this.legendId}"></svg>
         </div>
       `)
   }
@@ -254,7 +293,7 @@ class Globe {
       .attr('d', this.path)
       .style('stroke', (d, i) => {
         if (i === this.iHighlight) {
-          return 'green'
+          return this.highlightColor
         } else {
           return 'none'
         }
@@ -379,7 +418,7 @@ class Globe {
   }
 
   drawLegend () {
-    let svg = d3.select('#legend')
+    let svg = d3.select(`#${this.legendId}`)
     svg.html('')
     let colorLegend = legendColor()
       .labelFormat(d3.format('.0f'))
