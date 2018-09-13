@@ -12,9 +12,8 @@ import config from '../config'
 axios.defaults.withCredentials = true
 
 export default {
-
-  async rpcRun (method, ...params) {
-    let payload = {method, params, jsonrpc: '2.0'}
+  async rpcRun(method, ...params) {
+    let payload = { method, params, jsonrpc: '2.0' }
 
     console.log('> rpc.rpcRun', method, ...params)
 
@@ -31,7 +30,7 @@ export default {
     }
   },
 
-  async rpcUpload (method, files, ...params) {
+  async rpcUpload(method, files, ...params) {
     let formData = new FormData()
     formData.append('method', method)
     formData.append('params', JSON.stringify(params))
@@ -44,7 +43,10 @@ export default {
     console.log('> rpc.rpcUpoad', method, ...params, _.map(files, 'name'))
 
     try {
-      let response = await axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
+      let response = await axios.post(
+        `${config.apiUrl}/api/rpc-upload`,
+        formData
+      )
       return response.data
     } catch (e) {
       return {
@@ -55,5 +57,4 @@ export default {
       }
     }
   }
-
 }

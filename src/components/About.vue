@@ -1,7 +1,7 @@
 <template>
   <md-layout style="margin: 15px">
     <md-card
-        style="
+      style="
           max-width: 600px;
           padding: 2em;">
       <h1 class="md-display-1">
@@ -19,13 +19,13 @@
       long-term recurrent effects are yet to set in. </p>
 
       <p> It is developed as part of <a
-      href="https://www.aithm.jcu.edu.au/research/tropical-partners/overview-j9frv6/">Tropical
-      Partnerships to Enhance Surveillance and Response to Infectious
-      Diseases"</a>, based at the <a
-      href="https://www.aithm.jcu.edu.au/">Australian Institute of
-      Tropical Health & Medicine</a>. Specifically, it falls under <a
-      href="https://www.aithm.jcu.edu.au/research/tropical-partners/themes/theme-2/">Theme
-      2b</a>. </p>
+        href="https://www.aithm.jcu.edu.au/research/tropical-partners/overview-j9frv6/">Tropical
+        Partnerships to Enhance Surveillance and Response to Infectious
+        Diseases"</a>, based at the <a
+          href="https://www.aithm.jcu.edu.au/">Australian Institute of
+        Tropical Health & Medicine</a>. Specifically, it falls under <a
+          href="https://www.aithm.jcu.edu.au/research/tropical-partners/themes/theme-2/">Theme
+        2b</a>. </p>
 
       <p>
         Development team:
@@ -41,5 +41,5 @@
 </template>
 
 <script>
-export default {name: 'About'}
+export default { name: 'About' }
 </script>

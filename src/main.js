@@ -18,15 +18,15 @@ Vue.config.productionTip = false
 Vue.use(VueMaterial)
 document.title = config.title
 
-async function init () {
+async function init() {
   if (config.isUser) {
     await auth.restoreLastUser()
   }
   return new Vue({
     el: '#app',
     router,
-    template: '<App/>',
-    components: {App}
+    components: { App },
+    template: '<App/>'
   })
 }
 

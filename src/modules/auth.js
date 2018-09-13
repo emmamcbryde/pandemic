@@ -14,7 +14,7 @@ import sha244 from 'crypto-js/sha224'
 import util from '../modules/util'
 import rpc from '../modules/rpc'
 
-function hashPassword (password) {
+function hashPassword(password) {
   return sha244(password).toString()
 }
 
@@ -26,7 +26,7 @@ let user = {
 /**
  * Converts user.rawPassword to hashed user.password
  */
-function hashUserPassword (user) {
+function hashUserPassword(user) {
   let result = _.cloneDeep(user)
   if (!result.password && result.rawPassword) {
     result.password = hashPassword(result.rawPassword)
@@ -39,7 +39,6 @@ function hashUserPassword (user) {
 }
 
 export default {
-
   user: user,
 
   /**
@@ -49,7 +48,7 @@ export default {
    *
    * @param {Object} newUser - {email, password, rawPassword}
    */
-  async login (newUser) {
+  async login(newUser) {
     let payload = hashUserPassword(newUser)
     console.log('> auth.login', payload)
     let response = await rpc.rpcRun('login', payload)
@@ -63,13 +62,13 @@ export default {
     return response
   },
 
-  register (newUser) {
+  register(newUser) {
     let payload = hashUserPassword(newUser)
     console.log('> auth.register', payload)
     return rpc.rpcRun('publicRegisterUser', payload)
   },
 
-  async update (editUser) {
+  async update(editUser) {
     let payload = hashUserPassword(editUser)
     console.log('> auth.update', util.jstr(payload))
     let response = await rpc.rpcRun('updateUser', payload)
@@ -80,13 +79,13 @@ export default {
     return response
   },
 
-  async forceUpdate (editUser) {
+  async forceUpdate(editUser) {
     let payload = hashUserPassword(editUser)
     console.log('> auth.forceUpdate', util.jstr(payload))
     return rpc.rpcRun('publicForceUpdatePassword', payload)
   },
 
-  async restoreLastUser () {
+  async restoreLastUser() {
     let lastUser = JSON.parse(localStorage.getItem('user'))
     console.log('> auth.restoreLastUser from localStorage', lastUser)
     if (lastUser) {
@@ -94,7 +93,7 @@ export default {
     }
   },
 
-  logout () {
+  logout() {
     localStorage.removeItem('user')
     user.authenticated = false
     return rpc.rpcRun('logout')

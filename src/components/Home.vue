@@ -6,68 +6,43 @@
       height: calc(100vh - 48px);
       width: calc(100vw);">
 
-    <div style="height: calc(100vh - 48px); width: 50%">
-      <div style="overflow-y: scroll; height: calc(100vh - 48px); padding: 1em;">
+    <div
+      style="
+        height: calc(100vh - 48px);
+        width: 50%">
+
+      <div
+        style="
+          overflow-y: scroll;
+          height: calc(100vh - 48px);
+          padding: 1em;">
+
         <md-layout md-column>
 
           <md-card style="padding: 1em">
 
             <h3 class="md-title">Model Parameters</h3>
 
-            <md-layout md-row md-vertical-align="center">
-
-              <div
-                style="
-                    display: inline;
-                    color: red;
-                    font-size: 1.5em;
-                    line-height: 1em;
-                    height: 1em;
-                    min-height: 1em;
-                    margin-right: 0.2em">
-                &block;
-              </div>
+            <md-layout 
+              md-row 
+              md-vertical-align="center">
 
               <md-input-container
-                style="
-                    padding-left: 0.2em;
-                    width: 160px;
-                    margin-right: 1em">
-                <label>
-                  Source Country
-                </label>
-                <md-select
-                  name="country"
-                  id="country"
-                  v-model="iSourceCountry">
-                  <md-option
-                    :value="country.iCountry"
-                    v-for="(country, i) in selectableCountries"
-                    :key="i"
-                    @selected="asyncSelectSourceCountry()">
-                    {{country.name}}
-                  </md-option>
-                </md-select>
-              </md-input-container>
-
-              <md-input-container
-                style="
-                      margin-right: 1em;
-                      width: 120px">
+                style="margin-right: 1em;">
                 <label>
                   Model
                 </label>
                 <md-select
-                  style="width: 120px"
-                  name="modelType"
                   id="modelType"
-                  v-model="modelType">
+                  v-model="modelType"
+                  style="width: 400px"
+                  name="modelType">
                   <md-option
-                    :value="modelType"
                     v-for="(modelType, i) in modelTypes"
+                    :value="modelType"
                     :key="i"
                     @selected="asyncSelectNewModel">
-                    {{modelType}}
+                    {{ modelType }}
                   </md-option>
                 </md-select>
               </md-input-container>
@@ -78,18 +53,51 @@
               md-row
               md-vertical-align="center">
 
+              <div
+                style="
+                  display: inline;
+                  color: red;
+                  font-size: 1.5em;
+                  line-height: 1em;
+                  height: 1em;
+                  min-height: 1em;
+                  margin-right: 0.2em">
+                &block;
+              </div>
+
+              <md-input-container
+                style="
+                  padding-left: 0.2em;
+                  width: 160px;
+                  margin-right: 1em">
+                <label>
+                  Source Country
+                </label>
+                <md-select
+                  id="country"
+                  v-model="iSourceCountry"
+                  name="country">
+                  <md-option
+                    v-for="(country, i) in selectableCountries"
+                    :value="country.iCountry"
+                    :key="i"
+                    @selected="asyncSelectSourceCountry()">
+                    {{ country.name }}
+                  </md-option>
+                </md-select>
+              </md-input-container>
+
               <md-input-container
                 v-for="(entry, i) in guiParams"
                 :key="i"
                 style="
-                    margin-right: 1em;
-                    width: 100px;">
-                <label>{{entry.label}}</label>
+                    margin-right: 1em;">
+                <label>{{ entry.label }}</label>
                 <md-input
                   v-model="entry.value"
+                  :step="entry.step"
                   type="number"
-                  min = "0"
-                  :step = "entry.step"
+                  min="0"
                   @change="asyncCalculateRisk"/>
               </md-input-container>
 
@@ -108,9 +116,9 @@
               md-vertical-align="center">
 
               <md-switch
-                  v-model="isInterventionAllCountries"
-                  @change="asyncCalculateRisk"
-                  style="margin-right: 1em">
+                v-model="isInterventionAllCountries"
+                style="margin-right: 1em"
+                @change="asyncCalculateRisk">
                 All Countries
               </md-switch>
 
@@ -118,14 +126,14 @@
                 v-for="(entry, i) in interventionParams"
                 :key="i"
                 style="
-                    margin-right: 1em;
-                    width: 100px;">
-                <label>{{entry.label}}</label>
+                  margin-right: 1em;
+                  width: 100px;">
+                <label>{{ entry.label }}</label>
                 <md-input
                   v-model="entry.value"
+                  :step="entry.step"
                   type="number"
-                  min = "0"
-                  :step = "entry.step"
+                  min="0"
                   @change="asyncCalculateRisk"/>
               </md-input-container>
 
@@ -136,69 +144,32 @@
           <md-card style="padding: 1em; margin-top: 1em">
 
             <h3 class="md-title">
-              Prediction
+              Model the Pandemic over Time
             </h3>
 
             <md-layout
               md-row
-              style="margin-top: -1em"
               md-vertical-align="center">
 
-              <md-radio
-                v-model="mode"
-                @change="asyncSelectMode('destination')"
-                md-value="destination">
-                <div
-                  style="
-                  display: inline;
-                  height: 1em;
-                  color: #02386F">
-                  &block;
-                </div>
-                Destinations
-              </md-radio>
-
-              <span style="width:1em"></span>
-
-              <md-radio
-                v-model="mode"
-                @change="asyncSelectMode('risk')"
-                md-value="risk">
-                <div
-                  style="
-                  display: inline;
-                  height: 1em;
-                  color: #f0f">
-                  &block;
-                </div>
-                Risk
-              </md-radio>
-
-            </md-layout>
-
-            <md-layout
-              md-row
-              md-vertical-align="center">
-
-              Play &nbsp;
+              Animate &nbsp;
               <md-switch
                 v-model="isLoop"
-                @change="toggleLoop">
-              </md-switch>
+                @change="toggleLoop"/>
 
               {{ days }} Day
 
-              <div style="
+              <div 
+                style="
                       flex: 1;
                       margin-left: 0.5em;">
                 <vue-slider
                   ref="slider"
                   :interval="1"
-                  tooltip="none"
-                  @callback="asyncCalculateRisk()"
                   :min="1"
                   :max="getMaxDays"
-                  v-model="days"/>
+                  v-model="days"
+                  tooltip="none"
+                  @callback="asyncCalculateRisk()"/>
               </div>
 
             </md-layout>
@@ -209,7 +180,7 @@
 
               <md-input-container
                 style="
-                    width: 80px;">
+                  width: 80px;">
                 <label>Max Days</label>
                 <md-input
                   v-model="maxDays"
@@ -219,8 +190,8 @@
 
               <md-input-container
                 style="
-                    margin-left: 1em;
-                    width: 130px;">
+                  margin-left: 1em;
+                  width: 130px;">
                 <label>Max Prevalence</label>
                 <md-input
                   v-model="maxPrevalence"
@@ -247,14 +218,22 @@
                   color: #4ABDAC">
                 &block;
               </div>
+              model
+              &nbsp;
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #FC4A1A">
+                &block;
+              </div>
               intervention
             </div>
 
             <div
               v-show="mode === 'risk'"
               style="width: 100%">
-              <md-layout id="globalCharts">
-              </md-layout>
+              <md-layout id="globalCharts"/>
             </div>
 
           </md-card>
@@ -282,15 +261,15 @@
                   Watch Country
                 </label>
                 <md-select
-                  name="country"
                   id="country"
-                  v-model="iWatchCountry">
+                  v-model="iWatchCountry"
+                  name="country">
                   <md-option
-                    :value="country.iCountry"
                     v-for="(country, i) in selectableCountries"
+                    :value="country.iCountry"
                     :key="i"
                     @selected="asyncSelectWatchCountry()">
-                    {{country.name}}
+                    {{ country.name }}
                   </md-option>
                 </md-select>
               </md-input-container>
@@ -304,13 +283,21 @@
                   color: #4ABDAC">
                 &block;
               </div>
+              model
+              &nbsp;
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #FC4A1A">
+                &block;
+              </div>
               intervention
             </div>
 
             <md-layout
               v-show="mode === 'risk'"
-              id="localCharts">
-            </md-layout>
+              id="localCharts"/>
 
           </md-card>
 
@@ -318,15 +305,58 @@
       </div>
     </div>
 
-    <div style="height: calc(100vh - 48px); flex: 1; border-left: 1px solid #CCC">
-      <md-layout style="overflow: scroll; height: calc(100vh - 48px);">
+    <div
+      style="height: calc(100vh - 48px); flex: 1; border-left: 1px solid #CCC">
+
+      <md-layout
+        style="overflow: scroll; height: calc(100vh - 48px); padding: 1em">
+
+        <md-card style="padding: 0.5em;">
+
+          <md-layout
+            md-row
+            md-vertical-align="center">
+
+            <md-radio
+              v-model="mode"
+              md-value="destination"
+              @change="asyncSelectMode('destination')">
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #02386F">
+                &block;
+              </div>
+              Travel From Source
+            </md-radio>
+
+            <span style="width:1em"/>
+
+            <md-radio
+              v-model="mode"
+              md-value="risk"
+              @change="asyncSelectMode('risk')">
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #f0f">
+                &block;
+              </div>
+              Prevalence (from Model)
+            </md-radio>
+
+          </md-layout>
+        </md-card>
+
         <div
           id="main"
           style="
             background-color: white;
             height: 100%;
-            width: 100%;">
-        </div>
+            width: 100%;"/>
+
       </md-layout>
     </div>
 
@@ -335,26 +365,30 @@
 </template>
 
 <style>
-  html, body {
-    overflow: hidden;
-    position: fixed;
-  }
-  .countryTooltip {
-    position: absolute;
-    display: none;
-    pointer-events: none;
-    background: #fff;
-    padding: 5px;
-    text-align: left;
-    border: solid #ccc 1px;
-    color: #666;
-    font-size: 14px;
-    font-family: sans-serif;
-  }
-  .chart {
-    width: 250px;
-    height: 130px;
-  }
+html,
+body {
+  overflow: hidden;
+  position: fixed;
+}
+
+.countryTooltip {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+  background: #fff;
+  padding: 5px;
+  text-align: left;
+  border: solid #ccc 1px;
+  color: #666;
+  font-size: 14px;
+  font-family: sans-serif;
+}
+
+.chart {
+  width: 250px;
+  height: 200px;
+  margin-bottom: 1.5em;
+}
 </style>
 
 <script>
@@ -366,17 +400,17 @@ import vueSlider from 'vue-slider-component'
 
 import util from '../modules/util'
 import Globe from '../modules/globe'
-import {models} from '../modules/models'
+import { models } from '../modules/models'
 import ChartWidget from '../modules/chart-widget'
-import {GlobalModel} from '../modules/global-model'
+import { GlobalModel } from '../modules/global-model'
 
 const flightData = require('../data/flight-data')
 const adjacentData = require('../data/adjacent-data')
 const worldData = require('../data/world')
 
-function waitForElement (selector) {
+function waitForElement(selector) {
   return new Promise(resolve => {
-    function loop () {
+    function loop() {
       let $element = $(selector)
       if ($element.length) {
         resolve($element)
@@ -384,11 +418,12 @@ function waitForElement (selector) {
         window.setTimeout(loop, 50)
       }
     }
+
     loop()
   })
 }
 
-function acumulateValues (vals) {
+function acumulateValues(vals) {
   let result = []
   for (let i of _.range(vals.length)) {
     let val = _.sum(vals.slice(0, i + 1))
@@ -397,18 +432,19 @@ function acumulateValues (vals) {
   return result
 }
 
-function convertLabel (val) {
+function convertLabel(val) {
   val = parseFloat(val)
   if (val > 1) {
     return numeral(val).format('0a')
-  } if (val === 0) {
+  }
+  if (val === 0) {
     return '0'
   } else {
     return numeral(val).format('0.0[000000]')
   }
 }
 
-function copyArray (dest, source) {
+function copyArray(dest, source) {
   dest.length = 0
   for (let v of source) {
     dest.push(v)
@@ -416,10 +452,9 @@ function copyArray (dest, source) {
 }
 
 export default {
-
   id: 'home',
 
-  components: {vueSlider},
+  components: { vueSlider },
 
   /**
    * There are three indexes
@@ -431,7 +466,7 @@ export default {
    * the correct variable names.
    */
 
-  data () {
+  data() {
     let modelTypes = _.map(models, 'name')
     return {
       selectableCountries: [],
@@ -450,7 +485,17 @@ export default {
     }
   },
 
-  async mounted () {
+  computed: {
+    /**
+     * Needed as md-input corrupts this.maxDays into string
+     * @returns {number}
+     */
+    getMaxDays() {
+      return parseFloat(this.maxDays)
+    }
+  },
+
+  async mounted() {
     this.isRunning = true
 
     this.$element = $('#main')
@@ -496,10 +541,10 @@ export default {
       let country = flightData.countries[iCountry]
       let id = country.id
       let coordinates = country.coordinates
-      if (coordinates && (id in this.globe.iCountryFromId)) {
+      if (coordinates && id in this.globe.iCountryFromId) {
         let name = country.name
         let population = country.population
-        countries.push({name, iCountry, id, population})
+        countries.push({ name, iCountry, id, population })
       }
     }
     this.selectableCountries = _.sortBy(countries, a => a.name)
@@ -508,7 +553,7 @@ export default {
 
     this.countryIndices = _.map(countries, 'iCountry')
 
-    function getICountryFromId (id) {
+    function getICountryFromId(id) {
       for (let country of countries) {
         if (parseInt(id) === country.id) {
           return country.iCountry
@@ -529,8 +574,11 @@ export default {
         continue
       }
       this.adjacent[key] = _.reject(
-        _.map(entry.neighbours, getICountryFromId), _.isNil)
-      console.log('landNeighbours of',
+        _.map(entry.neighbours, getICountryFromId),
+        _.isNil
+      )
+      console.log(
+        'landNeighbours of',
         this.getNameFromICountry(key),
         _.map(this.adjacent[key], this.getNameFromICountry)
       )
@@ -590,18 +638,8 @@ export default {
     this.isRunning = false
   },
 
-  computed: {
-    /**
-     * Needed as md-input corrupts this.maxDays into string
-     * @returns {number}
-     */
-    getMaxDays () {
-      return parseFloat(this.maxDays)
-    }
-  },
-
   methods: {
-    async asyncMakeChartWidget (parentSelector, id) {
+    async asyncMakeChartWidget(parentSelector, id) {
       let $parent = $(parentSelector)
       await waitForElement($parent)
       $parent.append($(`<div id="${id}" class="chart">`))
@@ -618,15 +656,15 @@ export default {
       return selector
     },
 
-    getSourceCountryId () {
+    getSourceCountryId() {
       return this.flightData.countries[this.iSourceCountry].id
     },
 
-    getCountry (countryId) {
+    getCountry(countryId) {
       return _.find(this.flightData.countries, c => c.id === countryId)
     },
 
-    getICountry (countryId) {
+    getICountry(countryId) {
       for (let i in _.range(this.flightData.countries.length)) {
         if (this.flightData.countries[i].id === countryId) {
           return i
@@ -635,11 +673,11 @@ export default {
       return null
     },
 
-    getNameFromICountry (iCountry) {
+    getNameFromICountry(iCountry) {
       return this.flightData.countries[iCountry].name
     },
 
-    getPrevalenceByCountryId () {
+    getPrevalenceByCountryId() {
       let result = {}
       for (let iCountry of this.countryIndices) {
         let id = this.flightData.countries[iCountry].id
@@ -649,7 +687,7 @@ export default {
       return result
     },
 
-    resize () {
+    resize() {
       let position = this.$element.position()
       this.$element.height(window.innerHeight - position.top)
       if (this.globe) {
@@ -657,11 +695,11 @@ export default {
       }
     },
 
-    getTravelPerDay (iCountryFrom, iCountryTo) {
+    getTravelPerDay(iCountryFrom, iCountryTo) {
       return this.travel[iCountryFrom][iCountryTo]
     },
 
-    getTravelValuesByCountryId () {
+    getTravelValuesByCountryId() {
       let values = {}
       let nCountry = this.flightData.countries.length
       for (let jCountry = 0; jCountry < nCountry; jCountry += 1) {
@@ -673,7 +711,7 @@ export default {
       return values
     },
 
-    setNewEpiModel () {
+    setNewEpiModel() {
       let oldInputParams = {}
       for (let paramEntry of this.guiParams) {
         oldInputParams[paramEntry.key] = paramEntry.value
@@ -693,9 +731,15 @@ export default {
 
       let sourceCountryName = this.getNameFromICountry(this.iSourceCountry)
       this.globalModel.setCountryModel(
-        this.countryIndices, ModelClass, sourceCountryName)
+        this.countryIndices,
+        ModelClass,
+        sourceCountryName
+      )
       copyArray(this.guiParams, this.globalModel.getGuiParams())
-      copyArray(this.interventionParams, this.globalModel.getInterventionParams())
+      copyArray(
+        this.interventionParams,
+        this.globalModel.getInterventionParams()
+      )
 
       for (let paramEntry of this.guiParams) {
         if (paramEntry.key in oldInputParams) {
@@ -716,11 +760,12 @@ export default {
       }
     },
 
-    parameterizeGlobalModelFromInput () {
+    parameterizeGlobalModelFromInput() {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.importGuiParams(this.guiParams)
-        countryModel.param.initPopulation = flightData.countries[iCountry].population
+        countryModel.param.initPopulation =
+          flightData.countries[iCountry].population
         if (this.iSourceCountry !== iCountry) {
           countryModel.param.initPrevalence = 0
         }
@@ -728,13 +773,16 @@ export default {
 
       this.intervention = null
       this.globalModel.interventionDay = null
-      let entry = _.find(this.interventionParams, e => e.key === 'interventionDay')
+      let entry = _.find(
+        this.interventionParams,
+        e => e.key === 'interventionDay'
+      )
       if (entry) {
         this.globalModel.interventionDay = parseInt(entry.value)
       }
     },
 
-    calculateRiskOfSourceCountry () {
+    calculateRiskOfSourceCountry() {
       this.parameterizeGlobalModelFromInput()
 
       this.globalModel.clearSolutions()
@@ -748,10 +796,13 @@ export default {
         if (this.globalModel.time === this.globalModel.interventionDay) {
           if (this.isInterventionAllCountries) {
             this.intervention = this.globalModel.makeIntervention(
-              this.interventionParams)
+              this.interventionParams
+            )
           } else {
             this.intervention = this.globalModel.makeSingleCountryIntervention(
-              this.interventionParams, this.iSourceCountry)
+              this.interventionParams,
+              this.iSourceCountry
+            )
           }
         }
       })
@@ -769,34 +820,46 @@ export default {
         chart.updateDataset(1, [], [])
       }
 
-      this.chartWidgets.globalPrevalence
-        .setTitle('Global Prevalence')
-      this.chartWidgets.globalPrevalence
-        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.globalPrevalence.setTitle('Global Prevalence')
+      this.chartWidgets.globalPrevalence.setXLabel('Time (days)')
+      this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(
-        0, this.globalModel.times, this.globalModel.solution.prevalence)
+        0,
+        this.globalModel.times,
+        this.globalModel.solution.prevalence
+      )
       if (this.intervention) {
         this.chartWidgets.globalPrevalence.updateDataset(
-          1, this.intervention.times, this.intervention.solution.prevalence)
+          1,
+          this.intervention.times,
+          this.intervention.solution.prevalence
+        )
       }
 
-      this.chartWidgets.cumulativeIncidence
-        .setTitle('Global Cumulative Incidence')
-      this.chartWidgets.cumulativeIncidence
-        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.cumulativeIncidence.setTitle(
+        'Global Cumulative Incidence'
+      )
+      this.chartWidgets.cumulativeIncidence.setXLabel('Time (days)')
+      this.chartWidgets.cumulativeIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       let values = acumulateValues(this.globalModel.solution.incidence)
       this.chartWidgets.cumulativeIncidence.updateDataset(
-        0, this.globalModel.times, values)
+        0,
+        this.globalModel.times,
+        values
+      )
       if (this.intervention) {
         let startIncidence = values[this.globalModel.interventionDay]
         let newValues = acumulateValues(this.intervention.solution.incidence)
         newValues = _.map(newValues, v => v + startIncidence)
         this.chartWidgets.cumulativeIncidence.updateDataset(
-          1, this.intervention.times, newValues)
+          1,
+          this.intervention.times,
+          newValues
+        )
       }
     },
 
-    updateWatchCountry () {
+    updateWatchCountry() {
       if (this.iWatchCountry < 0) {
         return
       }
@@ -809,48 +872,65 @@ export default {
 
       let interventionSolution = null
       if (this.intervention) {
-        interventionSolution = this.intervention.countryModel[this.iWatchCountry].solution
+        interventionSolution = this.intervention.countryModel[
+          this.iWatchCountry
+        ].solution
       }
 
-      this.chartWidgets.prevalence
-        .setTitle('Prevalence')
-      this.chartWidgets.prevalence
-        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.prevalence.setTitle('Prevalence')
+      this.chartWidgets.prevalence.setXLabel('Time (days)')
+      this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.prevalence.updateDataset(
-        0, this.globalModel.times, solution.prevalence)
+        0,
+        this.globalModel.times,
+        solution.prevalence
+      )
       if (interventionSolution) {
         this.chartWidgets.prevalence.updateDataset(
-          1, this.intervention.times, interventionSolution.prevalence)
+          1,
+          this.intervention.times,
+          interventionSolution.prevalence
+        )
       }
 
-      this.chartWidgets.susceptible
-        .setTitle('Susceptible')
-      this.chartWidgets.susceptible
-        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.susceptible
-        .updateDataset(0, this.globalModel.times, solution.susceptible)
+      this.chartWidgets.susceptible.setTitle('Susceptible')
+      this.chartWidgets.susceptible.setXLabel('Time (days)')
+      this.chartWidgets.susceptible.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.susceptible.updateDataset(
+        0,
+        this.globalModel.times,
+        solution.susceptible
+      )
       if (interventionSolution) {
         this.chartWidgets.susceptible.updateDataset(
-          1, this.intervention.times, interventionSolution.susceptible)
+          1,
+          this.intervention.times,
+          interventionSolution.susceptible
+        )
       }
 
-      this.chartWidgets.importIncidence
-        .setTitle('Cumulative Import Incidence')
-      this.chartWidgets.importIncidence
-        .getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.importIncidence.setTitle('Cumulative Import Incidence')
+      this.chartWidgets.importIncidence.setXLabel('Time (days)')
+      this.chartWidgets.importIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       let values = acumulateValues(solution.importIncidence)
-      this.chartWidgets.importIncidence
-        .updateDataset(0, this.globalModel.times, values)
+      this.chartWidgets.importIncidence.updateDataset(
+        0,
+        this.globalModel.times,
+        values
+      )
       if (interventionSolution) {
         let startValue = values[this.globalModel.interventionDay]
         let newValues = acumulateValues(interventionSolution.importIncidence)
         newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
-          1, this.intervention.times, newValues)
+          1,
+          this.intervention.times,
+          newValues
+        )
       }
     },
 
-    async asyncRecalculateGlobe () {
+    async asyncRecalculateGlobe() {
       let valuesById, maxValue
       if (_.startsWith(this.mode, 'risk')) {
         while (this.isRunning) {
@@ -871,8 +951,8 @@ export default {
       }
       this.globe.setCountryValue(this.getSourceCountryId(), 0)
       let modeColors = {
-        'destination': '#02386F',
-        'risk': '#f0f'
+        destination: '#02386F',
+        risk: '#f0f'
       }
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
       this.globe.setCountryColor(this.getSourceCountryId(), '#f00')
@@ -880,14 +960,14 @@ export default {
       this.drawLegend()
     },
 
-    async asyncSelectNewModel () {
+    async asyncSelectNewModel() {
       await util.delay(100)
       this.setNewEpiModel()
       this.parameterizeGlobalModelFromInput()
       await this.asyncRecalculateGlobe()
     },
 
-    rotateToCountry (iCountry) {
+    rotateToCountry(iCountry) {
       let country = this.flightData.countries[iCountry]
       let id = country.id
       let coordinates = country.coordinates
@@ -896,13 +976,13 @@ export default {
       this.globe.rotateTransition(countryTargetR)
     },
 
-    async asyncSelectSourceCountry () {
+    async asyncSelectSourceCountry() {
       await util.delay(100)
       this.asyncRecalculateGlobe()
       this.rotateToCountry(this.iSourceCountry)
     },
 
-    selectWatchCountry (id) {
+    selectWatchCountry(id) {
       let iCountry = parseInt(this.getICountry(id))
       this.iWatchCountry = iCountry
       let iNewHighlight = this.globe.iCountryFromId[id]
@@ -913,9 +993,12 @@ export default {
       }
     },
 
-    async asyncSelectWatchCountry () {
+    async asyncSelectWatchCountry() {
       await util.delay(100)
-      console.log('> Home.asyncSelectWatchCountry', util.jstr(this.iWatchCountry))
+      console.log(
+        '> Home.asyncSelectWatchCountry',
+        util.jstr(this.iWatchCountry)
+      )
       this.updateWatchCountry()
       let id = this.flightData.countries[this.iWatchCountry].id
       this.globe.iHighlight = this.globe.iCountryFromId[id]
@@ -923,13 +1006,13 @@ export default {
       this.rotateToCountry(this.iWatchCountry)
     },
 
-    selectSourceCountryByCountryId (countryId) {
+    selectSourceCountryByCountryId(countryId) {
       let country = _.find(this.selectableCountries, c => c.id === countryId)
       this.iSourceCountry = country.iCountry
       this.asyncSelectSourceCountry()
     },
 
-    async asyncSelectRandomSourceCountry () {
+    async asyncSelectRandomSourceCountry() {
       let n = this.selectableCountries.length
       let i = Math.floor(Math.random() * Math.floor(n))
       this.iSourceCountry = this.selectableCountries[i].iCountry
@@ -937,25 +1020,25 @@ export default {
       await this.asyncSelectSourceCountry()
     },
 
-    async asyncSelectMode (mode) {
+    async asyncSelectMode(mode) {
       await util.delay(100)
       console.log('> Home.asyncSelectMode', mode)
       this.mode = mode
       this.asyncRecalculateGlobe()
     },
 
-    drawLegend () {
+    drawLegend() {
       this.globe.drawLegend()
     },
 
-    async asyncCalculateRisk () {
+    async asyncCalculateRisk() {
       await util.delay(100)
       this.mode = 'risk'
       await this.asyncRecalculateGlobe()
     },
 
-    loop () {
-      if ((this.isLoop) && (_.startsWith(this.mode, 'risk'))) {
+    loop() {
+      if (this.isLoop && _.startsWith(this.mode, 'risk')) {
         if (this.days < this.getMaxDays) {
           this.days += 1
         } else {
@@ -965,14 +1048,14 @@ export default {
       }
     },
 
-    toggleLoop (boolValue) {
+    toggleLoop(boolValue) {
       this.isLoop = boolValue
       if (this.isLoop) {
         this.mode = 'risk'
       }
     },
 
-    getCountryPopupHtml (id) {
+    getCountryPopupHtml(id) {
       let country = this.getCountry(id)
       let name = ''
       let population = ''
@@ -985,17 +1068,22 @@ export default {
       s += `<div style="text-align: center">`
       s += `${name}`
 
-      let tag = 'travel'
-      let value = this.globe.getCountryValue(id)
-      if (value === null) {
-        value = ''
-      } else {
-        value = value.toFixed(3)
+      if (population) {
+        s += `<br>population: ${population}`
       }
-      s += `<br>${tag}: ${value}`
 
-      if (value !== null) {
-        s += `<br>pop: ${population}`
+      if (this.mode === 'destination') {
+        let value = this.globe.getCountryValue(id)
+        if (value === null) {
+          value = ''
+        } else {
+          let tag
+          tag =
+            'people from flights per day from ' +
+            this.getNameFromICountry(this.iSourceCountry)
+          value = value.toFixed(3)
+          s += `<br>${tag}: ${value}`
+        }
       }
 
       if (this.mode === 'risk') {
@@ -1003,7 +1091,9 @@ export default {
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
           let countryId = this.flightData.countries[iCountry].id
           if (countryId === id) {
-            let prevalence = this.globalModel.countryModel[iCountry].compartment.prevalence.toFixed(2)
+            let prevalence = this.globalModel.countryModel[
+              iCountry
+            ].compartment.prevalence.toFixed(2)
             s += `<br>prevalence: ${prevalence}`
           }
         }
@@ -1012,7 +1102,6 @@ export default {
       s += `</div>`
       return s
     }
-
   }
 }
 </script>

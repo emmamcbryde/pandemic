@@ -54,7 +54,7 @@ class Globe {
    * @param world - topojson data structure to be loaded in from geojson
    * @param selector - jquery div tag to insert the globe
    */
-  constructor (world, selector) {
+  constructor(world, selector) {
     this.world = world
     this.selector = selector
     this.scaleFactor = 1 / 2.2
@@ -217,7 +217,7 @@ class Globe {
    * To be overridden
    * @param id
    */
-  dblclickCountry (id) {
+  dblclickCountry(id) {
     console.log('> Globe.dblclickCountry', id, d3.event.pageX, d3.event.pageY)
   }
 
@@ -225,30 +225,30 @@ class Globe {
    * To be overridden
    * @param id
    */
-  clickCountry (id) {
+  clickCountry(id) {
     console.log('> Globe.clickCountry', id, d3.event.pageX, d3.event.pageY)
   }
 
-  moveTooltip () {
+  moveTooltip() {
     this.tooltip
       .style('left', d3.event.pageX + 7 + 'px')
       .style('top', d3.event.pageY - 15 + 'px')
   }
 
-  setCountryValue (id, value) {
+  setCountryValue(id, value) {
     this.values[this.iCountryFromId[id]] = value
   }
 
-  getCountryValue (id) {
+  getCountryValue(id) {
     let iCountry = this.iCountryFromId[id]
     return this.values[iCountry]
   }
 
-  setCountryColor (id, color) {
+  setCountryColor(id, color) {
     this.colors[this.iCountryFromId[id]] = color
   }
 
-  getCountryColor (id) {
+  getCountryColor(id) {
     let iCountry = this.iCountryFromId[id]
     return this.colors[iCountry]
   }
@@ -258,7 +258,7 @@ class Globe {
    * @param id
    * @returns String - contains HTML to write to popup
    */
-  getCountryPopupHtml (id) {
+  getCountryPopupHtml(id) {
     let value = this.getCountryValue(id)
     if (value === null) {
       return ''
@@ -266,7 +266,7 @@ class Globe {
     return value.toFixed(1)
   }
 
-  getCurrentSize () {
+  getCurrentSize() {
     let rect = d3
       .select(this.selector)
       .node()
@@ -278,14 +278,14 @@ class Globe {
     this.centerY = this.height / 2
   }
 
-  resize () {
+  resize() {
     this.getCurrentSize()
     this.svg.attr('width', this.width).attr('height', this.height)
     this.projection.translate([this.centerX, this.centerY]).scale(this.scale)
     this.draw()
   }
 
-  draw () {
+  draw() {
     this.svg.selectAll('path.water').attr('d', this.path)
     // draw country fills
     this.svg
@@ -296,7 +296,7 @@ class Globe {
     this.drawHighlight()
   }
 
-  drawHighlight () {
+  drawHighlight() {
     // draw the highlighted country outline
     this.svg
       .selectAll('path.highlightCountry')
@@ -310,7 +310,7 @@ class Globe {
       })
   }
 
-  rotateTo (r) {
+  rotateTo(r) {
     if (r[1] < -90) {
       r[1] = -90
     }
@@ -321,14 +321,14 @@ class Globe {
     this.draw()
   }
 
-  rotateRel (diffR) {
+  rotateRel(diffR) {
     let r = this.projection.rotate()
     r[0] += diffR[0]
     r[1] += diffR[1]
     this.rotateTo(r)
   }
 
-  resetCountryColorsFromValues (maxColor, maxValue = null, minColor = '#DDD') {
+  resetCountryColorsFromValues(maxColor, maxValue = null, minColor = '#DDD') {
     if (maxValue === null) {
       maxValue = Math.max.apply(null, this.values)
     }
@@ -346,7 +346,7 @@ class Globe {
     }
   }
 
-  rotateTransition (targetR, callback) {
+  rotateTransition(targetR, callback) {
     let interpolateR = d3.interpolate(this.projection.rotate(), targetR)
     let rotate = t => {
       this.rotateTo(interpolateR(t))
@@ -357,7 +357,7 @@ class Globe {
       .on('end', callback)
   }
 
-  extractPointerPos () {
+  extractPointerPos() {
     let event = d3.event
     event.preventDefault()
     let x, y
@@ -386,7 +386,7 @@ class Globe {
     this.pos.y = y
   }
 
-  mousemove () {
+  mousemove() {
     this.extractPointerPos()
     if (this.isMouseDown) {
       this.rotateRel([
@@ -397,18 +397,18 @@ class Globe {
     }
   }
 
-  mousedown () {
+  mousedown() {
     this.mousemove()
     this.savePos = _.clone(this.pos)
     this.isMouseDown = true
   }
 
-  mouseup () {
+  mouseup() {
     this.mousemove()
     this.isMouseDown = false
   }
 
-  mousewheel () {
+  mousewheel() {
     // event.preventDefault()
 
     let wheel
@@ -428,7 +428,7 @@ class Globe {
     this.resize()
   }
 
-  drawLegend () {
+  drawLegend() {
     let svg = d3.select(`#${this.legendId}`)
     svg.html('')
     let colorLegend = legendColor()

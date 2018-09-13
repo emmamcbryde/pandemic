@@ -5,10 +5,10 @@
 
     <h2
       class="md-title"
-      @click="home"
       style="
         flex: 1;
-        cursor: pointer;">
+        cursor: pointer;"
+      @click="home">
       Global Pandemic Map
     </h2>
 
@@ -22,7 +22,7 @@
         v-if="user.authenticated">
         <md-button
           md-menu-trigger>
-          {{user.name}}
+          {{ user.name }}
         </md-button>
 
         <md-menu-content>
@@ -55,8 +55,8 @@ import auth from '../modules/auth'
 import config from '../config'
 
 export default {
-  name: 'navbar',
-  data () {
+  name: 'Navbar',
+  data() {
     return {
       isUser: config.isUser,
       user: auth.user,
@@ -64,17 +64,17 @@ export default {
     }
   },
   methods: {
-    async logout () {
+    async logout() {
       await auth.logout()
       this.$router.push('/login')
     },
-    about () {
+    about() {
       this.$router.push('/about')
     },
-    home () {
+    home() {
       this.$router.push('/')
     },
-    editUser () {
+    editUser() {
       this.$router.push('/edit-user')
     }
   }
