@@ -1,5 +1,5 @@
 define(function() {
-  result = {
+  var result = {
     'type': 'Topology',
     'objects': {
       'countries': {

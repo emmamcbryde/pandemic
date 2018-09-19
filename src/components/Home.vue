@@ -188,17 +188,6 @@
                   @change="asyncCalculateRisk()"/>
               </md-input-container>
 
-              <md-input-container
-                style="
-                  margin-left: 1em;
-                  width: 130px;">
-                <label>Max Prevalence</label>
-                <md-input
-                  v-model="maxPrevalence"
-                  type="number"
-                  @change="asyncCalculateRisk()"/>
-              </md-input-container>
-
             </md-layout>
 
           </md-card>
@@ -347,6 +336,18 @@
               Prevalence (from Model)
             </md-radio>
 
+            <md-input-container
+              v-if="mode === 'risk'"
+              style="
+                  margin-left: 1em;
+                  width: 130px;">
+              <label>Max Prevalence</label>
+              <md-input
+                v-model="maxPrevalence"
+                type="number"
+                @change="asyncCalculateRisk()"/>
+            </md-input-container>
+
           </md-layout>
         </md-card>
 
@@ -355,7 +356,8 @@
           style="
             background-color: white;
             height: 100%;
-            width: 100%;"/>
+            width: 100%;">
+        </div>
 
       </md-layout>
     </div>
@@ -372,7 +374,6 @@ body {
 }
 
 .countryTooltip {
-  position: absolute;
   display: none;
   pointer-events: none;
   background: #fff;
@@ -406,7 +407,6 @@ import { GlobalModel } from '../modules/global-model'
 
 const flightData = require('../data/flight-data')
 const adjacentData = require('../data/adjacent-data')
-const worldData = require('../data/world')
 
 function waitForElement(selector) {
   return new Promise(resolve => {
@@ -502,7 +502,7 @@ export default {
     this.resize()
     window.addEventListener('resize', () => this.resize())
 
-    this.globe = new Globe(worldData, '#main')
+    this.globe = new Globe('#main')
     this.globe.getCountryPopupHtml = this.getCountryPopupHtml
     this.globe.dblclickCountry = this.selectSourceCountryByCountryId
     this.globe.clickCountry = this.selectWatchCountry
@@ -540,10 +540,10 @@ export default {
     for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
       let country = flightData.countries[iCountry]
       let id = country.id
-      let coordinates = country.coordinates
-      if (coordinates && id in this.globe.iCountryFromId) {
-        let name = country.name
-        let population = country.population
+      if (id in this.globe.iCountryFromId) {
+        let i = this.globe.iCountryFromId[id]
+        let name = this.globe.countryFeatures[i].name
+        let population = this.globe.countryFeatures[i].pop_est
         countries.push({ name, iCountry, id, population })
       }
     }
@@ -969,11 +969,7 @@ export default {
 
     rotateToCountry(iCountry) {
       let country = this.flightData.countries[iCountry]
-      let id = country.id
-      let coordinates = country.coordinates
-      console.log('> Home.rotateToCountry', id, country.name, '' + coordinates)
-      let countryTargetR = [-coordinates[1], -coordinates[0]]
-      this.globe.rotateTransition(countryTargetR)
+      this.globe.rotateTransitionToCountry(country.id)
     },
 
     async asyncSelectSourceCountry() {
@@ -1056,13 +1052,9 @@ export default {
     },
 
     getCountryPopupHtml(id) {
-      let country = this.getCountry(id)
-      let name = ''
-      let population = ''
-      if (country) {
-        name = country.name
-        population = country.population
-      }
+      let feature = this.globe.getCountryFeature(id)
+      let name = feature.name
+      let population = feature.pop_est
 
       let s = ''
       s += `<div style="text-align: center">`
@@ -1075,7 +1067,7 @@ export default {
       if (this.mode === 'destination') {
         let value = this.globe.getCountryValue(id)
         if (value === null) {
-          value = ''
+          s += '<br>(No travel data available)'
         } else {
           let tag
           tag =

@@ -26,7 +26,8 @@
     "vue-material": "^0.7.4",
     "vue-router": "^3.0.1",
     "vue-slider-component": "^2.5.7",
-    "vuex": "^3.0.1"
+    "vuex": "^3.0.1",
+    "world-atlas": "^1.1.4"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

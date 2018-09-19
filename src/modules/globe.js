@@ -1,9 +1,11 @@
 import _ from 'lodash'
 import $ from 'jquery'
 import { legendColor } from 'd3-svg-legend'
-
 const d3 = require('d3')
 const topojson = require('topojson')
+
+const world110m = require('../data/world-110m.json')
+const world110mInfo = require('../data/world-110m-name.json')
 
 /**
  * A Rotating Globe widget that can be parameterized by
@@ -34,6 +36,10 @@ const topojson = require('topojson')
  * Automatic legend from maximum values to 0
  * and mapped from light-grey to this.fillColor
  *
+ * Internally countries are indexed using the world data structure.
+ * A dictionary is provided to convert from ISO country codes:
+ *    this.iCountryFromId
+ *
  * Overrridable methods:
  *   - this.clickCountry (id)
  *   - this.dbclickCoutnry (id)
@@ -41,6 +47,7 @@ const topojson = require('topojson')
  *
  * Based on the following D3 globe code snippets:
  *  - https://jorin.me/d3-canvas-globe-hover/
+ *  - http://bl.ocks.org/KoGor/5994804
  *  - http://bl.ocks.org/tlfrd/df1f1f705c7940a6a7c0dca47041fec8
  *  - https://bl.ocks.org/mbostock/7ea1dde508cec6d2d95306f92642bc42
  */
@@ -51,10 +58,9 @@ class Globe {
    * Use world json from:
    *   https://unpkg.com/world-atlas@1.1.4/world/110m.json
    *
-   * @param world - topojson data structure to be loaded in from geojson
    * @param selector - jquery div tag to insert the globe
    */
-  constructor(world, selector) {
+  constructor(selector, world = world110m, worldData = world110mInfo) {
     this.world = world
     this.selector = selector
     this.scaleFactor = 1 / 2.2
@@ -69,7 +75,15 @@ class Globe {
     this.iCountryFromId = {}
     for (let i = 0; i < this.countryFeatures.length; i += 1) {
       let countryFeature = this.countryFeatures[i]
+      countryFeature.id = parseInt(countryFeature.id)
       this.iCountryFromId[countryFeature.id] = i
+      for (let info of worldData) {
+        if (parseInt(info.iso_n3) === countryFeature.id) {
+          countryFeature.pop_est = parseInt(info.pop_est)
+          countryFeature.name = info.name
+        }
+      }
+      console.log('Globe.constructor', countryFeature)
     }
 
     this.nullColor = '#CCB'
@@ -170,6 +184,7 @@ class Globe {
         if (html) {
           this.tooltip
             .html(html)
+            .style('position', 'absolute')
             .style('display', 'block')
             .style('opacity', 1)
           this.moveTooltip()
@@ -211,6 +226,13 @@ class Globe {
           <svg id="${this.legendId}"></svg>
         </div>
       `)
+
+    this.draw()
+  }
+
+  getCountryFeature(id) {
+    let iCountry = this.iCountryFromId[id]
+    return this.countryFeatures[iCountry]
   }
 
   /**
@@ -296,6 +318,10 @@ class Globe {
     this.drawHighlight()
   }
 
+  setHighlight(id) {
+    this.iHighlight = this.iCountryFromId[id]
+  }
+
   drawHighlight() {
     // draw the highlighted country outline
     this.svg
@@ -310,6 +336,9 @@ class Globe {
       })
   }
 
+  /**
+   * @param r - [-Longitude, -Latitude]
+   */
   rotateTo(r) {
     if (r[1] < -90) {
       r[1] = -90
@@ -319,6 +348,18 @@ class Globe {
     }
     this.projection.rotate(r)
     this.draw()
+  }
+
+  rotateTransitionToCountry (id, callback) {
+    let selectedFeature = null
+    for (let feature of this.countryFeatures) {
+      if (id === feature.id) {
+        selectedFeature = feature
+      }
+    }
+    console.log('rotateToCountry', selectedFeature)
+    let p = d3.geoCentroid(selectedFeature)
+    this.rotateTransition([-p[0], -p[1]], callback)
   }
 
   rotateRel(diffR) {
@@ -346,6 +387,11 @@ class Globe {
     }
   }
 
+  /**
+   *
+   * @param targetR - [-Longitude, -Latitude]
+   * @param callback
+   */
   rotateTransition(targetR, callback) {
     let interpolateR = d3.interpolate(this.projection.rotate(), targetR)
     let rotate = t => {
