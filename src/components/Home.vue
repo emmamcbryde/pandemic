@@ -196,7 +196,7 @@
             style="padding: 1em; margin-top: 1em">
 
             <h3 class="md-title">
-              Global Risk
+              Global Risk Predictions
             </h3>
 
             <div>
@@ -231,7 +231,7 @@
             style="padding: 1em; margin-top: 1em">
 
             <h3 class="md-title">
-              Watch Country Risk
+              Watch Country Risk Predictions
             </h3>
 
             <md-layout md-row>
@@ -1057,11 +1057,11 @@ export default {
       let population = feature.pop_est
 
       let s = ''
-      s += `<div style="text-align: center">`
+      s += `<div style="text-align: left">`
       s += `${name}`
 
       if (population) {
-        s += `<br>population: ${population}`
+        s += `<br>&nbsp; Population: ${population}`
       }
 
       if (this.mode === 'destination') {
@@ -1069,25 +1069,28 @@ export default {
         if (value === null) {
           s += '<br>(No travel data available)'
         } else {
-          let tag
-          tag =
-            'people from flights per day from ' +
-            this.getNameFromICountry(this.iSourceCountry)
+          let countryName = this.getNameFromICountry(this.iSourceCountry)
           value = value.toFixed(3)
-          s += `<br>${tag}: ${value}`
+          s += `<br>Travelling from ${countryName}`
+          s += `<br>&nbsp; People per day: ${value}`
         }
       }
 
       if (this.mode === 'risk') {
         let nCountry = this.flightData.countries.length
+        let prevalence = null
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
           let countryId = this.flightData.countries[iCountry].id
           if (countryId === id) {
-            let prevalence = this.globalModel.countryModel[
+            prevalence = this.globalModel.countryModel[
               iCountry
             ].compartment.prevalence.toFixed(2)
-            s += `<br>prevalence: ${prevalence}`
           }
+        }
+        if (_.isNil(prevalence)) {
+          s += `<br>(No prediction due to lack of travel data)`
+        } else {
+          s += `<br>Prediction at ${this.days} days<br>&nbsp;Prevalence: ${prevalence}`
         }
       }
 
