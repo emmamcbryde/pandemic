@@ -356,8 +356,7 @@
           style="
             background-color: white;
             height: 100%;
-            width: 100%;">
-        </div>
+            width: 100%;"/>
 
       </md-layout>
     </div>
@@ -545,9 +544,9 @@ export default {
         entry.iso_n3 = feature.properties.iso_n3
         entry.iso_a3 = feature.properties.iso_a3
         entry.name = feature.properties.name
-        entry.population = feature.properties.pop_est
+        entry.population = parseInt(feature.properties.pop_est)
+        console.log('Home.constructor', entry)
         countries.push(entry)
-        console.log('Home.constructor', _.last(countries))
       }
     }
     this.selectableCountries = _.sortBy(countries, a => a.name)
@@ -767,8 +766,9 @@ export default {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.importGuiParams(this.guiParams)
+        let id = this.flightData.countries[iCountry].iso_n3
         countryModel.param.initPopulation =
-          flightData.countries[iCountry].population
+          this.globe.getCountryFeature(id).properties.pop_est
         if (this.iSourceCountry !== iCountry) {
           countryModel.param.initPrevalence = 0
         }
@@ -1006,7 +1006,10 @@ export default {
     },
 
     selectSourceCountryByCountryId(countryId) {
-      let country = _.find(this.selectableCountries, c => c.iso_n3 === countryId)
+      let country = _.find(
+        this.selectableCountries,
+        c => c.iso_n3 === countryId
+      )
       if (!_.isNil(country)) {
         this.iSourceCountry = country.iCountry
         this.asyncSelectSourceCountry()
@@ -1095,7 +1098,9 @@ export default {
         if (_.isNil(prevalence)) {
           s += `<br>(No prediction due to lack of travel data)`
         } else {
-          s += `<br>Prediction at ${this.days} days<br>&nbsp;Prevalence: ${prevalence}`
+          s += `<br>Prediction at ${
+            this.days
+          } days<br>&nbsp;Prevalence: ${prevalence}`
         }
       }
 
