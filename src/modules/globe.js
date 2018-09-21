@@ -10,8 +10,8 @@ const world110mInfo = require('../data/world-110m-name.json')
  * https://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
  */
 function zeroPad(num, places) {
-  var zero = places - num.toString().length + 1;
-  return Array(+(zero > 0 && zero)).join("0") + num;
+  let zero = places - num.toString().length + 1
+  return Array(+(zero > 0 && zero)).join('0') + num
 }
 
 /**
@@ -92,7 +92,6 @@ class Globe {
       for (let info of worldData) {
         if (info.iso_n3 === countryFeature.id) {
           _.assign(countryFeature.properties, info)
-          console.log('Globe.constructor', countryFeature)
           break
         }
       }
@@ -368,7 +367,7 @@ class Globe {
     this.draw()
   }
 
-  rotateTransitionToCountry (id, callback) {
+  rotateTransitionToCountry(id, callback) {
     let selectedFeature = null
     for (let feature of this.countryFeatures) {
       if (id === feature.id) {

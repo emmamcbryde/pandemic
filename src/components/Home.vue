@@ -541,9 +541,12 @@ export default {
       let id = flightData.countries[iCountry].iso_n3
       if (id in this.globe.iCountryFromId) {
         let feature = this.globe.getCountryFeature(id)
-        let name = feature.properties.name
-        let population = feature.properties.pop_est
-        countries.push({ name, iCountry, id, population })
+        let entry = { iCountry }
+        entry.iso_n3 = feature.properties.iso_n3
+        entry.iso_a3 = feature.properties.iso_a3
+        entry.name = feature.properties.name
+        entry.population = feature.properties.pop_est
+        countries.push(entry)
         console.log('Home.constructor', _.last(countries))
       }
     }
@@ -555,7 +558,7 @@ export default {
 
     function getICountryFromId(id) {
       for (let country of countries) {
-        if (id === country.id) {
+        if (id === country.iso_n3) {
           return country.iCountry
         }
       }
@@ -657,16 +660,16 @@ export default {
     },
 
     getSourceCountryId() {
-      return this.flightData.countries[this.iSourceCountry].id
+      return this.flightData.countries[this.iSourceCountry].iso_n3
     },
 
     getCountry(countryId) {
-      return _.find(this.flightData.countries, c => c.id === countryId)
+      return _.find(this.flightData.countries, c => c.iso_n3 === countryId)
     },
 
     getICountry(countryId) {
       for (let i in _.range(this.flightData.countries.length)) {
-        if (this.flightData.countries[i].id === countryId) {
+        if (this.flightData.countries[i].iso_n3 === countryId) {
           return i
         }
       }
@@ -680,7 +683,7 @@ export default {
     getPrevalenceByCountryId() {
       let result = {}
       for (let iCountry of this.countryIndices) {
-        let id = this.flightData.countries[iCountry].id
+        let id = this.flightData.countries[iCountry].iso_n3
         let countryModel = this.globalModel.countryModel[iCountry]
         result[id] = countryModel.compartment.prevalence
       }
@@ -705,7 +708,7 @@ export default {
       for (let jCountry = 0; jCountry < nCountry; jCountry += 1) {
         let value
         value = this.getTravelPerDay(this.iSourceCountry, jCountry)
-        let id = this.flightData.countries[jCountry].id
+        let id = this.flightData.countries[jCountry].iso_n3
         values[id] = value
       }
       return values
@@ -1003,9 +1006,11 @@ export default {
     },
 
     selectSourceCountryByCountryId(countryId) {
-      let country = _.find(this.selectableCountries, c => c.id === countryId)
-      this.iSourceCountry = country.iCountry
-      this.asyncSelectSourceCountry()
+      let country = _.find(this.selectableCountries, c => c.iso_n3 === countryId)
+      if (!_.isNil(country)) {
+        this.iSourceCountry = country.iCountry
+        this.asyncSelectSourceCountry()
+      }
     },
 
     async asyncSelectRandomSourceCountry() {
@@ -1080,7 +1085,7 @@ export default {
         let nCountry = this.flightData.countries.length
         let prevalence = null
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
-          let countryId = this.flightData.countries[iCountry].id
+          let countryId = this.flightData.countries[iCountry].iso_n3
           if (countryId === id) {
             prevalence = this.globalModel.countryModel[
               iCountry
