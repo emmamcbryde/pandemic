@@ -3,9 +3,16 @@ import $ from 'jquery'
 import { legendColor } from 'd3-svg-legend'
 const d3 = require('d3')
 const topojson = require('topojson')
-
 const world110m = require('../data/world-110m.json')
 const world110mInfo = require('../data/world-110m-name.json')
+
+/**
+ * https://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
+ */
+function zeroPad(num, places) {
+  var zero = places - num.toString().length + 1;
+  return Array(+(zero > 0 && zero)).join("0") + num;
+}
 
 /**
  * A Rotating Globe widget that can be parameterized by
@@ -71,19 +78,24 @@ class Globe {
       this.world.objects.countries
     ).features
 
+    for (let info of worldData) {
+      if (typeof info.iso_n3 === 'number') {
+        info.iso_n3 = zeroPad(info.iso_n3, 3)
+      }
+    }
+
     // look-up country from numeric ISO country ID
     this.iCountryFromId = {}
     for (let i = 0; i < this.countryFeatures.length; i += 1) {
       let countryFeature = this.countryFeatures[i]
-      countryFeature.id = parseInt(countryFeature.id)
       this.iCountryFromId[countryFeature.id] = i
       for (let info of worldData) {
-        if (parseInt(info.iso_n3) === countryFeature.id) {
-          countryFeature.pop_est = parseInt(info.pop_est)
-          countryFeature.name = info.name
+        if (info.iso_n3 === countryFeature.id) {
+          _.assign(countryFeature.properties, info)
+          console.log('Globe.constructor', countryFeature)
+          break
         }
       }
-      console.log('Globe.constructor', countryFeature)
     }
 
     this.nullColor = '#CCB'
@@ -175,6 +187,9 @@ class Globe {
       .select(this.selector)
       .append('div')
       .attr('class', 'countryTooltip')
+      .style('display', 'hidden')
+      .style('pointer-events', 'none')
+      .style('position', 'absolute')
 
     this.svg
       .selectAll('path.country')
@@ -232,7 +247,10 @@ class Globe {
 
   getCountryFeature(id) {
     let iCountry = this.iCountryFromId[id]
-    return this.countryFeatures[iCountry]
+    if (!_.isNil(iCountry)) {
+      return this.countryFeatures[iCountry]
+    }
+    return null
   }
 
   /**
@@ -488,4 +506,4 @@ class Globe {
   }
 }
 
-export default Globe
+export { Globe }

@@ -400,7 +400,7 @@ import numeral from 'numeral'
 import vueSlider from 'vue-slider-component'
 
 import util from '../modules/util'
-import Globe from '../modules/globe'
+import { Globe } from '../modules/globe'
 import { models } from '../modules/models'
 import ChartWidget from '../modules/chart-widget'
 import { GlobalModel } from '../modules/global-model'
@@ -538,13 +538,13 @@ export default {
     let countries = []
     let nCountry = this.flightData.countries.length
     for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
-      let country = flightData.countries[iCountry]
-      let id = country.id
+      let id = flightData.countries[iCountry].iso_n3
       if (id in this.globe.iCountryFromId) {
-        let i = this.globe.iCountryFromId[id]
-        let name = this.globe.countryFeatures[i].name
-        let population = this.globe.countryFeatures[i].pop_est
+        let feature = this.globe.getCountryFeature(id)
+        let name = feature.properties.name
+        let population = feature.properties.pop_est
         countries.push({ name, iCountry, id, population })
+        console.log('Home.constructor', _.last(countries))
       }
     }
     this.selectableCountries = _.sortBy(countries, a => a.name)
@@ -555,7 +555,7 @@ export default {
 
     function getICountryFromId(id) {
       for (let country of countries) {
-        if (parseInt(id) === country.id) {
+        if (id === country.id) {
           return country.iCountry
         }
       }
@@ -569,18 +569,18 @@ export default {
     //   ...
     // }
     for (let entry of this.adjacentData.neighbours) {
-      let key = getICountryFromId(entry.country)
-      if (_.isNil(key)) {
+      let iCountry = getICountryFromId(entry.country)
+      if (_.isNil(iCountry)) {
         continue
       }
-      this.adjacent[key] = _.reject(
+      this.adjacent[iCountry] = _.reject(
         _.map(entry.neighbours, getICountryFromId),
         _.isNil
       )
       console.log(
         'landNeighbours of',
-        this.getNameFromICountry(key),
-        _.map(this.adjacent[key], this.getNameFromICountry)
+        this.getNameFromICountry(iCountry),
+        _.map(this.adjacent[iCountry], this.getNameFromICountry)
       )
     }
 
@@ -969,7 +969,7 @@ export default {
 
     rotateToCountry(iCountry) {
       let country = this.flightData.countries[iCountry]
-      this.globe.rotateTransitionToCountry(country.id)
+      this.globe.rotateTransitionToCountry(country.iso_n3)
     },
 
     async asyncSelectSourceCountry() {
@@ -979,7 +979,7 @@ export default {
     },
 
     selectWatchCountry(id) {
-      let iCountry = parseInt(this.getICountry(id))
+      let iCountry = this.getICountry(id)
       this.iWatchCountry = iCountry
       let iNewHighlight = this.globe.iCountryFromId[id]
       if (iNewHighlight !== this.globe.iHighlight) {
@@ -996,7 +996,7 @@ export default {
         util.jstr(this.iWatchCountry)
       )
       this.updateWatchCountry()
-      let id = this.flightData.countries[this.iWatchCountry].id
+      let id = this.flightData.countries[this.iWatchCountry].iso_n3
       this.globe.iHighlight = this.globe.iCountryFromId[id]
       this.globe.drawHighlight()
       this.rotateToCountry(this.iWatchCountry)
@@ -1053,8 +1053,8 @@ export default {
 
     getCountryPopupHtml(id) {
       let feature = this.globe.getCountryFeature(id)
-      let name = feature.name
-      let population = feature.pop_est
+      let name = feature.properties.name
+      let population = feature.properties.pop_est
 
       let s = ''
       s += `<div style="text-align: left">`
