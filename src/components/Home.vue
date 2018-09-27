@@ -538,14 +538,14 @@ export default {
     let nCountry = this.flightData.countries.length
     for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
       let id = flightData.countries[iCountry].iso_n3
-      if (id in this.globe.iCountryFromId) {
-        let feature = this.globe.getCountryFeature(id)
+      let properties = this.globe.getPropertiesFromId(id)
+      if (!_.isNil(properties)) {
         let entry = { iCountry }
-        entry.iso_n3 = feature.properties.iso_n3
-        entry.iso_a3 = feature.properties.iso_a3
-        entry.name = feature.properties.name
-        entry.population = parseInt(feature.properties.pop_est)
-        console.log('Home.constructor', entry)
+        entry.iso_n3 = properties.iso_n3
+        entry.iso_a3 = properties.iso_a3
+        entry.name = properties.name
+        entry.population = parseInt(properties.pop_est)
+        // console.log('Home.constructor', entry)
         countries.push(entry)
       }
     }
@@ -579,11 +579,11 @@ export default {
         _.map(entry.neighbours, getICountryFromId),
         _.isNil
       )
-      console.log(
-        'landNeighbours of',
-        this.getNameFromICountry(iCountry),
-        _.map(this.adjacent[iCountry], this.getNameFromICountry)
-      )
+      // console.log(
+      //   'landNeighbours of',
+      //   this.getNameFromICountry(iCountry),
+      //   _.map(this.adjacent[iCountry], this.getNameFromICountry)
+      // )
     }
 
     // The structure is [
@@ -608,12 +608,24 @@ export default {
 
       // hack to simulate land neighbors
       let maxFlightTravel = _.max(this.travel[iCountryFrom])
+      let id = this.flightData.countries[iCountryFrom].iso_n3
+      let features = this.globe.getPropertiesFromId(id)
+      if (_.isNil(features)) {
+        continue
+      }
+      let travelPerCapita = maxFlightTravel / features.pop_est
       let landNeighbors = this.adjacent[iCountryFrom]
       if (_.isNil(landNeighbors)) {
         continue
       }
       for (let iCountryTo of landNeighbors) {
-        this.travel[iCountryFrom][iCountryTo] += maxFlightTravel
+        id = this.flightData.countries[iCountryTo].iso_n3
+        features = this.globe.getPropertiesFromId(id)
+        if (_.isNil(features)) {
+          continue
+        }
+        this.travel[iCountryFrom][iCountryTo] +=
+          travelPerCapita * features.pop_est
       }
     }
 
@@ -767,8 +779,9 @@ export default {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.importGuiParams(this.guiParams)
         let id = this.flightData.countries[iCountry].iso_n3
-        countryModel.param.initPopulation =
-          this.globe.getCountryFeature(id).properties.pop_est
+        countryModel.param.initPopulation = this.globe.getPropertiesFromId(
+          id
+        ).pop_est
         if (this.iSourceCountry !== iCountry) {
           countryModel.param.initPrevalence = 0
         }
@@ -950,15 +963,17 @@ export default {
         valuesById = this.getTravelValuesByCountryId()
       }
       for (let [id, value] of _.toPairs(valuesById)) {
-        this.globe.setCountryValue(id, value)
+        let i = this.globe.iCountryFromId[id]
+        this.globe.values[i] = value
       }
-      this.globe.setCountryValue(this.getSourceCountryId(), 0)
+      let i = this.globe.iCountryFromId[this.getSourceCountryId()]
+      this.globe.values[i] = 0
       let modeColors = {
         destination: '#02386F',
         risk: '#f0f'
       }
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
-      this.globe.setCountryColor(this.getSourceCountryId(), '#f00')
+      this.globe.colors[i] = '#f00'
       this.globe.draw()
       this.drawLegend()
     },
@@ -972,7 +987,8 @@ export default {
 
     rotateToCountry(iCountry) {
       let country = this.flightData.countries[iCountry]
-      this.globe.rotateTransitionToCountry(country.iso_n3)
+      let i = this.globe.iCountryFromId[country.iso_n3]
+      this.globe.rotateTransitionToICountry(i)
     },
 
     async asyncSelectSourceCountry() {
@@ -981,12 +997,14 @@ export default {
       this.rotateToCountry(this.iSourceCountry)
     },
 
-    selectWatchCountry(id) {
+    selectWatchCountry(i) {
+      let id = this.globe.features[i].properties.iso_n3
       let iCountry = this.getICountry(id)
       this.iWatchCountry = iCountry
+      console.log('Home.selectWatchCountry', i, id, iCountry)
       let iNewHighlight = this.globe.iCountryFromId[id]
-      if (iNewHighlight !== this.globe.iHighlight) {
-        this.globe.iHighlight = iNewHighlight
+      if (iNewHighlight !== this.globe.iHighlightCountry) {
+        this.globe.iHighlightCountry = iNewHighlight
         this.globe.drawHighlight()
         this.updateWatchCountry()
       }
@@ -1000,12 +1018,13 @@ export default {
       )
       this.updateWatchCountry()
       let id = this.flightData.countries[this.iWatchCountry].iso_n3
-      this.globe.iHighlight = this.globe.iCountryFromId[id]
+      this.globe.iHighlightCountry = this.globe.iCountryFromId[id]
       this.globe.drawHighlight()
       this.rotateToCountry(this.iWatchCountry)
     },
 
-    selectSourceCountryByCountryId(countryId) {
+    selectSourceCountryByCountryId(i) {
+      let countryId = this.globe.features[i].properties.iso_n3
       let country = _.find(
         this.selectableCountries,
         c => c.iso_n3 === countryId
@@ -1059,8 +1078,9 @@ export default {
       }
     },
 
-    getCountryPopupHtml(id) {
-      let feature = this.globe.getCountryFeature(id)
+    getCountryPopupHtml(i) {
+      let feature = this.globe.features[i]
+      let id = feature.properties.iso_n3
       let name = feature.properties.name
       let population = feature.properties.pop_est
 
@@ -1073,7 +1093,8 @@ export default {
       }
 
       if (this.mode === 'destination') {
-        let value = this.globe.getCountryValue(id)
+        let j = this.globe.iCountryFromId[id]
+        let value = this.globe.values[j]
         if (value === null) {
           s += '<br>(No travel data available)'
         } else {
