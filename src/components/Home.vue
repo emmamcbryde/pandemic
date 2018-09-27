@@ -115,12 +115,21 @@
               md-row
               md-vertical-align="center">
 
-              <md-switch
-                v-model="isInterventionAllCountries"
+              <md-radio
+                v-model="interventionMode"
                 style="margin-right: 1em"
+                md-value="all-countries"
                 @change="asyncCalculateRisk">
                 All Countries
-              </md-switch>
+              </md-radio>
+
+              <md-radio
+                v-model="interventionMode"
+                style="margin-right: 1em"
+                md-value="source-country-only"
+                @change="asyncCalculateRisk">
+                All Countries
+              </md-radio>
 
               <md-input-container
                 v-for="(entry, i) in interventionParams"
@@ -476,6 +485,7 @@ export default {
       maxDays: 60,
       maxPrevalence: 20,
       isInterventionAllCountries: true,
+      interventionMode: 'all-countries', // 'source-country-only'
       guiParams: [],
       interventionParams: [],
       isLoop: false,
@@ -810,11 +820,11 @@ export default {
       _.times(this.days, () => {
         this.globalModel.update()
         if (this.globalModel.time === this.globalModel.interventionDay) {
-          if (this.isInterventionAllCountries) {
+          if (this.interventionMode === 'all-countries') {
             this.intervention = this.globalModel.makeIntervention(
               this.interventionParams
             )
-          } else {
+          } else if (this.interventionMode === 'source-country-only') {
             this.intervention = this.globalModel.makeSingleCountryIntervention(
               this.interventionParams,
               this.iSourceCountry
