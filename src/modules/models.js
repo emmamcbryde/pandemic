@@ -445,6 +445,23 @@ class SisModel extends BaseModel {
         label: 'Prevalence'
       }
     ]
+
+    this.interventionParams = [
+      {
+        key: 'interventionDay',
+        value: 5,
+        step: 1,
+        placeHolder: '',
+        label: 'Start Day'
+      },
+      {
+        key: 'reproductionNumber',
+        value: 1.2,
+        step: 0.01,
+        placeHolder: '',
+        label: 'R0'
+      }
+    ]
   }
 
   calcExtraParams() {
@@ -598,6 +615,23 @@ class SEIRModel extends BaseModel {
         label: 'Prevalence'
       }
     ]
+
+    this.interventionParams = [
+      {
+        key: 'interventionDay',
+        value: 5,
+        step: 1,
+        placeHolder: '',
+        label: 'Start Day'
+      },
+      {
+        key: 'reproductionNumber',
+        value: 1.2,
+        step: 0.01,
+        placeHolder: '',
+        label: 'R0'
+      }
+    ]
   }
 
   calcExtraParams() {
@@ -681,6 +715,23 @@ class SEIRSModel extends BaseModel {
         step: 1,
         placeHolder: '',
         label: 'Prevalence'
+      }
+    ]
+
+    this.interventionParams = [
+      {
+        key: 'interventionDay',
+        value: 5,
+        step: 1,
+        placeHolder: '',
+        label: 'Start Day'
+      },
+      {
+        key: 'reproductionNumber',
+        value: 1.2,
+        step: 0.01,
+        placeHolder: '',
+        label: 'R0'
       }
     ]
   }
@@ -790,6 +841,30 @@ class EbolaModel extends BaseModel {
         step: 1,
         placeHolder: '',
         label: 'Prevalence'
+      }
+    ]
+
+    this.interventionParams = [
+      {
+        key: 'interventionDay',
+        value: 5,
+        step: 1,
+        placeHolder: '',
+        label: 'Start Day'
+      },
+      {
+        key: 'reproductionNumber',
+        value: 1.2,
+        step: 0.01,
+        placeHolder: '',
+        label: 'R0'
+      },
+      {
+        key: 'hospitalCapacity',
+        value: 10000,
+        step: 1,
+        placeHolder: '',
+        label: 'Hospital Capacity (number of isolation beds)'
       }
     ]
   }

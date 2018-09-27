@@ -128,15 +128,20 @@
                 style="margin-right: 1em"
                 md-value="source-country-only"
                 @change="asyncCalculateRisk">
-                All Countries
+                Source Country Only
               </md-radio>
+
+            </md-layout>
+
+            <md-layout
+              md-row
+              md-vertical-align="center">
 
               <md-input-container
                 v-for="(entry, i) in interventionParams"
                 :key="i"
                 style="
-                  margin-right: 1em;
-                  width: 100px;">
+                  margin-right: 1em;">
                 <label>{{ entry.label }}</label>
                 <md-input
                   v-model="entry.value"
@@ -205,7 +210,7 @@
             style="padding: 1em; margin-top: 1em">
 
             <h3 class="md-title">
-              Global Risk Predictions
+              Global Pandemic Predictions
             </h3>
 
             <div>
@@ -240,7 +245,7 @@
             style="padding: 1em; margin-top: 1em">
 
             <h3 class="md-title">
-              Watch Country Risk Predictions
+              Watch Country Pandemic Predictions
             </h3>
 
             <md-layout md-row>
@@ -480,11 +485,10 @@ export default {
       selectableCountries: [],
       iSourceCountry: -1,
       iWatchCountry: -1,
-      mode: 'destination', // or 'risk'
-      days: 1,
+      mode: 'risk', // or 'destination'
+      days: 15,
       maxDays: 60,
       maxPrevalence: 20,
-      isInterventionAllCountries: true,
       interventionMode: 'all-countries', // 'source-country-only'
       guiParams: [],
       interventionParams: [],
@@ -516,7 +520,7 @@ export default {
     this.globe.dblclickCountry = this.selectSourceCountryByCountryId
     this.globe.clickCountry = this.selectWatchCountry
 
-    this.mode = 'destination' // 'destination' or 'risk'
+    this.mode = 'risk' // 'destination' or 'risk'
 
     this.flightData = flightData
     this.flightData.countries[177].population = 39000000
@@ -648,7 +652,6 @@ export default {
     await this.asyncMakeChartWidget('#globalCharts', 'globalPrevalence')
     await this.asyncMakeChartWidget('#globalCharts', 'cumulativeIncidence')
     await this.asyncMakeChartWidget('#localCharts', 'prevalence')
-    await this.asyncMakeChartWidget('#localCharts', 'susceptible')
     await this.asyncMakeChartWidget('#localCharts', 'importIncidence')
 
     window.dispatchEvent(new Event('resize'))
@@ -916,22 +919,6 @@ export default {
           1,
           this.intervention.times,
           interventionSolution.prevalence
-        )
-      }
-
-      this.chartWidgets.susceptible.setTitle('Susceptible')
-      this.chartWidgets.susceptible.setXLabel('Time (days)')
-      this.chartWidgets.susceptible.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      this.chartWidgets.susceptible.updateDataset(
-        0,
-        this.globalModel.times,
-        solution.susceptible
-      )
-      if (interventionSolution) {
-        this.chartWidgets.susceptible.updateDataset(
-          1,
-          this.intervention.times,
-          interventionSolution.susceptible
         )
       }
 
