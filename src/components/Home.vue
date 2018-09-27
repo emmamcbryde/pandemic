@@ -979,7 +979,7 @@ export default {
     selectWatchCountry(i) {
       let id = this.globe.features[i].properties.iso_n3
       this.iWatchCountry = parseInt(this.getICountry(id))
-      console.log('Home.selectWatchCountry', i, id, iCountry)
+      console.log('Home.selectWatchCountry', i, id)
       let iNewHighlight = this.globe.iCountryFromId[id]
       if (iNewHighlight !== this.globe.iHighlightCountry) {
         this.globe.iHighlightCountry = iNewHighlight
@@ -990,10 +990,7 @@ export default {
 
     async asyncSelectWatchCountry() {
       await util.delay(100)
-      console.log(
-        '> Home.asyncSelectWatchCountry',
-        util.jstr(this.iWatchCountry)
-      )
+      console.log('> Home.asyncSelectWatchCountry', this.iWatchCountry)
       this.updateWatchCountry()
       let id = this.flightData.countries[this.iWatchCountry].iso_n3
       this.globe.iHighlightCountry = this.globe.iCountryFromId[id]
