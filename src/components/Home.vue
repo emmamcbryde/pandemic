@@ -529,22 +529,13 @@ export default {
     //   'travel': [
     //     # i'th country
     //     [
-    //       ['AUS', 33, 444],
-    //       ...
-    //     ],
-    //     ...
+    //       ['AUS', 33, 444],...
+    //     ],...
     //   ],
-    // ...
-    // ],
-    //   'series': [
-    //     ['AUS', 333.],
-    //     ...
-    //   ],
-    //     'countries': {
+    //   'countries': {
     //     'name': 'Australia',
-    //       'coordinates': [333, 444],
-    //       'id': '781',
-    //       'population': 400000,
+    //     'iso_n3': '781',
+    //     'iso_a3': 'AUS
     //   }
     // }
 
@@ -593,23 +584,14 @@ export default {
         _.map(entry.neighbours, getICountryFromId),
         _.isNil
       )
-      // console.log(
-      //   'landNeighbours of',
-      //   this.getNameFromICountry(iCountry),
-      //   _.map(this.adjacent[iCountry], this.getNameFromICountry)
-      // )
     }
 
     // The structure is [
-    //   ...,
     //   // iFromCountry
     //   [
-    //     ...,
     //     // iToCountry
-    //     <travelPerDay>,
-    //     ...
-    //   ],
-    //   ...
+    //     <travelPerDay>,...
+    //   ],...
     // ]
 
     this.travel = Array(nCountry)
@@ -996,8 +978,7 @@ export default {
 
     selectWatchCountry(i) {
       let id = this.globe.features[i].properties.iso_n3
-      let iCountry = this.getICountry(id)
-      this.iWatchCountry = iCountry
+      this.iWatchCountry = parseInt(this.getICountry(id))
       console.log('Home.selectWatchCountry', i, id, iCountry)
       let iNewHighlight = this.globe.iCountryFromId[id]
       if (iNewHighlight !== this.globe.iHighlightCountry) {
@@ -1089,6 +1070,14 @@ export default {
         s += `<br>&nbsp; Population: ${population}`
       }
 
+      function formatInt(i) {
+        if (i < 1) {
+          return '< 1'
+        } else {
+          return i.toFixed(0)
+        }
+      }
+
       if (this.mode === 'destination') {
         let j = this.globe.iCountryFromId[id]
         let value = this.globe.values[j]
@@ -1096,9 +1085,8 @@ export default {
           s += '<br>(No travel data available)'
         } else {
           let countryName = this.getNameFromICountry(this.iSourceCountry)
-          value = value.toFixed(3)
           s += `<br>Travelling from ${countryName}`
-          s += `<br>&nbsp; People per day: ${value}`
+          s += `<br>&nbsp; People per day: ` + formatInt(value)
         }
       }
 
@@ -1117,13 +1105,7 @@ export default {
           s += `<br>(No prediction due to lack of travel data)`
         } else {
           s += `<br>Prediction after ${this.days} days<br>`
-          s += ` &nbsp;Number of Active Infections: `
-          if (prevalence < 1) {
-            s += '< 1'
-          } else {
-            let n = prevalence.toFixed(0)
-            s += n
-          }
+          s += ` &nbsp;Number of Active Infections: ` + formatInt(prevalence)
         }
       }
 
