@@ -849,7 +849,7 @@ export default {
         chart.updateDataset(1, [], [])
       }
 
-      this.chartWidgets.globalPrevalence.setTitle('Global Prevalence')
+      this.chartWidgets.globalPrevalence.setTitle('Global Number of Active Infections')
       this.chartWidgets.globalPrevalence.setXLabel('Time (days)')
       this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(
@@ -906,7 +906,7 @@ export default {
         ].solution
       }
 
-      this.chartWidgets.prevalence.setTitle('Prevalence')
+      this.chartWidgets.prevalence.setTitle('Number of Active Infections')
       this.chartWidgets.prevalence.setXLabel('Time (days)')
       this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.prevalence.updateDataset(
@@ -1110,15 +1110,20 @@ export default {
           if (countryId === id) {
             prevalence = this.globalModel.countryModel[
               iCountry
-            ].compartment.prevalence.toFixed(2)
+            ].compartment.prevalence
           }
         }
         if (_.isNil(prevalence)) {
           s += `<br>(No prediction due to lack of travel data)`
         } else {
-          s += `<br>Prediction at ${
-            this.days
-          } days<br>&nbsp;Prevalence: ${prevalence}`
+          s += `<br>Prediction after ${this.days} days<br>`
+          s += ` &nbsp;Number of Active Infections: `
+          if (prevalence < 1) {
+            s += '< 1'
+          } else {
+            let n = prevalence.toFixed(0)
+            s += n
+          }
         }
       }
 
