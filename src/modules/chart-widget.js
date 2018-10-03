@@ -46,6 +46,16 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
             }
           }
         ]
+      },
+      tooltips: {
+        callbacks: {
+          label: function(tooltipItem, data) {
+            var label = 'value='
+            label += Math.round(tooltipItem.yLabel * 100) / 100;
+            label += ' day=' + Math.round(tooltipItem.xLabel * 100) / 100;
+            return label;
+          }
+        }
       }
     }
   }

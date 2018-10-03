@@ -812,7 +812,7 @@ class EbolaModel extends BaseModel {
         value: 0.2,
         step: 0.01,
         placeHolder: '',
-        label: 'Case-Ascertain. '
+        label: 'Fraction of People potentially infectious during incubation'
       },
       {
         key: 'hospitalCapacity',
