@@ -165,6 +165,42 @@
               md-row
               md-vertical-align="center">
 
+              <md-radio
+                v-model="mode"
+                md-value="risk"
+                @change="asyncSelectMode('risk')">
+                <div
+                  style="
+                    display: inline;
+                    height: 1em;
+                    color: #f0f">
+                  &block;
+                </div>
+                Show Pandemic Prediction
+              </md-radio>
+
+              <span style="width:1em"/>
+
+              <md-radio
+                v-model="mode"
+                md-value="destination"
+                @change="asyncSelectMode('destination')">
+                <div
+                  style="
+                    display: inline;
+                    height: 1em;
+                    color: #02386F">
+                  &block;
+                </div>
+                Show Travel Data Only
+              </md-radio>
+
+            </md-layout>
+
+            <md-layout
+              md-row
+              md-vertical-align="center">
+
               Animate &nbsp;
               <md-switch
                 v-model="isLoop"
@@ -309,79 +345,67 @@
     </div>
 
     <div
-      style="height: calc(100vh - 48px); flex: 1; border-left: 1px solid #CCC">
+      style="
+        height: calc(100vh - 48px);
+        flex: 1;
+        border-left: 1px solid #CCC;
+        overflow: hidden;
+        padding: 1em;
+        ">
 
-      <md-layout
-        style="overflow: scroll; height: calc(100vh - 48px); padding: 1em">
+      <md-card
+        style="
+          height: calc(100vh - 48px - 2em);
+          padding: 0.5em;">
 
-        <md-card style="padding: 0.5em;">
+        <md-layout
+          md-column
+          md-vertical-align="center"
+          style="
+            width: 100%;
+            height: calc(100vh - 48px - 2em);">
 
-          <md-layout
-            md-row
-            md-vertical-align="center">
-
-            <h2 class="md-title" style="width: 100%">
+          <div
+            style="
+              flex: 0;">
+            <h2
+              class="md-title"
+              style="margin-right: 2em;">
               <span v-if="mode == 'risk'">
-                Predicted Pandemic arising in {{ getNameFromICountry(iSourceCountry) }} after {{ days }} days
+                Predicted Pandemic originating in
+                {{ getNameFromICountry(iSourceCountry) }}
+                after {{ days }} days
               </span>
               <span v-if="mode == 'destination'">
-                People travelling from {{ getNameFromICountry(iSourceCountry) }}
+                People travelling from
+                {{ getNameFromICountry(iSourceCountry) }}
               </span>
             </h2>
 
-            <md-radio
-              v-model="mode"
-              md-value="risk"
-              @change="asyncSelectMode('risk')">
-              <div
-                style="
-                  display: inline;
-                  height: 1em;
-                  color: #f0f">
-                &block;
-              </div>
-              Pandemic Prediction
-            </md-radio>
-
-            <span style="width:1em"/>
-
-            <md-radio
-              v-model="mode"
-              md-value="destination"
-              @change="asyncSelectMode('destination')">
-              <div
-                style="
-                  display: inline;
-                  height: 1em;
-                  color: #02386F">
-                &block;
-              </div>
-              Travel Data
-            </md-radio>
-
             <md-input-container
               v-if="mode === 'risk'"
-              style="
-                  margin-left: 1em;
-                  width: 130px;">
+              style="width: 130px;">
               <label>Max Prevalence Shown</label>
               <md-input
                 v-model="maxPrevalence"
                 type="number"
                 @change="asyncCalculateRisk()"/>
             </md-input-container>
+          </div>
 
+          <md-layout
+            id="main"
+            style="
+                background-color: white;
+                height: 100%;
+                width: 100%;
+                ">
           </md-layout>
-        </md-card>
 
-        <div
-          id="main"
-          style="
-            background-color: white;
-            height: 100%;
-            width: 100%;"/>
+        </md-layout>
 
-      </md-layout>
+      </md-card>
+
     </div>
 
   </md-layout>
@@ -1094,7 +1118,7 @@ export default {
           let countryName = this.getNameFromICountry(this.iSourceCountry)
           s += `People travelling from ${countryName}`
           s += `<br>&nbsp; To ${name} (pop: ${population})`
-          s += `<br>&nbsp; Per Day: ` + formatInt(value)
+          s += `<br>&nbsp; Average Per Day: ` + formatInt(value)
         }
       }
 
@@ -1115,7 +1139,8 @@ export default {
         } else {
           s += `Prediction in ${name}`
           s += `<br> &nbsp; After ${this.days} days`
-          s += `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
+          s +=
+            `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
           s += `<br> &nbsp; Import incidence: ` + formatInt(importIncidence)
         }
       }

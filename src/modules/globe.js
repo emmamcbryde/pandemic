@@ -468,7 +468,7 @@ class Globe {
   }
 
   mousewheel() {
-    // event.preventDefault()
+    event.preventDefault()
 
     let wheel
     let e = d3.event

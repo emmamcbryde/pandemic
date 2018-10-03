@@ -9,32 +9,26 @@
       </h1>
 
       <p> This is an interactive tool that creates a map of the risk
-      of epidemic
-      spread/cross-border incursion related to priority pathogens.
-      This will
-      show the risk of combining human air travel and risk of
-      transmission
-      of disease to determine in an emerging pandemic, an early
-      outbreak. It
-      currently uses national populations, and consolidated flight
-      data for inter-national travel patterns. </p>
+      of epidemic spread/cross-border incursion related to priority
+      pathogens. This will show the risk of combining human air
+      travel and risk of transmission of disease to determine in an
+      emerging pandemic, an early outbreak. </p>
 
       <p> Given the coarse granularity of the data, basic
       epidemiological are used to model individual countries. This
-      is
-      sufficient to model the initial phases of an epidemic where
+      is sufficient to model the initial phases of an epidemic where
       long-term recurrent effects are yet to set in. </p>
 
-      <p>Data provided by OAG</p>
+      <p>It currently uses consolidated flight data for
+      inter-national travel patterns, provided by OAG, with a simple
+      estimate of land travel.</p>
 
       <p> It is developed as part of <a
         href="https://www.aithm.jcu.edu.au/research/tropical-partners/overview-j9frv6/">Tropical
         Partnerships to Enhance Surveillance and Response to
-        Infectious
-        Diseases"</a>, based at the <a
+        Infectious Diseases"</a>, based at the <a
           href="https://www.aithm.jcu.edu.au/">Australian Institute of
-        Tropical Health & Medicine</a>. Specifically, it falls under
-        <a
+        Tropical Health & Medicine</a>. Specifically, it falls under<a
           href="https://www.aithm.jcu.edu.au/research/tropical-partners/themes/theme-2/">Theme
         2b</a>. </p>
 
