@@ -106,12 +106,6 @@ class Globe {
     _.assign(this.features[38].properties, northernCyprus)
     _.assign(this.features[145].properties, somaliland)
 
-    let tags = ['adm0_a3', 'gu_a3', 'su_a3', 'brk_a3', 'iso_a3', 'iso_n3', 'adm0_a3_is']
-    for (let i = 0; i < this.features.length; i += 1) {
-      let countryFeature = this.features[i]
-      let strs = _.map(tags, t => countryFeature.properties[t])
-    }
-
     this.nullColor = '#CCB'
     this.borderColor = '#EEE'
     this.outerBorderColor = '#BBD'
@@ -256,7 +250,7 @@ class Globe {
     this.draw()
   }
 
-  getPropertiesFromId (id) {
+  getPropertiesFromId(id) {
     if (id in this.iCountryFromId) {
       return this.features[this.iCountryFromId[id]].properties
     } else {
@@ -269,7 +263,12 @@ class Globe {
    * @param id
    */
   dblclickCountry(iCountry) {
-    console.log('> Globe.dblclickCountry', iCountry, d3.event.pageX, d3.event.pageY)
+    console.log(
+      '> Globe.dblclickCountry',
+      iCountry,
+      d3.event.pageX,
+      d3.event.pageY
+    )
   }
 
   /**
@@ -277,7 +276,12 @@ class Globe {
    * @param id
    */
   clickCountry(iCountry) {
-    console.log('> Globe.clickCountry', iCountry, d3.event.pageX, d3.event.pageY)
+    console.log(
+      '> Globe.clickCountry',
+      iCountry,
+      d3.event.pageX,
+      d3.event.pageY
+    )
   }
 
   moveTooltip() {

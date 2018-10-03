@@ -320,21 +320,14 @@
             md-row
             md-vertical-align="center">
 
-            <md-radio
-              v-model="mode"
-              md-value="destination"
-              @change="asyncSelectMode('destination')">
-              <div
-                style="
-                  display: inline;
-                  height: 1em;
-                  color: #02386F">
-                &block;
-              </div>
-              Travel From Source
-            </md-radio>
-
-            <span style="width:1em"/>
+            <h2 class="md-title" style="width: 100%">
+              <span v-if="mode == 'risk'">
+                Predicted Pandemic arising in {{ getNameFromICountry(iSourceCountry) }} after {{ days }} days
+              </span>
+              <span v-if="mode == 'destination'">
+                People travelling from {{ getNameFromICountry(iSourceCountry) }}
+              </span>
+            </h2>
 
             <md-radio
               v-model="mode"
@@ -347,7 +340,23 @@
                   color: #f0f">
                 &block;
               </div>
-              Prevalence (from Model)
+              Pandemic Prediction
+            </md-radio>
+
+            <span style="width:1em"/>
+
+            <md-radio
+              v-model="mode"
+              md-value="destination"
+              @change="asyncSelectMode('destination')">
+              <div
+                style="
+                  display: inline;
+                  height: 1em;
+                  color: #02386F">
+                &block;
+              </div>
+              Travel Data
             </md-radio>
 
             <md-input-container
@@ -355,7 +364,7 @@
               style="
                   margin-left: 1em;
                   width: 130px;">
-              <label>Max Prevalence</label>
+              <label>Max Prevalence Shown</label>
               <md-input
                 v-model="maxPrevalence"
                 type="number"
@@ -461,6 +470,14 @@ function copyArray(dest, source) {
   dest.length = 0
   for (let v of source) {
     dest.push(v)
+  }
+}
+
+function formatInt(i) {
+  if (i < 1) {
+    return '< 1'
+  } else {
+    return i.toFixed(0)
   }
 }
 
@@ -683,7 +700,12 @@ export default {
     },
 
     getNameFromICountry(iCountry) {
-      return this.flightData.countries[iCountry].name
+      if (!_.isNil(this.flightData)) {
+        let id = this.flightData.countries[iCountry].iso_n3
+        return this.globe.getPropertiesFromId(id).admin
+      } else {
+        return ''
+      }
     },
 
     getPrevalenceByCountryId() {
@@ -831,7 +853,9 @@ export default {
         chart.updateDataset(1, [], [])
       }
 
-      this.chartWidgets.globalPrevalence.setTitle('Global Number of Active Infections')
+      this.chartWidgets.globalPrevalence.setTitle(
+        'Global Number of Active Infections'
+      )
       this.chartWidgets.globalPrevalence.setXLabel('Time (days)')
       this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.chartWidgets.globalPrevalence.updateDataset(
@@ -1059,50 +1083,40 @@ export default {
       let name = feature.properties.name
       let population = feature.properties.pop_est
 
-      let s = ''
-      s += `<div style="text-align: left">`
-      s += `${name}`
-
-      if (population) {
-        s += `<br>&nbsp; Population: ${population}`
-      }
-
-      function formatInt(i) {
-        if (i < 1) {
-          return '< 1'
-        } else {
-          return i.toFixed(0)
-        }
-      }
+      let s = `<div style="text-align: left">`
 
       if (this.mode === 'destination') {
         let j = this.globe.iCountryFromId[id]
         let value = this.globe.values[j]
         if (value === null) {
-          s += '<br>(No travel data available)'
+          s += `(No travel data available for ${name})`
         } else {
           let countryName = this.getNameFromICountry(this.iSourceCountry)
-          s += `<br>Travelling from ${countryName}`
-          s += `<br>&nbsp; People per day: ` + formatInt(value)
+          s += `People travelling from ${countryName}`
+          s += `<br>&nbsp; To ${name} (pop: ${population})`
+          s += `<br>&nbsp; Per Day: ` + formatInt(value)
         }
       }
 
       if (this.mode === 'risk') {
         let nCountry = this.flightData.countries.length
         let prevalence = null
+        let importIncidence
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
           let countryId = this.flightData.countries[iCountry].iso_n3
           if (countryId === id) {
-            prevalence = this.globalModel.countryModel[
-              iCountry
-            ].compartment.prevalence
+            let country = this.globalModel.countryModel[iCountry]
+            prevalence = country.compartment.prevalence
+            importIncidence = country.var.importIncidence
           }
         }
         if (_.isNil(prevalence)) {
-          s += `<br>(No prediction due to lack of travel data)`
+          s += `(No prediction due to lack of travel data)`
         } else {
-          s += `<br>Prediction after ${this.days} days<br>`
-          s += ` &nbsp;Number of Active Infections: ` + formatInt(prevalence)
+          s += `Prediction in ${name}`
+          s += `<br> &nbsp; After ${this.days} days`
+          s += `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
+          s += `<br> &nbsp; Import incidence: ` + formatInt(importIncidence)
         }
       }
 
