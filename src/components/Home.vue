@@ -969,6 +969,21 @@ export default {
     },
 
     async asyncRecalculateGlobe() {
+      let title = ''
+      if (this.mode == 'risk') {
+        title += 'Global Pandemic originating in '
+        title += this.getNameFromICountry(this.iSourceCountry)
+        title += ' after ' + this.days + ' days'
+      } else {
+        title += 'People travelling from '
+        title += this.getNameFromICountry(this.iSourceCountry)
+      }
+      this.title = title
+
+      // title needs to be given some time to reset the size
+      // of the globe div below it before redrawing
+      await util.delay(100)
+
       let valuesById, maxValue
       if (_.startsWith(this.mode, 'risk')) {
         while (this.isRunning) {
@@ -1014,20 +1029,6 @@ export default {
     },
 
     async asyncSelectSourceCountry() {
-      let title = ''
-      if (this.mode == 'risk') {
-        title += 'Global Pandemic originating in '
-        title += this.getNameFromICountry(this.iSourceCountry)
-        title += ' after ' + this.days + ' days'
-      } else {
-        title += 'People travelling from '
-        title += this.getNameFromICountry(this.iSourceCountry)
-      }
-      this.title = title
-
-      // title needs to be given some time to reset the size
-      // of the globe div below it before redrawing
-      await util.delay(100)
       this.asyncRecalculateGlobe()
       this.rotateToCountry(this.iSourceCountry)
     },
