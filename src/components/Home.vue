@@ -362,24 +362,15 @@
           md-column
           md-vertical-align="center"
           style="
-            width: 100%;
-            height: calc(100vh - 48px - 2em);">
+            height: 100%;
+            box-sizing: border-box
+            padding: 0 15px;">
 
-          <div
-            style="
-              flex: 0;">
+          <div>
             <h2
               class="md-title"
               style="margin-right: 2em;">
-              <span v-if="mode == 'risk'">
-                Predicted Pandemic originating in
-                {{ getNameFromICountry(iSourceCountry) }}
-                after {{ days }} days
-              </span>
-              <span v-if="mode == 'destination'">
-                People travelling from
-                {{ getNameFromICountry(iSourceCountry) }}
-              </span>
+              {{ title }}
             </h2>
 
             <md-input-container
@@ -396,10 +387,8 @@
           <md-layout
             id="main"
             style="
-                background-color: white;
-                height: 100%;
-                width: 100%;
-                ">
+              background-color: white;
+              width: 100%">
           </md-layout>
 
         </md-layout>
@@ -530,6 +519,7 @@ export default {
       days: 15,
       maxDays: 60,
       maxPrevalence: 20,
+      title: '',
       interventionMode: 'all-countries', // 'source-country-only'
       guiParams: [],
       interventionParams: [],
@@ -686,6 +676,8 @@ export default {
     setInterval(this.loop, this.loopTimeStepMs)
 
     this.isRunning = false
+
+    this.globe.resize()
   },
 
   methods: {
@@ -708,10 +700,6 @@ export default {
 
     getSourceCountryId() {
       return this.flightData.countries[this.iSourceCountry].iso_n3
-    },
-
-    getCountry(countryId) {
-      return _.find(this.flightData.countries, c => c.iso_n3 === countryId)
     },
 
     getICountry(countryId) {
@@ -1019,6 +1007,16 @@ export default {
     },
 
     async asyncSelectSourceCountry() {
+      let title = ''
+      if (this.mode == 'risk') {
+        title += 'Predicted Pandemic originating in '
+        title += this.getNameFromICountry(this.iSourceCountry)
+        title += ' after ' + this.days + ' days'
+      } else {
+        title += 'People travelling from '
+        title += this.getNameFromICountry(this.iSourceCountry)
+      }
+      this.title = title
       await util.delay(100)
       this.asyncRecalculateGlobe()
       this.rotateToCountry(this.iSourceCountry)
@@ -1139,8 +1137,7 @@ export default {
         } else {
           s += `Prediction in ${name}`
           s += `<br> &nbsp; After ${this.days} days`
-          s +=
-            `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
+          s += `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
           s += `<br> &nbsp; Import incidence: ` + formatInt(importIncidence)
         }
       }
