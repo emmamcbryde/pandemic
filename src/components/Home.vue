@@ -388,8 +388,7 @@
             id="main"
             style="
               background-color: white;
-              width: 100%">
-          </md-layout>
+              width: 100%"/>
 
         </md-layout>
 
@@ -888,14 +887,18 @@ export default {
       )
       this.chartWidgets.cumulativeIncidence.setXLabel('Time (days)')
       this.chartWidgets.cumulativeIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      let values = acumulateValues(this.globalModel.solution.incidence)
+      this.globalModel.solution.cumulativeIncidence = acumulateValues(
+        this.globalModel.solution.incidence
+      )
       this.chartWidgets.cumulativeIncidence.updateDataset(
         0,
         this.globalModel.times,
-        values
+        this.globalModel.solution.cumulativeIncidence
       )
       if (this.intervention) {
-        let startIncidence = values[this.globalModel.interventionDay]
+        let startIncidence = this.globalModel.solution.cumulativeIncidence[
+          this.globalModel.interventionDay
+        ]
         let newValues = acumulateValues(this.intervention.solution.incidence)
         newValues = _.map(newValues, v => v + startIncidence)
         this.chartWidgets.cumulativeIncidence.updateDataset(
@@ -943,14 +946,17 @@ export default {
       this.chartWidgets.importIncidence.setTitle('Cumulative Import Incidence')
       this.chartWidgets.importIncidence.setXLabel('Time (days)')
       this.chartWidgets.importIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      let values = acumulateValues(solution.importIncidence)
+      solution.cumulativeImportIncidence = acumulateValues(
+        solution.importIncidence
+      )
       this.chartWidgets.importIncidence.updateDataset(
         0,
         this.globalModel.times,
-        values
+        solution.cumulativeImportIncidence
       )
       if (interventionSolution) {
-        let startValue = values[this.globalModel.interventionDay]
+        let startValue =
+          solution.cumulativeImportIncidence[this.globalModel.interventionDay]
         let newValues = acumulateValues(interventionSolution.importIncidence)
         newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
@@ -1017,6 +1023,9 @@ export default {
         title += this.getNameFromICountry(this.iSourceCountry)
       }
       this.title = title
+
+      // title needs to be given some time to reset the size
+      // of the globe div below it before redrawing
       await util.delay(100)
       this.asyncRecalculateGlobe()
       this.rotateToCountry(this.iSourceCountry)
@@ -1123,13 +1132,15 @@ export default {
       if (this.mode === 'risk') {
         let nCountry = this.flightData.countries.length
         let prevalence = null
-        let importIncidence
+        let country = null
+        let solution = null
         for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
           let countryId = this.flightData.countries[iCountry].iso_n3
           if (countryId === id) {
-            let country = this.globalModel.countryModel[iCountry]
+            country = this.globalModel.countryModel[iCountry]
             prevalence = country.compartment.prevalence
-            importIncidence = country.var.importIncidence
+            solution = country.solution
+            break
           }
         }
         if (_.isNil(prevalence)) {
@@ -1137,8 +1148,10 @@ export default {
         } else {
           s += `Prediction in ${name}`
           s += `<br> &nbsp; After ${this.days} days`
-          s += `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
-          s += `<br> &nbsp; Import incidence: ` + formatInt(importIncidence)
+          s +=
+            `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
+          let cumulativeImportIncidence = _.last(acumulateValues(solution.importIncidence))
+          s += `<br> &nbsp; Cumulative Import incidence: ` + formatInt(cumulativeImportIncidence)
         }
       }
 
