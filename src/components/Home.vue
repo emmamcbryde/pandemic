@@ -360,7 +360,7 @@
 
         <md-layout
           md-column
-          md-vertical-align="center"
+          md-align="start"
           style="
             height: 100%;
             box-sizing: border-box
@@ -373,15 +373,6 @@
               {{ title }}
             </h2>
 
-            <md-input-container
-              v-if="mode === 'risk'"
-              style="width: 130px;">
-              <label>Max Prevalence Shown</label>
-              <md-input
-                v-model="maxPrevalence"
-                type="number"
-                @change="asyncCalculateRisk()"/>
-            </md-input-container>
           </div>
 
           <md-layout
@@ -389,6 +380,16 @@
             style="
               background-color: white;
               width: 100%"/>
+
+          <md-input-container
+            v-if="mode === 'risk'"
+            style="width: 130px;">
+            <label>Saturation Prevalence</label>
+            <md-input
+              v-model="maxPrevalence"
+              type="number"
+              @change="asyncCalculateRisk()"/>
+          </md-input-container>
 
         </md-layout>
 

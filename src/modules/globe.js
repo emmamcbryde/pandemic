@@ -239,11 +239,10 @@ class Globe {
     }).append(`
         <div
           style="
-          position: absolute;
-          bottom: 0;
-          padding-left: 10px;
-          user-select: none;
-          pointer-events: none;">
+            position: absolute;
+            bottom: 40px;
+            user-select: none;
+            pointer-events: none;">
           <svg id="${this.legendId}"></svg>
         </div>
       `)
