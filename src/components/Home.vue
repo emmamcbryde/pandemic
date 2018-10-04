@@ -1015,7 +1015,7 @@ export default {
     async asyncSelectSourceCountry() {
       let title = ''
       if (this.mode == 'risk') {
-        title += 'Predicted Pandemic originating in '
+        title += 'Global Pandemic originating in '
         title += this.getNameFromICountry(this.iSourceCountry)
         title += ' after ' + this.days + ' days'
       } else {
@@ -1114,18 +1114,23 @@ export default {
       let name = feature.properties.name
       let population = feature.properties.pop_est
 
+      let sourceId = this.flightData.countries[this.iSourceCountry].iso_n3
       let s = `<div style="text-align: left">`
 
       if (this.mode === 'destination') {
         let j = this.globe.iCountryFromId[id]
-        let value = this.globe.values[j]
-        if (value === null) {
-          s += `(No travel data available for ${name})`
+        if (id === sourceId) {
+          s += `Source country of travel: ${name}`
         } else {
-          let countryName = this.getNameFromICountry(this.iSourceCountry)
-          s += `People travelling from ${countryName}`
-          s += `<br>&nbsp; To ${name} (pop: ${population})`
-          s += `<br>&nbsp; Average Per Day: ` + formatInt(value)
+          let value = this.globe.values[j]
+          if (value === null) {
+            s += `(No travel data available for ${name})`
+          } else {
+            let countryName = this.getNameFromICountry(this.iSourceCountry)
+            s += `People travelling from ${countryName}`
+            s += `<br>&nbsp; To ${name} (pop: ${population})`
+            s += `<br>&nbsp; Average Per Day: ` + formatInt(value)
+          }
         }
       }
 
@@ -1147,6 +1152,9 @@ export default {
           s += `(No prediction due to lack of travel data)`
         } else {
           s += `Prediction in ${name}`
+          if (id === sourceId) {
+            s += ` (source)`
+          }
           s += `<br> &nbsp; After ${this.days} days`
           s +=
             `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
