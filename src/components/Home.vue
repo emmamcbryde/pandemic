@@ -35,7 +35,6 @@
                 <md-select
                   id="modelType"
                   v-model="modelType"
-                  style="width: 400px"
                   name="modelType">
                   <md-option
                     v-for="(modelType, i) in modelTypes"
@@ -404,8 +403,6 @@
 <style>
 html,
 body {
-  overflow: hidden;
-  position: fixed;
 }
 
 .countryTooltip {
