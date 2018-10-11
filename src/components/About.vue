@@ -7,38 +7,39 @@
 
     <div
       style="
-        padding-top: 7em;
-        padding-bottom: 4em;
+        padding-top: 10em;
+        padding-bottom: 3em;
         width: 100%;
         text-align: left">
 
-      <h1
-        class="md-display-1"
+      <div
+        class="md-title"
         style="
-          color: #333;
-          font-size: 2em;
-          letter-spacing: 0.2em;
-          font-weight: 800;
-          text-transform: uppercase">
+          font-weight: normal;
+          font-size: 36px;
+          ">
         Global Pandemic Map
-      </h1>
+      </div>
     </div>
 
     <div
-      style="text-align: justify">
+      style="
+        text-align: justify;
+        padding-bottom: 15em">
 
       <p> This is an interactive tool that creates a map of the risk
       of epidemic spread/cross-border incursion related to priority
-      pathogens. This will show the risk of combining human air
-      travel and risk of transmission of disease to determine in an
-      emerging pandemic, an early outbreak. </p>
+      pathogens. It combines human air travel with the risk of
+      transmission of disease, to determine the risk of an early
+      outbreak in an emerging pandemic. </p>
 
       <p class="md-subheading">
         Model
       </p>
 
-      <p> Given the coarse granularity of the data, basic
-      epidemiological models are used to model individual countries. This
+      <p> Given the coarse granularity of the data, simple
+      epidemiological models are used to model individual countries.
+      This
       is sufficient to model the initial phases of an epidemic where
       long-term recurrent effects are yet to set in. </p>
 
@@ -46,23 +47,10 @@
         Data
       </p>
 
-      <p>It currently uses consolidated flight data for
-      inter-national travel patterns, provided by OAG, with a simple
-      estimate of land travel.</p>
-
-      <p class="md-subheading">
-        Funding
-      </p>
-
-      <p> The Global Pandemic Map is part of  <a
-        href="https://www.aithm.jcu.edu.au/research/tropical-partners/themes/theme-2/">Theme
-        2b</a> of the <a
-        href="https://www.aithm.jcu.edu.au/research/tropical-partners/overview-j9frv6/">"Tropical
-        Partnerships to Enhance Surveillance and Response to
-        Infectious Diseases"</a>. It is based at the <a
-        href="https://www.aithm.jcu.edu.au/">Australian Institute of
-        Tropical Health & Medicine</a>, Townsville, Australia.
-      </p>
+      <p>Travel data is generated from consolidated international
+      flight
+      data from OAG, combined with a simple estimate of land travel
+      between neighbouring countries.</p>
 
       <p class="md-subheading">
         Development Team
@@ -77,6 +65,35 @@
           <li>Project Lead: Emma McBryde</li>
         </ul>
       </p>
+
+      <p class="md-subheading">
+        Source
+      </p>
+
+      <p>
+        <a href="http://github.com/boscoh/pandemic">
+          http://github.com/boscoh/pandemic</a>
+      </p>
+
+      <p class="md-subheading">
+        Funding
+      </p>
+
+      <p>
+        <a
+          href="https://www.aithm.jcu.edu.au/research/tropical-partners/themes/theme-2/">Theme
+        2b</a> //
+        <a
+          href="https://www.aithm.jcu.edu.au/research/tropical-partners/overview-j9frv6/">Tropical
+          Partnerships to Enhance Surveillance and Response to
+          Infectious Diseases</a>
+      </p>
+      <p>
+        <a
+          href="https://www.aithm.jcu.edu.au/">Australian Institute of
+          Tropical Health & Medicine</a>
+        <br>Townsville, Australia
+      </p>
     </div>
 
   </md-layout>
@@ -84,13 +101,9 @@
 
 <style>
 .md-subheading {
-  text-transform: uppercase;
   padding-top: 1em;
   width: 100%;
-  font-size: 0.9em;
-  font-weight: 800;
   text-align: left;
-  letter-spacing: 0.2em;
 }
 </style>
 

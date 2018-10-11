@@ -491,6 +491,8 @@ function formatInt(i) {
   }
 }
 
+let isDef = x => !_.isNil(x)
+
 export default {
   id: 'home',
 
@@ -538,91 +540,65 @@ export default {
 
   async mounted() {
     this.isRunning = true
-
     this.$element = $('#main')
+    this.loopTimeStepMs = 2000
+
     this.resize()
     window.addEventListener('resize', () => this.resize())
 
     this.globe = new Globe('#main')
-    this.globe.getCountryPopupHtml = this.getCountryPopupHtml
-    this.globe.dblclickCountry = this.selectSourceCountryByCountryId
-    this.globe.clickCountry = this.selectWatchCountry
+    this.globe.getPopupHtmlFromGlobe = this.getPopupHtmlFromGlobe
+    this.globe.dblclickCountry = this.selectSourceCountryFromGlobe
+    this.globe.clickCountry = this.selectWatchCountryFromGlobe
 
     this.mode = 'risk' // 'destination' or 'risk'
 
     this.flightData = flightData
-    this.flightData.countries[177].population = 39000000
-    // data is for Feb, 2015
-    // Resultant data written to data_js_fname: {
+    // data is for Feb, 2015 {
     //   'travel': [
-    //     # i'th country
-    //     [
-    //       ['AUS', 33, 444],...
-    //     ],...
+    //      [ ... ['AUS', 33, 444],... ],
+    //      ....
     //   ],
-    //   'countries': {
-    //     'name': 'Australia',
-    //     'iso_n3': '781',
-    //     'iso_a3': 'AUS
-    //   }
+    //   'countries': [ { 'name': 'Australia', 'iso_n3': '781', 'iso_a3': 'AUS },... ]
     // }
 
-    let countries = []
+    this.selectableCountries = []
     let nCountry = this.flightData.countries.length
     for (let iCountry = 0; iCountry < nCountry; iCountry += 1) {
-      let id = flightData.countries[iCountry].iso_n3
-      let properties = this.globe.getPropertiesFromId(id)
-      if (!_.isNil(properties)) {
-        let entry = { iCountry }
-        entry.iso_n3 = properties.iso_n3
-        entry.iso_a3 = properties.iso_a3
-        entry.name = properties.name
-        entry.population = parseInt(properties.pop_est)
-        // console.log('Home.constructor', entry)
-        countries.push(entry)
+      let country = flightData.countries[iCountry]
+      let query = { iso_n3: country.iso_n3 }
+      let properties = this.globe.getPropertiesFromQuery(query)
+      if (isDef(properties)) {
+        this.selectableCountries.push({
+          iCountry,
+          iso_n3: properties.iso_n3,
+          iso_a3: properties.iso_a3,
+          name: properties.name,
+          population: parseInt(properties.pop_est)
+        })
+      } else {
+        console.log(`Couldn't match ${JSON.stringify(country)} to map data`)
       }
     }
-    this.selectableCountries = _.sortBy(countries, a => a.name)
+    this.countryIndices = _.map(this.selectableCountries, 'iCountry')
+    this.selectableCountries = _.sortBy(this.selectableCountries, a => a.name)
 
     this.iSourceCountry = 0
 
-    this.countryIndices = _.map(countries, 'iCountry')
-
-    function getICountryFromId(id) {
-      for (let country of countries) {
-        if (id === country.iso_n3) {
-          return country.iCountry
-        }
-      }
-      return null
-    }
-
     this.adjacentData = adjacentData
-    this.adjacent = {}
-    // To produce this structure {
-    //   country_iso: [country_iso, ...],
-    //   ...
-    // }
+    this.adjacent = {} // { iCountry: [iCountry,...], ... }
     for (let entry of this.adjacentData.neighbours) {
-      let iCountry = getICountryFromId(entry.country)
-      if (_.isNil(iCountry)) {
-        continue
+      let isoN3 = entry.country
+      let iCountry = this.getICountry(isoN3)
+      if (isDef(iCountry)) {
+        this.adjacent[iCountry] = _.reject(
+          _.map(entry.neighbours, this.getICountry),
+          _.isNil
+        )
       }
-      this.adjacent[iCountry] = _.reject(
-        _.map(entry.neighbours, getICountryFromId),
-        _.isNil
-      )
     }
 
-    // The structure is [
-    //   // iFromCountry
-    //   [
-    //     // iToCountry
-    //     <travelPerDay>,...
-    //   ],...
-    // ]
-
-    this.travel = Array(nCountry)
+    this.travel = Array(nCountry) // n x n matrix of floats - travelPerDay
     for (let iCountryFrom of _.range(nCountry)) {
       this.travel[iCountryFrom] = _.fill(Array(nCountry), 0)
       for (let iCountryTo of this.countryIndices) {
@@ -632,8 +608,8 @@ export default {
 
       // hack to simulate land neighbors
       let maxFlightTravel = _.max(this.travel[iCountryFrom])
-      let id = this.flightData.countries[iCountryFrom].iso_n3
-      let features = this.globe.getPropertiesFromId(id)
+      let query = { iso_n3: this.flightData.countries[iCountryFrom].iso_n3 }
+      let features = this.globe.getPropertiesFromQuery(query)
       if (_.isNil(features)) {
         continue
       }
@@ -643,8 +619,8 @@ export default {
         continue
       }
       for (let iCountryTo of landNeighbors) {
-        id = this.flightData.countries[iCountryTo].iso_n3
-        features = this.globe.getPropertiesFromId(id)
+        let query = { iso_n3: this.flightData.countries[iCountryTo].iso_n3 }
+        features = this.globe.getPropertiesFromQuery(query)
         if (_.isNil(features)) {
           continue
         }
@@ -668,8 +644,6 @@ export default {
 
     await this.asyncSelectRandomSourceCountry()
 
-    this.loopTimeStepMs = 2000
-
     setInterval(this.loop, this.loopTimeStepMs)
 
     this.isRunning = false
@@ -685,33 +659,28 @@ export default {
       let selector = `#${id}`
       await waitForElement(selector)
       let chartWidget = new ChartWidget(selector)
-      chartWidget.setTitle('')
-      chartWidget.setXLabel('')
-      chartWidget.setYLabel('')
       chartWidget.addDataset(id)
       chartWidget.addDataset(id + '-intervention')
       chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = convertLabel
       this.chartWidgets[id] = chartWidget
-      return selector
     },
 
     getSourceCountryId() {
       return this.flightData.countries[this.iSourceCountry].iso_n3
     },
 
-    getICountry(countryId) {
-      for (let i in _.range(this.flightData.countries.length)) {
-        if (this.flightData.countries[i].iso_n3 === countryId) {
-          return i
+    getICountry(id) {
+      for (let country of this.selectableCountries) {
+        if (id === country.iso_n3) {
+          return country.iCountry
         }
       }
-      return null
     },
 
     getNameFromICountry(iCountry) {
-      if (!_.isNil(this.flightData)) {
-        let id = this.flightData.countries[iCountry].iso_n3
-        return this.globe.getPropertiesFromId(id).admin
+      if (isDef(this.flightData)) {
+        let query = { iso_n3: this.flightData.countries[iCountry].iso_n3 }
+        return this.globe.getPropertiesFromQuery(query).admin
       } else {
         return ''
       }
@@ -804,10 +773,9 @@ export default {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.importGuiParams(this.guiParams)
-        let id = this.flightData.countries[iCountry].iso_n3
-        countryModel.param.initPopulation = this.globe.getPropertiesFromId(
-          id
-        ).pop_est
+        let query = { iso_n3: this.flightData.countries[iCountry].iso_n3 }
+        let pop = this.globe.getPropertiesFromQuery(query).pop_est
+        countryModel.param.initPopulation = pop
         if (this.iSourceCountry !== iCountry) {
           countryModel.param.initPrevalence = 0
         }
@@ -1030,10 +998,10 @@ export default {
       this.rotateToCountry(this.iSourceCountry)
     },
 
-    selectWatchCountry(i) {
-      let id = this.globe.features[i].properties.iso_n3
+    selectWatchCountryFromGlobe(iGlobeCountry) {
+      let id = this.globe.features[iGlobeCountry].properties.iso_n3
       this.iWatchCountry = parseInt(this.getICountry(id))
-      console.log('Home.selectWatchCountry', i, id)
+      console.log('Home.selectWatchCountry', iGlobeCountry, id)
       let iNewHighlight = this.globe.iCountryFromId[id]
       if (iNewHighlight !== this.globe.iHighlightCountry) {
         this.globe.iHighlightCountry = iNewHighlight
@@ -1052,13 +1020,13 @@ export default {
       this.rotateToCountry(this.iWatchCountry)
     },
 
-    selectSourceCountryByCountryId(i) {
-      let countryId = this.globe.features[i].properties.iso_n3
+    selectSourceCountryFromGlobe(iGlobeCountry) {
+      let countryId = this.globe.features[iGlobeCountry].properties.iso_n3
       let country = _.find(
         this.selectableCountries,
         c => c.iso_n3 === countryId
       )
-      if (!_.isNil(country)) {
+      if (isDef(country)) {
         this.iSourceCountry = country.iCountry
         this.asyncSelectSourceCountry()
       }
@@ -1107,8 +1075,8 @@ export default {
       }
     },
 
-    getCountryPopupHtml(i) {
-      let feature = this.globe.features[i]
+    getPopupHtmlFromGlobe(iGlobeCountry) {
+      let feature = this.globe.features[iGlobeCountry]
       let id = feature.properties.iso_n3
       let name = feature.properties.name
       let population = feature.properties.pop_est
@@ -1157,8 +1125,12 @@ export default {
           s += `<br> &nbsp; After ${this.days} days`
           s +=
             `<br> &nbsp; Number of Active Infections: ` + formatInt(prevalence)
-          let cumulativeImportIncidence = _.last(acumulateValues(solution.importIncidence))
-          s += `<br> &nbsp; Cumulative Import incidence: ` + formatInt(cumulativeImportIncidence)
+          let cumulativeImportIncidence = _.last(
+            acumulateValues(solution.importIncidence)
+          )
+          s +=
+            `<br> &nbsp; Cumulative Import incidence: ` +
+            formatInt(cumulativeImportIncidence)
         }
       }
 

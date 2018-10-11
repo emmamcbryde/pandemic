@@ -203,7 +203,7 @@ class Globe {
     this.svg
       .selectAll('path.country')
       .on('mouseover', (d, i) => {
-        let html = this.getCountryPopupHtml(i)
+        let html = this.getPopupHtmlFromGlobe(i)
         if (html) {
           this.tooltip
             .html(html)
@@ -256,6 +256,23 @@ class Globe {
     } else {
       return null
     }
+  }
+
+  /**
+   *
+   * @param query - {key: value}
+   * @returns {*}
+   */
+  getPropertiesFromQuery(query) {
+    for (let feature of this.features) {
+      let properties = feature.properties
+      for (let key of _.keys(query)) {
+        if (query[key] === properties[key]) {
+          return properties
+        }
+      }
+    }
+    return null
   }
 
   /**
