@@ -659,6 +659,7 @@ export default {
       let selector = `#${id}`
       await waitForElement(selector)
       let chartWidget = new ChartWidget(selector)
+      chartWidget.setYLabel('')
       chartWidget.addDataset(id)
       chartWidget.addDataset(id + '-intervention')
       chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = convertLabel
@@ -863,7 +864,7 @@ export default {
       )
       if (this.intervention) {
         let startIncidence = this.globalModel.solution.cumulativeIncidence[
-          this.globalModel.interventionDay
+          this.globalModel.interventionDay - 1
         ]
         let newValues = acumulateValues(this.intervention.solution.incidence)
         newValues = _.map(newValues, v => v + startIncidence)
@@ -922,7 +923,7 @@ export default {
       )
       if (interventionSolution) {
         let startValue =
-          solution.cumulativeImportIncidence[this.globalModel.interventionDay]
+          solution.cumulativeImportIncidence[this.globalModel.interventionDay - 1]
         let newValues = acumulateValues(interventionSolution.importIncidence)
         newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
