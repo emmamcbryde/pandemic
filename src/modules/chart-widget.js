@@ -15,7 +15,8 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
         text: title
       },
       legend: {
-        display: false
+        display: true,
+        position: 'top',
       },
       maintainAspectRatio: false,
       responsive: true,
@@ -51,7 +52,13 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
         callbacks: {
           label (tooltipItem, data) {
             let label = 'value='
-            label += Math.round(tooltipItem.yLabel * 100) / 100
+            let y
+            if (tooltipItem.yLabel > 1) {
+              y = tooltipItem.yLabel.toFixed(0)
+            } else {
+              y = Math.round(tooltipItem.yLabel * 100) / 100
+            }
+            label += y
             label += ' day=' + Math.round(tooltipItem.xLabel * 100) / 100
             return label
           }

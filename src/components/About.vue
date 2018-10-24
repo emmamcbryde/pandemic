@@ -34,7 +34,7 @@
       outbreak in an emerging pandemic. </p>
 
       <p class="md-subheading">
-        Model
+        Country Model
       </p>
 
       <p> Given the coarse granularity of the data, simple
@@ -44,13 +44,24 @@
       long-term recurrent effects are yet to set in. </p>
 
       <p class="md-subheading">
-        Data
+        Travel Data
       </p>
 
       <p>Travel data is generated from consolidated international
       flight
       data from OAG, combined with a simple estimate of land travel
       between neighbouring countries.</p>
+
+      <p class="md-subheading">
+        Global Model
+      </p>
+
+      <p> The global model is a geospatial model consisting of
+        each individual country model combined with an inter-country
+        transfer of people at each major time-step. The number of
+        people transferring is derived from the travel data. All
+        model calculations are carried out in the browser directly.
+      </p>
 
       <p class="md-subheading">
         Development Team
@@ -60,7 +71,7 @@
         <ul>
           <li>Lead Programmer/UX Designer: <a href="http://boscoh.com">Bosco
           Ho</a></li>
-          <li>Model Development: Adeshina Adekunke</li>
+          <li>Model Development: Adeshina Adekunle</li>
           <li>Consulting Epidemiologist: James Trauer</li>
           <li>Project Lead: Emma McBryde</li>
         </ul>

@@ -19,7 +19,60 @@
 
         <md-layout md-column>
 
-          <md-card style="padding: 1em">
+          <md-card
+            style="padding: 1em;">
+
+            <h3 class="md-title">Global Pandemic Model</h3>
+
+            <p>
+              This page models an emerging pandemic originating from a source country.
+              Scroll down to see interactive graphs of the pandemic globally, and
+              for individual countries.
+            </p>
+
+            <md-layout
+              md-row
+              md-vertical-align="center">
+
+              <div
+                style="
+                  display: inline;
+                  color: red;
+                  font-size: 1.5em;
+                  line-height: 1em;
+                  height: 1em;
+                  min-height: 1em;
+                  margin-right: 0.2em">
+                &block;
+              </div>
+
+              <md-input-container
+                style="
+                  padding-left: 0.2em;
+                  flex: 1;
+                  margin-right: 1em">
+                <label>
+                  Source Country
+                </label>
+                <md-select
+                  id="country"
+                  v-model="iSourceCountry"
+                  name="country">
+                  <md-option
+                    v-for="(country, i) in selectableCountries"
+                    :value="country.iCountry"
+                    :key="i"
+                    @selected="asyncSelectSourceCountry()">
+                    {{ country.name }}
+                  </md-option>
+                </md-select>
+              </md-input-container>
+
+            </md-layout>
+
+          </md-card>
+
+          <md-card style="padding: 1em;  margin-top: 1em">
 
             <h3 class="md-title">Model Parameters</h3>
 
@@ -51,40 +104,6 @@
             <md-layout
               md-row
               md-vertical-align="center">
-
-              <div
-                style="
-                  display: inline;
-                  color: red;
-                  font-size: 1.5em;
-                  line-height: 1em;
-                  height: 1em;
-                  min-height: 1em;
-                  margin-right: 0.2em">
-                &block;
-              </div>
-
-              <md-input-container
-                style="
-                  padding-left: 0.2em;
-                  width: 160px;
-                  margin-right: 1em">
-                <label>
-                  Source Country
-                </label>
-                <md-select
-                  id="country"
-                  v-model="iSourceCountry"
-                  name="country">
-                  <md-option
-                    v-for="(country, i) in selectableCountries"
-                    :value="country.iCountry"
-                    :key="i"
-                    @selected="asyncSelectSourceCountry()">
-                    {{ country.name }}
-                  </md-option>
-                </md-select>
-              </md-input-container>
 
               <md-input-container
                 v-for="(entry, i) in guiParams"
@@ -248,26 +267,6 @@
               Global Pandemic Predictions
             </h3>
 
-            <div>
-              <div
-                style="
-                  display: inline;
-                  height: 1em;
-                  color: #4ABDAC">
-                &block;
-              </div>
-              model
-              &nbsp;
-              <div
-                style="
-                  display: inline;
-                  height: 1em;
-                  color: #FC4A1A">
-                &block;
-              </div>
-              intervention
-            </div>
-
             <div
               v-show="mode === 'risk'"
               style="width: 100%">
@@ -283,18 +282,23 @@
               Watch Country Pandemic Predictions
             </h3>
 
-            <md-layout md-row>
+            <md-layout
+              md-row
+              md-vertical-align="center">
               <div
                 style="
                   display: inline;
-                  height: 1em;
                   color: green;
-                  margin-right: 1em; ">
+                  font-size: 1.5em;
+                  line-height: 1em;
+                  height: 1em;
+                  min-height: 1em;
+                  margin-right: 0.2em">
                 &block;
               </div>
 
               <md-input-container
-                style="width: 140px">
+                style="flex: 1">
                 <label>
                   Watch Country
                 </label>
@@ -312,26 +316,6 @@
                 </md-select>
               </md-input-container>
             </md-layout>
-
-            <div>
-              <div
-                style="
-                  display: inline;
-                  height: 1em;
-                  color: #4ABDAC">
-                &block;
-              </div>
-              model
-              &nbsp;
-              <div
-                style="
-                  display: inline;
-                  height: 1em;
-                  color: #FC4A1A">
-                &block;
-              </div>
-              intervention
-            </div>
 
             <md-layout
               v-show="mode === 'risk'"
@@ -355,7 +339,7 @@
       <md-card
         style="
           height: calc(100vh - 48px - 2em);
-          padding: 0.5em;">
+          padding: 1em;">
 
         <md-layout
           md-column
@@ -418,8 +402,8 @@ body {
 }
 
 .chart {
-  width: 250px;
-  height: 200px;
+  width: 400px;
+  height: 300px;
   margin-bottom: 1.5em;
 }
 </style>
@@ -660,8 +644,8 @@ export default {
       await waitForElement(selector)
       let chartWidget = new ChartWidget(selector)
       chartWidget.setYLabel('')
-      chartWidget.addDataset(id)
-      chartWidget.addDataset(id + '-intervention')
+      chartWidget.addDataset('model')
+      chartWidget.addDataset('intervention')
       chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = convertLabel
       this.chartWidgets[id] = chartWidget
     },
@@ -937,7 +921,7 @@ export default {
     async asyncRecalculateGlobe() {
       let title = ''
       if (this.mode == 'risk') {
-        title += 'Global Pandemic originating in '
+        title += 'Risk of Pandemic Originating in '
         title += this.getNameFromICountry(this.iSourceCountry)
         title += ' after ' + this.days + ' days'
       } else {
