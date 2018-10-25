@@ -43,7 +43,7 @@ class BaseModel {
    *    the given time-point
    *    to be saved in this.solutions
    */
-  constructor(id) {
+  constructor (id) {
     // Name of the particular instance of the model
     this.id = id
 
@@ -157,7 +157,7 @@ class BaseModel {
    *
    * @returns list[{}] paramEntries
    */
-  getGuiParams() {
+  getGuiParams () {
     return _.cloneDeep(this.guiParams)
   }
 
@@ -167,7 +167,7 @@ class BaseModel {
    *
    * @returns list[{}] paramEntries
    */
-  getInterventionParams() {
+  getInterventionParams () {
     if (this.interventionParams.length > 0) {
       return _.cloneDeep(this.interventionParams)
     } else {
@@ -182,7 +182,7 @@ class BaseModel {
    *
    * @param guiParams
    */
-  importGuiParams(guiParams) {
+  importGuiParams (guiParams) {
     this.param = _.cloneDeep(this.defaultParams)
     for (let param of guiParams) {
       this.param[param.key] = parseFloat(param.value)
@@ -193,14 +193,14 @@ class BaseModel {
    * To be overridden. Calculates new this.param from
    * existing this.param.
    */
-  calcExtraParams() {}
+  calcExtraParams () {}
 
   /**
    * To be overridden. Initializations of compartments
    * from this.param, used at the beginning of a run and typically
    * called by this.initCompartments
    */
-  initCompartmentsByParams() {
+  initCompartmentsByParams () {
     this.compartment.prevalence = this.param.initPrevalence
     this.compartment.susceptible =
       this.param.initPopulation - this.param.initPrevalence
@@ -209,7 +209,7 @@ class BaseModel {
   /**
    * Called before running a simulation
    */
-  initCompartments() {
+  initCompartments () {
     for (let key of this.keys) {
       this.compartment[key] = 0
     }
@@ -224,7 +224,7 @@ class BaseModel {
    *
    * @param [params] - a param folds a dictionary for a value and its bounds and step
    */
-  applyIntervention(guiParams) {
+  applyIntervention (guiParams) {
     for (let param of guiParams) {
       this.param[param.key] = parseFloat(param.value)
     }
@@ -236,7 +236,7 @@ class BaseModel {
    * re-running the simulation from the beginning and
    * for reseting a simulation as an intervention
    */
-  clearSolutions() {
+  clearSolutions () {
     this.keys = _.keys(this.compartment)
     for (let key of _.keys(this.solution)) {
       this.solution[key].length = 0
@@ -249,14 +249,14 @@ class BaseModel {
    * relevant to each time-point from compartment and
    * params values.
    */
-  calcVars() {}
+  calcVars () {}
 
   /**
    * Sanity check to make sure that there are suitable
    * this.var and this.param for the varEvents and
    * paramEvents that are defined.
    */
-  checkEvents() {
+  checkEvents () {
     this.calcVars()
     let varKeys = _.keys(this.var)
     for (let varEvent of this.varEvents) {
@@ -283,7 +283,7 @@ class BaseModel {
   /**
    * Clears variables for transfers with other countryModels to occur
    */
-  clearBeforeTransfer() {
+  clearBeforeTransfer () {
     for (let key of this.keys) {
       this.delta[key] = 0
     }
@@ -297,7 +297,7 @@ class BaseModel {
    * @param toCountryModel - another BaseModel
    * @param travelPerDay - number of people travelling between the two models
    */
-  transferTo(toCountryModel, travelPerDay) {
+  transferTo (toCountryModel, travelPerDay) {
     let probSickCanTravel = 1
     let probTravelPerDay = travelPerDay / this.var.population
     let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
@@ -313,7 +313,7 @@ class BaseModel {
    * to allow for both the construction of differentials
    * and to use randomized samples further down the track
    */
-  calcEvents() {
+  calcEvents () {
     this.calcVars()
 
     this.events.length = 0
@@ -336,7 +336,7 @@ class BaseModel {
    *
    * @param dTime
    */
-  saveToSolution(dTime) {
+  saveToSolution (dTime) {
     let incidence = 0
     for (let event of this.events) {
       let to = event[1]
@@ -352,7 +352,7 @@ class BaseModel {
     }
   }
 
-  runStep(dTime) {
+  runStep (dTime) {
     this.calcEvents()
 
     // Calculates the flow from events, which is the
@@ -400,7 +400,7 @@ class BaseModel {
 }
 
 class SisModel extends BaseModel {
-  constructor(id) {
+  constructor (id) {
     super(id)
 
     this.modelType = 'SIS'
@@ -445,7 +445,6 @@ class SisModel extends BaseModel {
         label: 'Prevalence'
       }
     ]
-
     this.interventionParams = [
       {
         key: 'interventionDay',
@@ -464,12 +463,12 @@ class SisModel extends BaseModel {
     ]
   }
 
-  calcExtraParams() {
+  calcExtraParams () {
     this.param.contactRate =
       this.param.reproductionNumber * this.param.recoverRate
   }
 
-  calcVars() {
+  calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -478,7 +477,7 @@ class SisModel extends BaseModel {
 }
 
 class SirModel extends BaseModel {
-  constructor(id) {
+  constructor (id) {
     super(id)
 
     this.modelType = 'SIR'
@@ -543,12 +542,12 @@ class SirModel extends BaseModel {
     ]
   }
 
-  calcExtraParams() {
+  calcExtraParams () {
     this.param.contactRate =
       this.param.reproductionNumber * this.param.recoverRate
   }
 
-  calcVars() {
+  calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -557,7 +556,7 @@ class SirModel extends BaseModel {
 }
 
 class SEIRModel extends BaseModel {
-  constructor(id) {
+  constructor (id) {
     super(id)
     this.id = id
 
@@ -615,7 +614,6 @@ class SEIRModel extends BaseModel {
         label: 'Prevalence'
       }
     ]
-
     this.interventionParams = [
       {
         key: 'interventionDay',
@@ -634,14 +632,14 @@ class SEIRModel extends BaseModel {
     ]
   }
 
-  calcExtraParams() {
+  calcExtraParams () {
     this.param.recoverRate = (1 - this.param.caseFatality) * this.param.period
     this.param.disDeath = -1 * this.param.caseFatality * this.param.period
     this.param.incubationRate = this.param.incubation
     this.param.contactRate = this.param.reproductionNumber * this.param.period
   }
 
-  calcVars() {
+  calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -650,7 +648,7 @@ class SEIRModel extends BaseModel {
 }
 
 class SEIRSModel extends BaseModel {
-  constructor(id) {
+  constructor (id) {
     super(id)
     this.id = id
 
@@ -717,7 +715,6 @@ class SEIRSModel extends BaseModel {
         label: 'Prevalence'
       }
     ]
-
     this.interventionParams = [
       {
         key: 'interventionDay',
@@ -736,7 +733,7 @@ class SEIRSModel extends BaseModel {
     ]
   }
 
-  calcExtraParams() {
+  calcExtraParams () {
     this.param.recoverRate = (1 - this.param.caseFatality) * this.param.period
     this.param.incubationRate = this.param.incubation
     this.param.disDeath = -1 * this.param.caseFatality * this.param.period
@@ -744,7 +741,7 @@ class SEIRSModel extends BaseModel {
     this.param.immunityLossRate = 1 / this.param.immunityPeriod
   }
 
-  calcVars() {
+  calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -753,7 +750,7 @@ class SEIRSModel extends BaseModel {
 }
 
 class EbolaModel extends BaseModel {
-  constructor(id) {
+  constructor (id) {
     super(id)
     this.id = id
 
@@ -843,7 +840,6 @@ class EbolaModel extends BaseModel {
         label: 'Prevalence'
       }
     ]
-
     this.interventionParams = [
       {
         key: 'interventionDay',
@@ -869,7 +865,7 @@ class EbolaModel extends BaseModel {
     ]
   }
 
-  calcExtraParams() {
+  calcExtraParams () {
     this.param.incubationRate = this.param.latency
     this.param.recoverRate1 =
       (1 - this.param.caseFatality) * this.param.postDetection
@@ -891,7 +887,7 @@ class EbolaModel extends BaseModel {
           this.param.preBurialPeriod)
   }
 
-  calcVars() {
+  calcVars () {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.foi * this.compartment.prevalence +

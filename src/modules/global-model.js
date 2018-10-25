@@ -1,6 +1,6 @@
 const _ = require('lodash')
 
-function clearDict(aDict) {
+function clearDict (aDict) {
   for (let key of _.keys(aDict)) {
     delete aDict[key]
   }
@@ -34,7 +34,7 @@ class GlobalModel {
     this.interventionDay = null
   }
 
-  setCountryModel(countryIndices, ModelClass, sourceCountryName) {
+  setCountryModel (countryIndices, ModelClass, sourceCountryName) {
     this.countryIndices = countryIndices
     clearDict(this.countryModel)
     for (let iCountry of this.countryIndices) {
@@ -42,7 +42,7 @@ class GlobalModel {
     }
   }
 
-  getGuiParams() {
+  getGuiParams () {
     if (_.keys(this.countryModel).length > 0) {
       let result = this.countryModel[0].getGuiParams()
       if (!this.isIntervention) {
@@ -57,7 +57,7 @@ class GlobalModel {
     }
   }
 
-  getInterventionParams() {
+  getInterventionParams () {
     if (_.keys(this.countryModel).length > 0) {
       let result = this.countryModel[0].getInterventionParams()
       if (!this.isIntervention) {
@@ -72,7 +72,7 @@ class GlobalModel {
     }
   }
 
-  makeIntervention(inputParams) {
+  makeIntervention (inputParams) {
     let intervention = new this.constructor(true)
     intervention.startTime = this.time
     intervention.times.length = 0
@@ -86,7 +86,7 @@ class GlobalModel {
     return intervention
   }
 
-  makeSingleCountryIntervention(inputParams, iCountry) {
+  makeSingleCountryIntervention (inputParams, iCountry) {
     let intervention = new this.constructor(true)
     intervention.startTime = this.time
     intervention.times.length = 0
@@ -102,7 +102,7 @@ class GlobalModel {
     return intervention
   }
 
-  transferPeople() {
+  transferPeople () {
     if (!this.getTravelPerDay) {
       throw new Error('GlobalModel.getTravelPerDay function not set!')
     }
@@ -120,7 +120,7 @@ class GlobalModel {
     }
   }
 
-  clearSolutions() {
+  clearSolutions () {
     this.solution.incidence.length = 0
     this.solution.prevalence.length = 0
     this.times.length = 0
@@ -130,7 +130,7 @@ class GlobalModel {
     }
   }
 
-  update() {
+  update () {
     this.time += this.dTimeInDay
     this.times.push(this.time)
 

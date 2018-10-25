@@ -9,7 +9,7 @@ const world110mInfo = require('../data/world-110m-name.json')
 /**
  * https://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
  */
-function zeroPad(num, places) {
+function zeroPad (num, places) {
   let zero = places - num.toString().length + 1
   return Array(+(zero > 0 && zero)).join('0') + num
 }
@@ -67,7 +67,7 @@ class Globe {
    *
    * @param selector - jquery div tag to insert the globe
    */
-  constructor(selector, world = world110m, worldData = world110mInfo) {
+  constructor (selector, world = world110m, worldData = world110mInfo) {
     this.world = world
     this.selector = selector
     this.scaleFactor = 1 / 2.2
@@ -192,7 +192,7 @@ class Globe {
       .attr('d', this.path)
 
     this.tooltip = d3
-      .select("body")
+      .select('body')
       .append('div')
       .attr('class', 'countryTooltip')
       .style('display', 'hidden')
@@ -250,7 +250,7 @@ class Globe {
     this.draw()
   }
 
-  getPropertiesFromId(id) {
+  getPropertiesFromId (id) {
     if (id in this.iCountryFromId) {
       return this.features[this.iCountryFromId[id]].properties
     } else {
@@ -263,7 +263,7 @@ class Globe {
    * @param query - {key: value}
    * @returns {*}
    */
-  getPropertiesFromQuery(query) {
+  getPropertiesFromQuery (query) {
     for (let feature of this.features) {
       let properties = feature.properties
       for (let key of _.keys(query)) {
@@ -279,7 +279,7 @@ class Globe {
    * To be overridden
    * @param id
    */
-  dblclickCountry(iCountry) {
+  dblclickCountry (iCountry) {
     console.log(
       '> Globe.dblclickCountry',
       iCountry,
@@ -292,7 +292,7 @@ class Globe {
    * To be overridden
    * @param id
    */
-  clickCountry(iCountry) {
+  clickCountry (iCountry) {
     console.log(
       '> Globe.clickCountry',
       iCountry,
@@ -301,7 +301,7 @@ class Globe {
     )
   }
 
-  moveTooltip() {
+  moveTooltip () {
     this.tooltip
       .style('left', d3.event.pageX + 7 + 'px')
       .style('top', d3.event.pageY - 15 + 'px')
@@ -312,7 +312,7 @@ class Globe {
    * @param id
    * @returns String - contains HTML to write to popup
    */
-  getCountryPopupHtml(iCountry) {
+  getCountryPopupHtml (iCountry) {
     let value = this.values[iCountry]
     if (value === null) {
       return ''
@@ -320,7 +320,7 @@ class Globe {
     return value.toFixed(1)
   }
 
-  getCurrentSize() {
+  getCurrentSize () {
     let rect = d3
       .select(this.selector)
       .node()
@@ -332,14 +332,14 @@ class Globe {
     this.centerY = this.height / 2
   }
 
-  resize() {
+  resize () {
     this.getCurrentSize()
     this.svg.attr('width', this.width).attr('height', this.height)
     this.projection.translate([this.centerX, this.centerY]).scale(this.scale)
     this.draw()
   }
 
-  draw() {
+  draw () {
     this.svg.selectAll('path.water').attr('d', this.path)
     // draw country fills
     this.svg
@@ -350,11 +350,11 @@ class Globe {
     this.drawHighlight()
   }
 
-  setHighlight(iCountry) {
+  setHighlight (iCountry) {
     this.iHighlightCountry = iCountry
   }
 
-  drawHighlight() {
+  drawHighlight () {
     // draw the highlighted country outline
     this.svg
       .selectAll('path.highlightCountry')
@@ -373,7 +373,7 @@ class Globe {
    *
    * @param r - [-Longitude, -Latitude]
    */
-  rotateTo(r) {
+  rotateTo (r) {
     if (r[1] < -90) {
       r[1] = -90
     }
@@ -391,7 +391,7 @@ class Globe {
    * @param targetR - [-Longitude, -Latitude]
    * @param callback
    */
-  rotateTransition(targetR, callback) {
+  rotateTransition (targetR, callback) {
     let interpolateR = d3.interpolate(this.projection.rotate(), targetR)
     let rotate = t => {
       this.rotateTo(interpolateR(t))
@@ -402,20 +402,20 @@ class Globe {
       .on('end', callback)
   }
 
-  rotateTransitionToICountry(iCountry, callback) {
+  rotateTransitionToICountry (iCountry, callback) {
     let selectedFeature = this.features[iCountry]
     let p = d3.geoCentroid(selectedFeature)
     this.rotateTransition([-p[0], -p[1]], callback)
   }
 
-  rotateRel(diffR) {
+  rotateRel (diffR) {
     let r = this.projection.rotate()
     r[0] += diffR[0]
     r[1] += diffR[1]
     this.rotateTo(r)
   }
 
-  resetCountryColorsFromValues(maxColor, maxValue = null, minColor = '#DDD') {
+  resetCountryColorsFromValues (maxColor, maxValue = null, minColor = '#DDD') {
     if (maxValue === null) {
       maxValue = Math.max.apply(null, this.values)
     }
@@ -433,7 +433,7 @@ class Globe {
     }
   }
 
-  extractPointerPos() {
+  extractPointerPos () {
     let event = d3.event
     event.preventDefault()
     let x, y
@@ -462,7 +462,7 @@ class Globe {
     this.pos.y = y
   }
 
-  mousemove() {
+  mousemove () {
     this.extractPointerPos()
     if (this.isMouseDown) {
       this.rotateRel([
@@ -473,18 +473,18 @@ class Globe {
     }
   }
 
-  mousedown() {
+  mousedown () {
     this.mousemove()
     this.savePos = _.clone(this.pos)
     this.isMouseDown = true
   }
 
-  mouseup() {
+  mouseup () {
     this.mousemove()
     this.isMouseDown = false
   }
 
-  mousewheel() {
+  mousewheel () {
     event.preventDefault()
 
     let wheel
@@ -504,7 +504,7 @@ class Globe {
     this.resize()
   }
 
-  drawLegend() {
+  drawLegend () {
     let svg = d3.select(`#${this.legendId}`)
     svg.html('')
     let colorLegend = legendColor()

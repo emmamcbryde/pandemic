@@ -1,9 +1,9 @@
 <template>
   <md-layout md-align="center">
     <md-whiteframe style="margin-top: 4em; padding: 3em">
-      <md-layout 
-        md-flex="50" 
-        md-align="center" 
+      <md-layout
+        md-flex="50"
+        md-align="center"
         md-column>
 
         <h2 class="md-display-2">
@@ -39,13 +39,13 @@
               type="password"
               placeholder="Confirm Password"/>
           </md-input-container>
-          <md-button 
-            type="submit" 
+          <md-button
+            type="submit"
             class="md-raised md-primary">
             Register
           </md-button>
-          <div 
-            v-if="error" 
+          <div
+            v-if="error"
             style="color: red">
             {{ error }}
           </div>
@@ -62,7 +62,7 @@ import config from '../config'
 
 export default {
   name: 'Register',
-  data() {
+  data () {
     return {
       title: config.title,
       name: '',
@@ -74,7 +74,7 @@ export default {
     }
   },
   methods: {
-    async submit() {
+    async submit () {
       let payload = {
         name: this.$data.name,
         email: this.$data.email,

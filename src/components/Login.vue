@@ -1,17 +1,17 @@
 <template>
   <md-layout md-align="center">
     <md-whiteframe style="margin-top: 4em; padding: 3em">
-      <md-layout 
-        md-flex="50" 
-        md-align="center" 
+      <md-layout
+        md-flex="50"
+        md-align="center"
         md-column>
 
         <h2 class="md-display-2">
           Login to {{ title }}
         </h2>
 
-        <form 
-          novalidate 
+        <form
+          novalidate
           class="login-screen"
           @submit.prevent="submit">
 
@@ -31,12 +31,12 @@
               placeholder="Password"/>
           </md-input-container>
 
-          <md-button 
-            type="submit" 
+          <md-button
+            type="submit"
             class="md-raised md-primary">login</md-button>
 
-          <div 
-            v-if="error" 
+          <div
+            v-if="error"
             style="color: red">
             {{ error }}
           </div>
@@ -59,7 +59,7 @@ import config from '../config'
 
 export default {
   name: 'Login',
-  data() {
+  data () {
     return {
       title: config.title,
       email: '',
@@ -68,7 +68,7 @@ export default {
     }
   },
   methods: {
-    async submit() {
+    async submit () {
       let payload = {
         email: this.$data.email,
         rawPassword: this.$data.rawPassword
