@@ -14,7 +14,7 @@ import sha244 from 'crypto-js/sha224'
 import util from '../modules/util'
 import rpc from '../modules/rpc'
 
-function hashPassword(password) {
+function hashPassword (password) {
   return sha244(password).toString()
 }
 

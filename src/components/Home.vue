@@ -424,9 +424,9 @@ import { GlobalModel } from '../modules/global-model'
 const flightData = require('../data/flight-data')
 const adjacentData = require('../data/adjacent-data')
 
-function waitForElement(selector) {
+function waitForElement (selector) {
   return new Promise(resolve => {
-    function loop() {
+    function loop () {
       let $element = $(selector)
       if ($element.length) {
         resolve($element)
@@ -636,7 +636,7 @@ export default {
   },
 
   methods: {
-    async asyncMakeChartWidget(parentSelector, id) {
+    async asyncMakeChartWidget (parentSelector, id) {
       let $parent = $(parentSelector)
       await waitForElement($parent)
       $parent.append($(`<div id="${id}" class="chart">`))
@@ -689,7 +689,7 @@ export default {
       }
     },
 
-    getTravelPerDay(iCountryFrom, iCountryTo) {
+    getTravelPerDay (iCountryFrom, iCountryTo) {
       return this.travel[iCountryFrom][iCountryTo]
     },
 
