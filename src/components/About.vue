@@ -49,7 +49,7 @@
 
       <p>Travel data is generated from consolidated international
       flight
-      data from OAG, combined with a simple estimate of land travel
+      data from <a href="https://www.oag.com/">OAG</a>, combined with a simple estimate of land travel
       between neighbouring countries.</p>
 
       <p class="md-subheading">
@@ -57,10 +57,10 @@
       </p>
 
       <p> The global model is a geospatial model consisting of
-        each individual country model combined with an inter-country
-        transfer of people at each major time-step. The number of
-        people transferring is derived from the travel data. All
-        model calculations are carried out in the browser directly.
+      each individual country model combined with an inter-country
+      transfer of people at each major time-step. The number of
+      people transferring is derived from the travel data. All
+      model calculations are carried out in the browser directly.
       </p>
 
       <p class="md-subheading">
