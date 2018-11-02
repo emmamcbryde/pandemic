@@ -346,16 +346,42 @@
           md-align="start"
           style="
             height: 100%;
-            box-sizing: border-box
+            box-sizing: border-box;
             padding: 0 15px;">
 
-          <div>
+
+          <div
+            v-if="isRunning">
             <h2
               class="md-title"
-              style="margin-right: 2em;">
+              style="
+                opacity: 0.2;
+                background-color: #DDD;
+                line-height: 1em">
               {{ title }}
             </h2>
-
+            <div
+              style="
+                margin-top: 0.5em;
+                line-height: 1.5em;
+                padding-left: 0.2em;
+                color: #999;
+                background-color: #FCC">
+              Calculating...
+            </div>
+          </div>
+          <div v-else>
+            <h2
+              class="md-title"
+              style="line-height: 1em">
+              {{ title }}
+            </h2>
+            <div 
+              style="
+                margin-top: 0.5em;
+                line-height: 1.5em;">
+              &nbsp;
+            </div>
           </div>
 
           <md-layout
@@ -500,6 +526,7 @@ export default {
       iWatchCountry: -1,
       mode: 'risk', // or 'destination'
       days: 15,
+      isRunning: false,
       maxDays: 60,
       maxPrevalence: 20,
       title: '',
@@ -523,7 +550,6 @@ export default {
   },
 
   async mounted() {
-    this.isRunning = true
     this.$element = $('#main')
     this.loopTimeStepMs = 2000
 
@@ -619,10 +645,30 @@ export default {
     this.setNewEpiModel()
 
     this.chartWidgets = {}
-    await this.asyncMakeChartWidget('#globalCharts', 'globalPrevalence')
-    await this.asyncMakeChartWidget('#globalCharts', 'cumulativeIncidence')
-    await this.asyncMakeChartWidget('#localCharts', 'prevalence')
-    await this.asyncMakeChartWidget('#localCharts', 'importIncidence')
+    await this.asyncMakeChartWidget(
+      '#globalCharts',
+      'globalPrevalence',
+      'Global Number of Active Infections',
+      'Time (days)'
+    )
+    await this.asyncMakeChartWidget(
+      '#globalCharts',
+      'cumulativeIncidence',
+      'Global Cumulative Incidence',
+      'Time (days)'
+    )
+    await this.asyncMakeChartWidget(
+      '#localCharts',
+      'prevalence',
+      'Number of Active Infections',
+      'Time (days)'
+    )
+    await this.asyncMakeChartWidget(
+      '#localCharts',
+      'importIncidence',
+      'Cumulative Import Incidence',
+      'Time (days)'
+    )
 
     window.dispatchEvent(new Event('resize'))
 
@@ -630,13 +676,11 @@ export default {
 
     setInterval(this.loop, this.loopTimeStepMs)
 
-    this.isRunning = false
-
     this.globe.resize()
   },
 
   methods: {
-    async asyncMakeChartWidget(parentSelector, id) {
+    async asyncMakeChartWidget(parentSelector, id, title, xLabel) {
       let $parent = $(parentSelector)
       await waitForElement($parent)
       $parent.append($(`<div id="${id}" class="chart">`))
@@ -646,6 +690,9 @@ export default {
       chartWidget.setYLabel('')
       chartWidget.addDataset('model')
       chartWidget.addDataset('intervention')
+      chartWidget.setXLabel(xLabel)
+      chartWidget.setTitle(title)
+
       chartWidget.getChartOptions().scales.yAxes[0].ticks.callback = convertLabel
       this.chartWidgets[id] = chartWidget
     },
@@ -758,12 +805,10 @@ export default {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.importGuiParams(this.guiParams)
+        countryModel.param.initPrevalence = 0
         let query = { iso_n3: this.flightData.countries[iCountry].iso_n3 }
         let pop = this.globe.getPropertiesFromQuery(query).pop_est
         countryModel.param.initPopulation = pop
-        if (this.iSourceCountry !== iCountry) {
-          countryModel.param.initPrevalence = 0
-        }
       }
 
       this.intervention = null
@@ -780,15 +825,29 @@ export default {
     calculateRiskOfSourceCountry() {
       this.parameterizeGlobalModelFromInput()
 
+      let param = _.find(this.guiParams, p => p.key === 'initPrevalence')
+      let initPrevalence = parseFloat(param.value)
+      let countryModel = this.globalModel.countryModel[this.iSourceCountry]
+      countryModel.param.initPrevalence = 10
+
       this.globalModel.clearSolutions()
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.initCompartments()
       }
 
-      _.times(this.days, () => {
+      while (countryModel.compartment.prevalence < initPrevalence) {
         this.globalModel.update()
-        if (this.globalModel.time === this.globalModel.interventionDay) {
+      }
+
+      this.dayStart = _.last(this.globalModel.times)
+
+      this.interventionDay = this.globalModel.interventionDay
+      this.interventionDay += this.dayStart
+
+      while (_.last(this.globalModel.times) < this.dayStart + this.days) {
+        this.globalModel.update()
+        if (this.globalModel.time === this.interventionDay) {
           if (this.interventionMode === 'all-countries') {
             this.intervention = this.globalModel.makeIntervention(
               this.interventionParams
@@ -800,7 +859,7 @@ export default {
             )
           }
         }
-      })
+      }
 
       if (this.intervention) {
         this.intervention.clearSolutions()
@@ -810,16 +869,24 @@ export default {
         })
       }
 
+      this.showMaxDays = this.maxDays
+
+      for (let i = 0; i < this.globalModel.times.length; i += 1) {
+        this.globalModel.times[i] -= this.dayStart
+      }
+
+      if (this.intervention) {
+        for (let i = 0; i < this.intervention.times.length; i += 1) {
+          this.intervention.times[i] -= this.dayStart
+        }
+      }
+
       // clear intervention graphs
       for (let chart of _.values(this.chartWidgets)) {
         chart.updateDataset(1, [], [])
       }
 
-      this.chartWidgets.globalPrevalence.setTitle(
-        'Global Number of Active Infections'
-      )
-      this.chartWidgets.globalPrevalence.setXLabel('Time (days)')
-      this.chartWidgets.globalPrevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      this.chartWidgets.globalPrevalence.setMaxX(this.showMaxDays)
       this.chartWidgets.globalPrevalence.updateDataset(
         0,
         this.globalModel.times,
@@ -833,29 +900,30 @@ export default {
         )
       }
 
-      this.chartWidgets.cumulativeIncidence.setTitle(
-        'Global Cumulative Incidence'
-      )
-      this.chartWidgets.cumulativeIncidence.setXLabel('Time (days)')
-      this.chartWidgets.cumulativeIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
       this.globalModel.solution.cumulativeIncidence = acumulateValues(
         this.globalModel.solution.incidence
       )
+      if (this.intervention) {
+        let i = this.interventionDay - 1
+        let offset = this.globalModel.solution.cumulativeIncidence[i]
+        let newValues = acumulateValues(this.intervention.solution.incidence)
+        this.intervention.solution.cumulativeIncidence = _.map(
+          newValues,
+          v => v + offset
+        )
+      }
+
+      this.chartWidgets.cumulativeIncidence.setMaxX(this.showMaxDays)
       this.chartWidgets.cumulativeIncidence.updateDataset(
         0,
         this.globalModel.times,
         this.globalModel.solution.cumulativeIncidence
       )
       if (this.intervention) {
-        let startIncidence = this.globalModel.solution.cumulativeIncidence[
-          this.globalModel.interventionDay - 1
-        ]
-        let newValues = acumulateValues(this.intervention.solution.incidence)
-        newValues = _.map(newValues, v => v + startIncidence)
         this.chartWidgets.cumulativeIncidence.updateDataset(
           1,
           this.intervention.times,
-          newValues
+          this.intervention.solution.cumulativeIncidence
         )
       }
     },
@@ -878,9 +946,20 @@ export default {
         ].solution
       }
 
-      this.chartWidgets.prevalence.setTitle('Number of Active Infections')
-      this.chartWidgets.prevalence.setXLabel('Time (days)')
-      this.chartWidgets.prevalence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
+      solution.cumulativeImportIncidence = acumulateValues(
+        solution.importIncidence
+      )
+      if (interventionSolution) {
+        let i = this.interventionDay - 1
+        let offset = solution.cumulativeImportIncidence[i]
+        let newValues = acumulateValues(interventionSolution.importIncidence)
+        interventionSolution.cumulativeImportIncidence = _.map(
+          newValues,
+          v => v + offset
+        )
+      }
+
+      this.chartWidgets.prevalence.setMaxX(this.showMaxDays)
       this.chartWidgets.prevalence.updateDataset(
         0,
         this.globalModel.times,
@@ -894,33 +973,37 @@ export default {
         )
       }
 
-      this.chartWidgets.importIncidence.setTitle('Cumulative Import Incidence')
-      this.chartWidgets.importIncidence.setXLabel('Time (days)')
-      this.chartWidgets.importIncidence.getChartOptions().scales.xAxes[0].ticks.max = this.getMaxDays
-      solution.cumulativeImportIncidence = acumulateValues(
-        solution.importIncidence
-      )
+      this.chartWidgets.importIncidence.setMaxX(this.showMaxDays)
       this.chartWidgets.importIncidence.updateDataset(
         0,
         this.globalModel.times,
         solution.cumulativeImportIncidence
       )
       if (interventionSolution) {
-        let startValue =
-          solution.cumulativeImportIncidence[this.globalModel.interventionDay - 1]
-        let newValues = acumulateValues(interventionSolution.importIncidence)
-        newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
           1,
           this.intervention.times,
-          newValues
+          interventionSolution.cumulativeImportIncidence
         )
       }
     },
 
     async asyncRecalculateGlobe() {
+      console.log('asyncRecalculateGlobe start', this.isRunning)
+
+      while (this.isRunning) {
+        await util.delay(100)
+      }
+
+      this.isRunning = true
+
+      // for (let i = 0; i < this.globe.colors.length; i += 1) {
+      //   this.globe.colors[i] = '#CCC'
+      // }
+      // this.globe.draw()
+
       let title = ''
-      if (this.mode == 'risk') {
+      if (this.mode === 'risk') {
         title += 'Risk of Pandemic Originating in '
         title += this.getNameFromICountry(this.iSourceCountry)
         title += ' after ' + this.days + ' days'
@@ -932,14 +1015,11 @@ export default {
 
       // title needs to be given some time to reset the size
       // of the globe div below it before redrawing
-      await util.delay(100)
+      await util.delay(300)
 
       let valuesById, maxValue
+
       if (_.startsWith(this.mode, 'risk')) {
-        while (this.isRunning) {
-          await util.delay(100)
-        }
-        this.isRunning = true
         this.calculateRiskOfSourceCountry()
         valuesById = this.getPrevalenceByCountryId()
         valuesById[this.getSourceCountryId()] = 0
@@ -949,6 +1029,7 @@ export default {
       } else {
         valuesById = this.getTravelValuesByCountryId()
       }
+
       for (let [id, value] of _.toPairs(valuesById)) {
         let i = this.globe.iCountryFromId[id]
         this.globe.values[i] = value
@@ -979,7 +1060,7 @@ export default {
     },
 
     async asyncSelectSourceCountry() {
-      this.asyncRecalculateGlobe()
+      await this.asyncRecalculateGlobe()
       this.rotateToCountry(this.iSourceCountry)
     },
 

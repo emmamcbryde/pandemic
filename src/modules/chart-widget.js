@@ -16,7 +16,7 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
       },
       legend: {
         display: true,
-        position: 'top',
+        position: 'top'
       },
       maintainAspectRatio: false,
       responsive: true,
@@ -30,7 +30,6 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
               labelString: xAxisLabel
             },
             ticks: {
-              min: 0,
               max: 60
             }
           }
@@ -50,7 +49,7 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
       },
       tooltips: {
         callbacks: {
-          label (tooltipItem, data) {
+          label(tooltipItem, data) {
             let label = 'value='
             let y
             if (tooltipItem.yLabel > 1) {
@@ -122,6 +121,10 @@ class ChartWidget {
 
   getChartOptions() {
     return this.chartData.options
+  }
+
+  setMaxX(xMax) {
+    this.chartData.options.scales.xAxes[0].ticks.max = xMax
   }
 
   addDataset(name, xValues, yValues) {

@@ -192,7 +192,7 @@ class Globe {
       .attr('d', this.path)
 
     this.tooltip = d3
-      .select("body")
+      .select('body')
       .append('div')
       .attr('class', 'countryTooltip')
       .style('display', 'hidden')
