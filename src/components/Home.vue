@@ -25,9 +25,12 @@
             <h3 class="md-title">Global Pandemic Model</h3>
 
             <p>
-              This page models an emerging pandemic originating from a source country.
-              Scroll down to see interactive graphs of the pandemic globally, and
-              for individual countries.
+              This is an interactive visualization for predicting emerging
+              pandemics. Select the source country below (or double-click
+              on the globe), and see the
+              resulting pandemic on the globe to the right. Scroll down to
+              see the graphs of the pandemic for individual countries, as
+              well as globally.
             </p>
 
             <md-layout
@@ -75,6 +78,10 @@
           <md-card style="padding: 1em;  margin-top: 1em">
 
             <h3 class="md-title">Model Parameters</h3>
+
+            <p>Choose the type of compartmental model you would like to
+            use, and modify the parameters of the pandemic.
+            </p>
 
             <md-layout 
               md-row 
@@ -129,6 +136,12 @@
 
             <h3 class="md-title">Intervention Parameters</h3>
 
+            <p>To see the predicted effects of an intervention, select
+            a start date of the intervention, and the predicted
+            changes to the parameters of the epidemic arising from
+            the intervention.
+            </p>
+
             <md-layout
               md-row
               md-vertical-align="center">
@@ -178,6 +191,12 @@
             <h3 class="md-title">
               Model the Pandemic over Time
             </h3>
+
+            <p>
+              Select the time course of the pandemic, with the option
+              of animating the pandemic. Adjust max days for the
+              display of the graphs below.
+            </p>
 
             <md-layout
               md-row
@@ -267,6 +286,11 @@
               Global Pandemic Predictions
             </h3>
 
+            <p>
+              Progression of the pandemic summed over all
+              the countries.
+            </p>
+
             <div
               v-show="mode === 'risk'"
               style="width: 100%">
@@ -281,6 +305,12 @@
             <h3 class="md-title">
               Watch Country Pandemic Predictions
             </h3>
+
+            <p>
+              Progression of the pandemic for the chosen watch
+              country. Select different countries either through
+              the drop-down or clicking on the globe.
+            </p>
 
             <md-layout
               md-row
@@ -365,7 +395,7 @@
                 margin-top: 0.5em;
                 line-height: 1.5em;
                 padding-left: 0.2em;
-                color: #999;
+                color: #F00;
                 background-color: #FCC">
               Calculating...
             </div>
@@ -550,6 +580,8 @@ export default {
   },
 
   async mounted() {
+    this.isRunning = false
+
     this.$element = $('#main')
     this.loopTimeStepMs = 2000
 
@@ -641,6 +673,8 @@ export default {
 
     this.globalModel = new GlobalModel()
     this.globalModel.getTravelPerDay = this.getTravelPerDay
+
+    this.isRunning = false
 
     this.setNewEpiModel()
 
@@ -989,18 +1023,11 @@ export default {
     },
 
     async asyncRecalculateGlobe() {
-      console.log('asyncRecalculateGlobe start', this.isRunning)
-
       while (this.isRunning) {
         await util.delay(100)
       }
 
       this.isRunning = true
-
-      // for (let i = 0; i < this.globe.colors.length; i += 1) {
-      //   this.globe.colors[i] = '#CCC'
-      // }
-      // this.globe.draw()
 
       let title = ''
       if (this.mode === 'risk') {
@@ -1013,8 +1040,7 @@ export default {
       }
       this.title = title
 
-      // title needs to be given some time to reset the size
-      // of the globe div below it before redrawing
+      // give time for Vue to update elements
       await util.delay(300)
 
       let valuesById, maxValue
@@ -1024,7 +1050,6 @@ export default {
         valuesById = this.getPrevalenceByCountryId()
         valuesById[this.getSourceCountryId()] = 0
         maxValue = this.maxPrevalence
-        this.isRunning = false
         this.updateWatchCountry()
       } else {
         valuesById = this.getTravelValuesByCountryId()
@@ -1044,6 +1069,8 @@ export default {
       this.globe.colors[i] = '#f00'
       this.globe.draw()
       this.drawLegend()
+
+      this.isRunning = false
     },
 
     async asyncSelectNewModel() {
