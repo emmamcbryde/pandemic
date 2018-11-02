@@ -831,12 +831,9 @@ export default {
               this.iWatchCountry
             )
           } else if (this.interventionMode === 'watch-and-source-countries') {
-            this.intervention = this.globalModel.makeSingleCountryIntervention(
+            this.intervention = this.globalModel.makeDoubleCountryIntervention(
               this.interventionParams,
-              this.iSourceCountry
-            )
-            this.intervention = this.globalModel.makeSingleCountryIntervention(
-              this.interventionParams,
+              this.iSourceCountry,
               this.iWatchCountry
             )
           }
