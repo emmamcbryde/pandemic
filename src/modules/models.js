@@ -439,7 +439,7 @@ class SisModel extends BaseModel {
       },
       {
         key: 'initPrevalence',
-        value: 3000,
+        value: 300,
         step: 1,
         placeHolder: '',
         label: 'Prevalence'
@@ -518,7 +518,7 @@ class SirModel extends BaseModel {
       },
       {
         key: 'initPrevalence',
-        value: 3000,
+        value: 300,
         placeHolder: '',
         step: 1,
         label: 'Prevalence'
@@ -609,7 +609,7 @@ class SEIRModel extends BaseModel {
       },
       {
         key: 'initPrevalence',
-        value: 3000,
+        value: 300,
         step: 1,
         placeHolder: '',
         label: 'Prevalence'
@@ -711,7 +711,7 @@ class SEIRSModel extends BaseModel {
       },
       {
         key: 'initPrevalence',
-        value: 3000,
+        value: 300,
         step: 1,
         placeHolder: '',
         label: 'Prevalence'
@@ -837,7 +837,7 @@ class EbolaModel extends BaseModel {
       },
       {
         key: 'initPrevalence',
-        value: 5000,
+        value: 300,
         step: 1,
         placeHolder: '',
         label: 'Prevalence'
