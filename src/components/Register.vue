@@ -62,7 +62,7 @@ import config from '../config'
 
 export default {
   name: 'Register',
-  data () {
+  data() {
     return {
       title: config.title,
       name: '',
@@ -74,7 +74,7 @@ export default {
     }
   },
   methods: {
-    async submit () {
+    async submit() {
       let payload = {
         name: this.$data.name,
         email: this.$data.email,

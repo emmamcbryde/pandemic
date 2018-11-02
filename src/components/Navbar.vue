@@ -56,7 +56,7 @@ import config from '../config'
 
 export default {
   name: 'Navbar',
-  data () {
+  data() {
     return {
       isUser: config.isUser,
       user: auth.user,
@@ -64,17 +64,17 @@ export default {
     }
   },
   methods: {
-    async logout () {
+    async logout() {
       await auth.logout()
       this.$router.push('/login')
     },
-    about () {
+    about() {
       this.$router.push('/about')
     },
-    home () {
+    home() {
       this.$router.push('/')
     },
-    editUser () {
+    editUser() {
       this.$router.push('/edit-user')
     }
   }

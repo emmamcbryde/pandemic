@@ -59,7 +59,7 @@ import config from '../config'
 
 export default {
   name: 'Login',
-  data () {
+  data() {
     return {
       title: config.title,
       email: '',
@@ -68,7 +68,7 @@ export default {
     }
   },
   methods: {
-    async submit () {
+    async submit() {
       let payload = {
         email: this.$data.email,
         rawPassword: this.$data.rawPassword

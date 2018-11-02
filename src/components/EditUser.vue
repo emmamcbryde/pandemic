@@ -69,7 +69,7 @@ import _ from 'lodash'
 
 export default {
   name: 'EditUser',
-  data () {
+  data() {
     let result = _.assign({}, auth.user)
     _.assign(result, {
       title: 'Edit Your Details',
@@ -80,7 +80,7 @@ export default {
     return result
   },
   methods: {
-    async submit () {
+    async submit() {
       this.error = ''
 
       let payload = {}

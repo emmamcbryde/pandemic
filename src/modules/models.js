@@ -13,7 +13,7 @@ class BaseModel {
    * from another compartment.
    *
    * In order to handle all the connections without
-   * putting too much of a burden on the programmer
+   * putting too much of a burden on the programmer,
    * the differential equations are built up from
    * the individual connections rather than being
    * specified straight up.
@@ -43,7 +43,7 @@ class BaseModel {
    *    the given time-point
    *    to be saved in this.solutions
    */
-  constructor (id) {
+  constructor(id) {
     // Name of the particular instance of the model
     this.id = id
 
@@ -157,17 +157,16 @@ class BaseModel {
    *
    * @returns list[{}] paramEntries
    */
-  getGuiParams () {
+  getGuiParams() {
     return _.cloneDeep(this.guiParams)
   }
-
   /**
    * Convenient function to return GUI-friendly
    * list of parameters to modify
    *
    * @returns list[{}] paramEntries
    */
-  getInterventionParams () {
+  getInterventionParams() {
     if (this.interventionParams.length > 0) {
       return _.cloneDeep(this.interventionParams)
     } else {
@@ -182,7 +181,7 @@ class BaseModel {
    *
    * @param guiParams
    */
-  importGuiParams (guiParams) {
+  importGuiParams(guiParams) {
     this.param = _.cloneDeep(this.defaultParams)
     for (let param of guiParams) {
       this.param[param.key] = parseFloat(param.value)
@@ -193,14 +192,14 @@ class BaseModel {
    * To be overridden. Calculates new this.param from
    * existing this.param.
    */
-  calcExtraParams () {}
+  calcExtraParams() {}
 
   /**
    * To be overridden. Initializations of compartments
    * from this.param, used at the beginning of a run and typically
    * called by this.initCompartments
    */
-  initCompartmentsByParams () {
+  initCompartmentsByParams() {
     this.compartment.prevalence = this.param.initPrevalence
     this.compartment.susceptible =
       this.param.initPopulation - this.param.initPrevalence
@@ -209,7 +208,7 @@ class BaseModel {
   /**
    * Called before running a simulation
    */
-  initCompartments () {
+  initCompartments() {
     for (let key of this.keys) {
       this.compartment[key] = 0
     }
@@ -224,7 +223,7 @@ class BaseModel {
    *
    * @param [params] - a param folds a dictionary for a value and its bounds and step
    */
-  applyIntervention (guiParams) {
+  applyIntervention(guiParams) {
     for (let param of guiParams) {
       this.param[param.key] = parseFloat(param.value)
     }
@@ -236,7 +235,7 @@ class BaseModel {
    * re-running the simulation from the beginning and
    * for reseting a simulation as an intervention
    */
-  clearSolutions () {
+  clearSolutions() {
     this.keys = _.keys(this.compartment)
     for (let key of _.keys(this.solution)) {
       this.solution[key].length = 0
@@ -249,14 +248,14 @@ class BaseModel {
    * relevant to each time-point from compartment and
    * params values.
    */
-  calcVars () {}
+  calcVars() {}
 
   /**
    * Sanity check to make sure that there are suitable
    * this.var and this.param for the varEvents and
    * paramEvents that are defined.
    */
-  checkEvents () {
+  checkEvents() {
     this.calcVars()
     let varKeys = _.keys(this.var)
     for (let varEvent of this.varEvents) {
@@ -283,7 +282,7 @@ class BaseModel {
   /**
    * Clears variables for transfers with other countryModels to occur
    */
-  clearBeforeTransfer () {
+  clearBeforeTransfer() {
     for (let key of this.keys) {
       this.delta[key] = 0
     }
@@ -297,7 +296,7 @@ class BaseModel {
    * @param toCountryModel - another BaseModel
    * @param travelPerDay - number of people travelling between the two models
    */
-  transferTo (toCountryModel, travelPerDay) {
+  transferTo(toCountryModel, travelPerDay) {
     let probSickCanTravel = 1
     let probTravelPerDay = travelPerDay / this.var.population
     let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
@@ -313,7 +312,7 @@ class BaseModel {
    * to allow for both the construction of differentials
    * and to use randomized samples further down the track
    */
-  calcEvents () {
+  calcEvents() {
     this.calcVars()
 
     this.events.length = 0
@@ -336,7 +335,7 @@ class BaseModel {
    *
    * @param dTime
    */
-  saveToSolution (dTime) {
+  saveToSolution(dTime) {
     let incidence = 0
     for (let event of this.events) {
       let to = event[1]
@@ -352,7 +351,7 @@ class BaseModel {
     }
   }
 
-  runStep (dTime) {
+  runStep(dTime) {
     this.calcEvents()
 
     // Calculates the flow from events, which is the
@@ -400,7 +399,7 @@ class BaseModel {
 }
 
 class SisModel extends BaseModel {
-  constructor (id) {
+  constructor(id) {
     super(id)
 
     this.modelType = 'SIS'
@@ -413,10 +412,10 @@ class SisModel extends BaseModel {
     this.defaultParams = {
       initPopulation: 50000,
       initPrevalence: 3000,
-      recoverRate: 0.1,
-      reproductionNumber: 1.5
+      infectiousPeriodSis: 5,
+      transmissionRateSis: 0.36
+      // reproductionNumber: 0.35 * 5
     }
-
     this.param = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
@@ -424,51 +423,81 @@ class SisModel extends BaseModel {
 
     this.guiParams = [
       {
-        key: 'reproductionNumber',
-        value: 1.5,
+        key: 'transmissionRateSis',
+        value: 0.36,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
       },
       {
-        key: 'recoverRate',
-        value: 0.1,
-        step: 0.01,
+        key: 'infectiousPeriodSis',
+        value: 5,
+        step: 1,
+        min: 1,
         placeHolder: '',
-        label: 'Recovery Rate'
+        label: 'Infectious Period (days)'
       },
       {
         key: 'initPrevalence',
         value: 3000,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Prevalence'
       }
     ]
+    // extending guiParams
+    var R0Sis = this.guiParams[0].value * this.guiParams[1].value
+    this.guiParams.push({
+      key: 'reproductionNumberSis',
+      value: R0Sis.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
     this.interventionParams = [
       {
         key: 'interventionDay',
         value: 5,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Start Day'
       },
       {
-        key: 'reproductionNumber',
-        value: 1.2,
+        key: 'transmissionRateSis',
+        value: 0.3,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
+      },
+      {
+        key: 'infectiousPeriodSis',
+        value: 4,
+        step: 1,
+        min: 1,
+        placeHolder: '',
+        label: 'Infectious Period (days)'
       }
     ]
+    // extending interventionParams
+    var R0SisI =
+      this.interventionParams[1].value * this.interventionParams[2].value
+    this.interventionParams.push({
+      key: 'reproductionNumberSisI',
+      value: R0SisI.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
   }
 
-  calcExtraParams () {
-    this.param.contactRate =
-      this.param.reproductionNumber * this.param.recoverRate
+  calcExtraParams() {
+    this.param.contactRate = this.param.transmissionRateSis
+    this.param.recoverRate = 1 / this.param.infectiousPeriodSis
   }
 
-  calcVars () {
+  calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -477,7 +506,7 @@ class SisModel extends BaseModel {
 }
 
 class SirModel extends BaseModel {
-  constructor (id) {
+  constructor(id) {
     super(id)
 
     this.modelType = 'SIR'
@@ -491,63 +520,105 @@ class SirModel extends BaseModel {
     this.defaultParams = {
       initPopulation: 50000,
       initPrevalence: 3000,
-      recoverRate: 0.1,
-      reproductionNumber: 1.5
+      infectiousPeriodSir: 5,
+      transmissionRateSir: 0.35,
+      caseFatalitySir: 0.02
     }
 
     this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
     this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
+    this.paramEvents.push(['prevalence', 'prevalence', 'disDeath'])
 
     this.param = _.cloneDeep(this.defaultParams)
 
     this.guiParams = [
       {
-        key: 'reproductionNumber',
-        value: 1.5,
+        key: 'transmissionRateSir',
+        value: 0.35,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
       },
       {
-        key: 'recoverRate',
-        value: 0.1,
-        step: 0.01,
+        key: 'infectiousPeriodSir',
+        value: 5,
+        step: 1,
+        min: 1,
         placeHolder: '',
-        label: 'Recovery Rate'
+        label: 'Infectious Period (days)'
+      },
+      {
+        key: 'caseFatalitySir',
+        value: 0.02,
+        step: 0.01,
+        min: 0,
+        placeHolder: '',
+        label: 'Case-Fatality Rate'
       },
       {
         key: 'initPrevalence',
         value: 3000,
         placeHolder: '',
         step: 1,
+        min: 0,
         label: 'Prevalence'
       }
     ]
-
+    // extending guiParams
+    var R0Sir = this.guiParams[0].value * this.guiParams[1].value
+    this.guiParams.push({
+      key: 'reproductionNumberSir',
+      value: R0Sir.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
     this.interventionParams = [
       {
         key: 'interventionDay',
         value: 5,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Start Day'
       },
       {
-        key: 'reproductionNumber',
-        value: 1.2,
+        key: 'transmissionRateSir',
+        value: 0.3,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
+      },
+      {
+        key: 'infectiousPeriodSir',
+        value: 4,
+        step: 1,
+        min: 1,
+        placeHolder: '',
+        label: 'Infectious Period (days)'
       }
     ]
+    // extending interventionParams
+    var R0SirI =
+      this.interventionParams[1].value * this.interventionParams[2].value
+    this.interventionParams.push({
+      key: 'reproductionNumberSirI',
+      value: R0SirI.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
   }
 
-  calcExtraParams () {
-    this.param.contactRate =
-      this.param.reproductionNumber * this.param.recoverRate
+  calcExtraParams() {
+    this.param.contactRate = this.param.transmissionRateSir
+    this.param.recoverRate =
+      (1 - this.param.caseFatalitySir) * (1 / this.param.infectiousPeriodSir)
+    this.param.disDeath =
+      -this.param.caseFatalitySir * (1 / this.param.infectiousPeriodSir)
   }
 
-  calcVars () {
+  calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -556,7 +627,7 @@ class SirModel extends BaseModel {
 }
 
 class SEIRModel extends BaseModel {
-  constructor (id) {
+  constructor(id) {
     super(id)
     this.id = id
 
@@ -571,11 +642,11 @@ class SEIRModel extends BaseModel {
 
     this.defaultParams = {
       initPopulation: 50000,
-      period: 0.1,
-      incubation: 0.01,
-      caseFatality: 0.2,
-      initPrevalence: 5000,
-      reproductionNumber: 4
+      incubationRate: 0.01,
+      infectiousPeriodSeir: 5,
+      transmissionRateSeir: 0.35,
+      caseFatalitySeir: 0.02,
+      initPrevalence: 3000
     }
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -586,23 +657,26 @@ class SEIRModel extends BaseModel {
 
     this.guiParams = [
       {
-        key: 'reproductionNumber',
-        value: 1.5,
+        key: 'transmissionRateSeir',
+        value: 0.35,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
       },
       {
-        key: 'period',
-        value: 0.1,
-        step: 0.01,
+        key: 'infectiousPeriodSeir',
+        value: 5,
+        step: 1,
+        min: 1,
         placeHolder: '',
-        label: 'Recovery Rate'
+        label: 'Infectious Period (days)'
       },
       {
-        key: 'CaseFatality',
+        key: 'caseFatalitySeir',
         value: 0.2,
         step: 0.01,
+        min: 0,
         placeHolder: '',
         label: 'Case-Fatality Rate'
       },
@@ -610,36 +684,65 @@ class SEIRModel extends BaseModel {
         key: 'initPrevalence',
         value: 3000,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Prevalence'
       }
     ]
+    // extending guiParams
+    var R0Seir = this.guiParams[0].value * this.guiParams[1].value
+    this.guiParams.push({
+      key: 'reproductionNumberSeir',
+      value: R0Seir.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
     this.interventionParams = [
       {
         key: 'interventionDay',
         value: 5,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Start Day'
       },
       {
-        key: 'reproductionNumber',
-        value: 1.2,
+        key: 'transmissionRateSeir',
+        value: 0.3,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
+      },
+      {
+        key: 'infectiousPeriodSeir',
+        value: 4,
+        step: 1,
+        min: 1,
+        placeHolder: '',
+        label: 'Infectious Period (days)'
       }
     ]
+    // extending interventionParams
+    var R0SeirI =
+      this.interventionParams[1].value * this.interventionParams[2].value
+    this.interventionParams.push({
+      key: 'reproductionNumberSeirI',
+      value: R0SeirI.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
   }
 
-  calcExtraParams () {
-    this.param.recoverRate = (1 - this.param.caseFatality) * this.param.period
-    this.param.disDeath = -1 * this.param.caseFatality * this.param.period
-    this.param.incubationRate = this.param.incubation
-    this.param.contactRate = this.param.reproductionNumber * this.param.period
+  calcExtraParams() {
+    this.param.recoverRate =
+      (1 - this.param.caseFatalitySeir) * (1 / this.param.infectiousPeriodSeir)
+    this.param.disDeath =
+      -1 * this.param.caseFatalitySeir * (1 / this.param.infectiousPeriodSeir)
+    this.param.contactRate = this.param.transmissionRateSeir
   }
 
-  calcVars () {
+  calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -648,7 +751,7 @@ class SEIRModel extends BaseModel {
 }
 
 class SEIRSModel extends BaseModel {
-  constructor (id) {
+  constructor(id) {
     super(id)
     this.id = id
 
@@ -663,12 +766,12 @@ class SEIRSModel extends BaseModel {
 
     this.defaultParams = {
       initPopulation: 50000,
-      period: 0.1,
-      incubation: 0.01,
-      caseFatality: 0.2,
+      incubationPeriod: 0.01,
+      caseFatalitySeirs: 0.02,
       initPrevalence: 3000,
-      reproductionNumber: 50,
-      immunityPeriod: 50
+      infectiousPeriodSeirs: 5,
+      transmissionRateSeirs: 0.35,
+      immunityPeriodSeirs: 50
     }
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -680,68 +783,103 @@ class SEIRSModel extends BaseModel {
 
     this.guiParams = [
       {
-        key: 'reproductionNumber',
-        value: 1.5,
+        key: 'transmissionRateSeirs',
+        value: 0.35,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
       },
       {
-        key: 'period',
-        value: 0.1,
-        step: 0.01,
+        key: 'infectiousPeriodSeirs',
+        value: 5,
+        step: 1,
+        min: 1,
         placeHolder: '',
-        label: 'Recovery Rate'
+        label: 'Infectious Period (days)'
       },
       {
-        key: 'CaseFatality',
+        key: 'caseFatalitySeirs',
         value: 0.2,
         step: 0.01,
+        min: 0,
         placeHolder: '',
         label: 'Case-Fatality Rate'
       },
       {
-        key: 'immunityPeriod',
+        key: 'immunityPeriodSeirs',
         value: 50,
         step: 1,
+        min: 1,
         placeHolder: '',
-        label: 'Immunity Period '
+        label: 'Immunity Period (days) '
       },
       {
         key: 'initPrevalence',
         value: 3000,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Prevalence'
       }
     ]
+    // extending guiParams
+    var R0Seirs = this.guiParams[0].value * this.guiParams[1].value
+    this.guiParams.push({
+      key: 'reproductionNumberSeir',
+      value: R0Seirs.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
     this.interventionParams = [
       {
         key: 'interventionDay',
         value: 5,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Start Day'
       },
       {
-        key: 'reproductionNumber',
-        value: 1.2,
+        key: 'transmissionRateSeirs',
+        value: 0.3,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate (per day)'
+      },
+      {
+        key: 'infectiousPeriodSeirs',
+        value: 4,
+        step: 1,
+        min: 1,
+        placeHolder: '',
+        label: 'Infectious Period (days)'
       }
     ]
+    // extending interventionParams
+    var R0SeirsI =
+      this.interventionParams[1].value * this.interventionParams[2].value
+    this.interventionParams.push({
+      key: 'reproductionNumberSeirsI',
+      value: R0SeirsI.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
   }
 
-  calcExtraParams () {
-    this.param.recoverRate = (1 - this.param.caseFatality) * this.param.period
-    this.param.incubationRate = this.param.incubation
-    this.param.disDeath = -1 * this.param.caseFatality * this.param.period
-    this.param.contactRate = this.param.reproductionNumber * this.param.period
-    this.param.immunityLossRate = 1 / this.param.immunityPeriod
+  calcExtraParams() {
+    this.param.recoverRate =
+      (1 - this.param.caseFatalitySeirs) *
+      (1 / this.param.infectiousPeriodSeirs)
+    this.param.incubationRate = this.param.incubationPeriod
+    this.param.disDeath =
+      -1 * this.param.caseFatalitySeirs * (1 / this.param.infectiousPeriodSeirs)
+    this.param.contactRate = this.param.transmissionRateSeirs
+    this.param.immunityLossRate = 1 / this.param.immunityPeriodSeirs
   }
 
-  calcVars () {
+  calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.contactRate / this.var.population) *
@@ -750,7 +888,7 @@ class SEIRSModel extends BaseModel {
 }
 
 class EbolaModel extends BaseModel {
-  constructor (id) {
+  constructor(id) {
     super(id)
     this.id = id
 
@@ -773,7 +911,6 @@ class EbolaModel extends BaseModel {
       foiZero: 0.1,
       foi: 0.2,
       foiTwo: 0.02,
-      reproduction: 10,
       foiThree: 0.2,
       latency: 0.1,
       preDetection: 0.25,
@@ -798,23 +935,26 @@ class EbolaModel extends BaseModel {
 
     this.guiParams = [
       {
-        key: 'reproduction',
-        value: 1.6,
+        key: 'foi',
+        value: 0.35,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate from Infectious Individuals(per day)'
       },
       {
         key: 'ascerProb',
         value: 0.2,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'Fraction of People potentially infectious during incubation'
+        label: 'Fraction of People Potentially Infectious During Incubation'
       },
       {
         key: 'hospitalCapacity',
         value: 10000,
         step: 1,
+        min: 1,
         placeHolder: '',
         label: 'Hospital Capacity (number of isolation beds)'
       },
@@ -822,6 +962,7 @@ class EbolaModel extends BaseModel {
         key: 'CaseFatalityHosp',
         value: 0.35,
         step: 0.01,
+        min: 0,
         placeHolder: '',
         label: 'Case Fatality in Hospital'
       },
@@ -829,6 +970,7 @@ class EbolaModel extends BaseModel {
         key: 'preBurialPeriod',
         value: 3,
         step: 1,
+        min: 1,
         placeHolder: '',
         label: 'Burial Period (days)'
       },
@@ -836,36 +978,74 @@ class EbolaModel extends BaseModel {
         key: 'initPrevalence',
         value: 5000,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Prevalence'
       }
     ]
+    // extending guiParams
+    var R1 = this.guiParams[0].value / this.defaultParams.preDetection
+    var R2 =
+      this.defaultParams.foiZero * (1 - this.guiParams[1].value) +
+      this.defaultParams.foiThree * this.guiParams[1].value
+    var R3 =
+      (this.defaultParams.foiThree *
+        (this.guiParams[3].value * (1 - this.guiParams[1].value) +
+          this.guiParams[1].value * this.defaultParams.caseFatality)) /
+      this.guiParams[4].value
+    var R0Ebola = R1 + R2 + R3
+    this.guiParams.push({
+      key: 'reproductionNumberSeir',
+      value: R0Ebola.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
     this.interventionParams = [
       {
         key: 'interventionDay',
         value: 5,
         step: 1,
+        min: 0,
         placeHolder: '',
         label: 'Start Day'
       },
       {
-        key: 'reproductionNumber',
-        value: 1.2,
+        key: 'foi',
+        value: 0.2,
         step: 0.01,
+        min: 0,
         placeHolder: '',
-        label: 'R0'
+        label: 'Transmission Rate from Infectious Individuals(per day)'
       },
       {
         key: 'hospitalCapacity',
         value: 10000,
         step: 1,
+        min: 1,
         placeHolder: '',
         label: 'Hospital Capacity (number of isolation beds)'
       }
     ]
+    // extending intervention Params
+    var R11 = this.interventionParams[1].value / this.defaultParams.preDetection
+    var R12 =
+      this.defaultParams.foiZero * (1 - this.guiParams[1].value) +
+      this.defaultParams.foiThree * this.guiParams[1].value
+    var R13 =
+      (this.defaultParams.foiThree *
+        (this.guiParams[3].value * (1 - this.guiParams[1].value) +
+          this.guiParams[1].value * this.defaultParams.caseFatality)) /
+      this.guiParams[4].value
+    var R0EbolaI = R11 + R12 + R13
+    this.interventionParams.push({
+      key: 'reproductionNumberSeirI',
+      value: R0EbolaI.toFixed(2),
+      placeHolder: '',
+      label: 'R0'
+    })
   }
 
-  calcExtraParams () {
+  calcExtraParams() {
     this.param.incubationRate = this.param.latency
     this.param.recoverRate1 =
       (1 - this.param.caseFatality) * this.param.postDetection
@@ -875,19 +1055,18 @@ class EbolaModel extends BaseModel {
     this.param.deathRate2 =
       this.param.caseFatalityHosp * this.param.postDetection
     this.param.burialRate = 1 / this.param.preBurialPeriod
-    this.param.foi =
-      this.param.preDetection *
-      (this.param.reproduction -
-        (this.param.foiZero * (1 - this.param.ascerProb) +
-          this.param.foiTwo * this.param.ascerProb) /
-          this.param.postDetection -
-        this.param.foiThree *
-          (this.param.caseFatalityHosp * (1 - this.param.ascerProb) +
-            this.param.caseFatality * this.param.ascerProb) *
-          this.param.preBurialPeriod)
+    this.param.reproductionNumber =
+      this.param.foi / this.param.preDetection +
+      (this.param.foiZero * (1 - this.param.ascerProb) +
+        this.param.foiTwo * this.param.ascerProb) /
+        this.param.postDetection +
+      (this.param.foiThree *
+        (this.param.caseFatalityHosp * (1 - this.param.ascerProb) +
+          this.param.caseFatality * this.param.ascerProb)) /
+        this.param.preBurialPeriod
   }
 
-  calcVars () {
+  calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.foi * this.compartment.prevalence +

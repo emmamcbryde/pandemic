@@ -100,7 +100,6 @@
               </md-input-container>
 
             </md-layout>
-
             <md-layout
               md-row
               md-vertical-align="center">
@@ -112,10 +111,17 @@
                     margin-right: 1em;">
                 <label>{{ entry.label }}</label>
                 <md-input
+                  v-if="entry.label==='R0'"
+                  v-model="entry.value"
+                  :disabled="true"
+                  type="number"
+                />
+                <md-input
+                  v-else-if="entry.label!=='R0'"
                   v-model="entry.value"
                   :step="entry.step"
+                  :min="entry.min"
                   type="number"
-                  min="0"
                   @change="asyncCalculateRisk"/>
               </md-input-container>
 
@@ -149,6 +155,22 @@
                 Source Country Only
               </md-radio>
 
+              <md-radio
+                v-model="interventionMode"
+                style="margin-right: 1em"
+                md-value="watch-country-only"
+                @change="asyncCalculateRisk">
+                Watch Country Only
+              </md-radio>
+
+              <md-radio
+                v-model="interventionMode"
+                style="margin-right: 1em"
+                md-value="watch-and-source-countries"
+                @change="asyncCalculateRisk">
+                Source and Watch Countries
+              </md-radio>
+
             </md-layout>
 
             <md-layout
@@ -162,10 +184,17 @@
                   margin-right: 1em;">
                 <label>{{ entry.label }}</label>
                 <md-input
+                  v-if="entry.label === 'R0'"
+                  v-model="entry.value"
+                  :disabled="true"
+                  type="number"
+                  @change="asyncCalculateRisk"/>
+                <md-input
+                  v-else-if="entry.label !=='R0'"
                   v-model="entry.value"
                   :step="entry.step"
+                  :min="entry.min"
                   type="number"
-                  min="0"
                   @change="asyncCalculateRisk"/>
               </md-input-container>
 
@@ -386,7 +415,7 @@
 
 <style>
 html,
-body{
+body {
 }
 
 .countryTooltip {
@@ -424,9 +453,9 @@ import { GlobalModel } from '../modules/global-model'
 const flightData = require('../data/flight-data')
 const adjacentData = require('../data/adjacent-data')
 
-function waitForElement (selector) {
+function waitForElement(selector) {
   return new Promise(resolve => {
-    function loop () {
+    function loop() {
       let $element = $(selector)
       if ($element.length) {
         resolve($element)
@@ -439,7 +468,7 @@ function waitForElement (selector) {
   })
 }
 
-function acumulateValues (vals) {
+function acumulateValues(vals) {
   let result = []
   for (let i of _.range(vals.length)) {
     let val = _.sum(vals.slice(0, i + 1))
@@ -448,7 +477,7 @@ function acumulateValues (vals) {
   return result
 }
 
-function convertLabel (val) {
+function convertLabel(val) {
   val = parseFloat(val)
   if (val > 1) {
     return numeral(val).format('0a')
@@ -460,14 +489,14 @@ function convertLabel (val) {
   }
 }
 
-function copyArray (dest, source) {
+function copyArray(dest, source) {
   dest.length = 0
   for (let v of source) {
     dest.push(v)
   }
 }
 
-function formatInt (i) {
+function formatInt(i) {
   if (i < 1) {
     return '< 1'
   } else {
@@ -492,7 +521,7 @@ export default {
    * the correct variable names.
    */
 
-  data () {
+  data() {
     let modelTypes = _.map(models, 'name')
     return {
       selectableCountries: [],
@@ -517,12 +546,12 @@ export default {
      * Needed as md-input corrupts this.maxDays into string
      * @returns {number}
      */
-    getMaxDays () {
+    getMaxDays() {
       return parseFloat(this.maxDays)
     }
   },
 
-  async mounted () {
+  async mounted() {
     this.isRunning = true
     this.$element = $('#main')
     this.loopTimeStepMs = 2000
@@ -536,7 +565,6 @@ export default {
     this.globe.clickCountry = this.selectWatchCountryFromGlobe
 
     this.mode = 'risk' // 'destination' or 'risk'
-
     this.flightData = flightData
     // data is for Feb, 2015 {
     //   'travel': [
@@ -615,7 +643,6 @@ export default {
 
     this.globalModel = new GlobalModel()
     this.globalModel.getTravelPerDay = this.getTravelPerDay
-
     this.setNewEpiModel()
 
     this.chartWidgets = {}
@@ -636,7 +663,7 @@ export default {
   },
 
   methods: {
-    async asyncMakeChartWidget (parentSelector, id) {
+    async asyncMakeChartWidget(parentSelector, id) {
       let $parent = $(parentSelector)
       await waitForElement($parent)
       $parent.append($(`<div id="${id}" class="chart">`))
@@ -650,11 +677,11 @@ export default {
       this.chartWidgets[id] = chartWidget
     },
 
-    getSourceCountryId () {
+    getSourceCountryId() {
       return this.flightData.countries[this.iSourceCountry].iso_n3
     },
 
-    getICountry (id) {
+    getICountry(id) {
       for (let country of this.selectableCountries) {
         if (id === country.iso_n3) {
           return country.iCountry
@@ -662,7 +689,7 @@ export default {
       }
     },
 
-    getNameFromICountry (iCountry) {
+    getNameFromICountry(iCountry) {
       if (isDef(this.flightData)) {
         let query = { iso_n3: this.flightData.countries[iCountry].iso_n3 }
         return this.globe.getPropertiesFromQuery(query).admin
@@ -671,7 +698,7 @@ export default {
       }
     },
 
-    getPrevalenceByCountryId () {
+    getPrevalenceByCountryId() {
       let result = {}
       for (let iCountry of this.countryIndices) {
         let id = this.flightData.countries[iCountry].iso_n3
@@ -681,7 +708,7 @@ export default {
       return result
     },
 
-    resize () {
+    resize() {
       let position = this.$element.position()
       this.$element.height(window.innerHeight - position.top)
       if (this.globe) {
@@ -689,11 +716,11 @@ export default {
       }
     },
 
-    getTravelPerDay (iCountryFrom, iCountryTo) {
+    getTravelPerDay(iCountryFrom, iCountryTo) {
       return this.travel[iCountryFrom][iCountryTo]
     },
 
-    getTravelValuesByCountryId () {
+    getTravelValuesByCountryId() {
       let values = {}
       let nCountry = this.flightData.countries.length
       for (let jCountry = 0; jCountry < nCountry; jCountry += 1) {
@@ -705,7 +732,7 @@ export default {
       return values
     },
 
-    setNewEpiModel () {
+    setNewEpiModel() {
       let oldInputParams = {}
       for (let paramEntry of this.guiParams) {
         oldInputParams[paramEntry.key] = paramEntry.value
@@ -754,7 +781,7 @@ export default {
       }
     },
 
-    parameterizeGlobalModelFromInput () {
+    parameterizeGlobalModelFromInput() {
       for (let iCountry of this.countryIndices) {
         let countryModel = this.globalModel.countryModel[iCountry]
         countryModel.importGuiParams(this.guiParams)
@@ -777,7 +804,7 @@ export default {
       }
     },
 
-    calculateRiskOfSourceCountry () {
+    calculateRiskOfSourceCountry() {
       this.parameterizeGlobalModelFromInput()
 
       this.globalModel.clearSolutions()
@@ -797,6 +824,20 @@ export default {
             this.intervention = this.globalModel.makeSingleCountryIntervention(
               this.interventionParams,
               this.iSourceCountry
+            )
+          } else if (this.interventionMode === 'watch-country-only') {
+            this.intervention = this.globalModel.makeSingleCountryIntervention(
+              this.interventionParams,
+              this.iWatchCountry
+            )
+          } else if (this.interventionMode === 'watch-and-source-countries') {
+            this.intervention = this.globalModel.makeSingleCountryIntervention(
+              this.interventionParams,
+              this.iSourceCountry
+            )
+            this.intervention = this.globalModel.makeSingleCountryIntervention(
+              this.interventionParams,
+              this.iWatchCountry
             )
           }
         }
@@ -860,7 +901,7 @@ export default {
       }
     },
 
-    updateWatchCountry () {
+    updateWatchCountry() {
       if (this.iWatchCountry < 0) {
         return
       }
@@ -907,7 +948,9 @@ export default {
       )
       if (interventionSolution) {
         let startValue =
-          solution.cumulativeImportIncidence[this.globalModel.interventionDay - 1]
+          solution.cumulativeImportIncidence[
+            this.globalModel.interventionDay - 1
+          ]
         let newValues = acumulateValues(interventionSolution.importIncidence)
         newValues = _.map(newValues, v => v + startValue)
         this.chartWidgets.importIncidence.updateDataset(
@@ -918,9 +961,9 @@ export default {
       }
     },
 
-    async asyncRecalculateGlobe () {
+    async asyncRecalculateGlobe() {
       let title = ''
-      if (this.mode == 'risk') {
+      if (this.mode === 'risk') {
         title += 'Risk of Pandemic Originating in '
         title += this.getNameFromICountry(this.iSourceCountry)
         title += ' after ' + this.days + ' days'
@@ -965,25 +1008,25 @@ export default {
       this.drawLegend()
     },
 
-    async asyncSelectNewModel () {
+    async asyncSelectNewModel() {
       await util.delay(100)
       this.setNewEpiModel()
       this.parameterizeGlobalModelFromInput()
       await this.asyncRecalculateGlobe()
     },
 
-    rotateToCountry (iCountry) {
+    rotateToCountry(iCountry) {
       let country = this.flightData.countries[iCountry]
       let i = this.globe.iCountryFromId[country.iso_n3]
       this.globe.rotateTransitionToICountry(i)
     },
 
-    async asyncSelectSourceCountry () {
+    async asyncSelectSourceCountry() {
       this.asyncRecalculateGlobe()
       this.rotateToCountry(this.iSourceCountry)
     },
 
-    selectWatchCountryFromGlobe (iGlobeCountry) {
+    selectWatchCountryFromGlobe(iGlobeCountry) {
       let id = this.globe.features[iGlobeCountry].properties.iso_n3
       this.iWatchCountry = parseInt(this.getICountry(id))
       console.log('Home.selectWatchCountry', iGlobeCountry, id)
@@ -995,7 +1038,7 @@ export default {
       }
     },
 
-    async asyncSelectWatchCountry () {
+    async asyncSelectWatchCountry() {
       await util.delay(100)
       console.log('> Home.asyncSelectWatchCountry', this.iWatchCountry)
       this.updateWatchCountry()
@@ -1005,7 +1048,7 @@ export default {
       this.rotateToCountry(this.iWatchCountry)
     },
 
-    selectSourceCountryFromGlobe (iGlobeCountry) {
+    selectSourceCountryFromGlobe(iGlobeCountry) {
       let countryId = this.globe.features[iGlobeCountry].properties.iso_n3
       let country = _.find(
         this.selectableCountries,
@@ -1017,7 +1060,7 @@ export default {
       }
     },
 
-    async asyncSelectRandomSourceCountry () {
+    async asyncSelectRandomSourceCountry() {
       let n = this.selectableCountries.length
       let i = Math.floor(Math.random() * Math.floor(n))
       this.iSourceCountry = this.selectableCountries[i].iCountry
@@ -1025,24 +1068,24 @@ export default {
       await this.asyncSelectSourceCountry()
     },
 
-    async asyncSelectMode (mode) {
+    async asyncSelectMode(mode) {
       await util.delay(100)
       console.log('> Home.asyncSelectMode', mode)
       this.mode = mode
       this.asyncRecalculateGlobe()
     },
 
-    drawLegend () {
+    drawLegend() {
       this.globe.drawLegend()
     },
 
-    async asyncCalculateRisk () {
+    async asyncCalculateRisk() {
       await util.delay(100)
       this.mode = 'risk'
       await this.asyncRecalculateGlobe()
     },
 
-    loop () {
+    loop() {
       if (this.isLoop && _.startsWith(this.mode, 'risk')) {
         if (this.days < this.getMaxDays) {
           this.days += 1
@@ -1053,14 +1096,14 @@ export default {
       }
     },
 
-    toggleLoop (boolValue) {
+    toggleLoop(boolValue) {
       this.isLoop = boolValue
       if (this.isLoop) {
         this.mode = 'risk'
       }
     },
 
-    getPopupHtmlFromGlobe (iGlobeCountry) {
+    getPopupHtmlFromGlobe(iGlobeCountry) {
       let feature = this.globe.features[iGlobeCountry]
       let id = feature.properties.iso_n3
       let name = feature.properties.name
