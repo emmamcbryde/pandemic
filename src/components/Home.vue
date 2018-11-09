@@ -859,9 +859,13 @@ export default {
     calculateRiskOfSourceCountry() {
       this.parameterizeGlobalModelFromInput()
 
+      let countryModel = this.globalModel.countryModel[this.iSourceCountry]
+
       let param = _.find(this.guiParams, p => p.key === 'initPrevalence')
       let initPrevalence = parseFloat(param.value)
-      let countryModel = this.globalModel.countryModel[this.iSourceCountry]
+
+      // Run model from prevalence = 10 to prevalence = initPrevalence
+
       countryModel.param.initPrevalence = 10
 
       this.globalModel.clearSolutions()
@@ -875,6 +879,9 @@ export default {
       }
 
       this.dayStart = _.last(this.globalModel.times)
+
+      // Run model for the number of days, whilst keeping track of
+      // intervention
 
       this.interventionDay = this.globalModel.interventionDay
       this.interventionDay += this.dayStart
@@ -903,6 +910,8 @@ export default {
         })
       }
 
+      // reorder times to start at 0 for main model
+
       this.showMaxDays = this.maxDays
 
       for (let i = 0; i < this.globalModel.times.length; i += 1) {
@@ -920,6 +929,10 @@ export default {
         chart.updateDataset(1, [], [])
       }
 
+      this.updateGlobalCharts()
+    },
+
+    updateGlobalCharts() {
       this.chartWidgets.globalPrevalence.setMaxX(this.showMaxDays)
       this.chartWidgets.globalPrevalence.updateDataset(
         0,
@@ -1044,7 +1057,6 @@ export default {
       await util.delay(300)
 
       let valuesById, maxValue
-
       if (_.startsWith(this.mode, 'risk')) {
         this.calculateRiskOfSourceCountry()
         valuesById = this.getPrevalenceByCountryId()
@@ -1068,7 +1080,7 @@ export default {
       this.globe.resetCountryColorsFromValues(modeColors[this.mode], maxValue)
       this.globe.colors[i] = '#f00'
       this.globe.draw()
-      this.drawLegend()
+      this.globe.drawLegend()
 
       this.isRunning = false
     },
@@ -1138,10 +1150,6 @@ export default {
       console.log('> Home.asyncSelectMode', mode)
       this.mode = mode
       this.asyncRecalculateGlobe()
-    },
-
-    drawLegend() {
-      this.globe.drawLegend()
     },
 
     async asyncCalculateRisk() {
