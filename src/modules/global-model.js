@@ -102,6 +102,24 @@ class GlobalModel {
     return intervention
   }
 
+  makeDoubleCountryIntervention(inputParams, iCountry1, iCountry2) {
+    let intervention = new this.constructor(true)
+    intervention.startTime = this.time
+    intervention.times.length = 0
+    intervention.getTravelPerDay = this.getTravelPerDay
+    intervention.countryIndices = _.clone(this.countryIndices)
+    for (let i of this.countryIndices) {
+      let countryModel = _.cloneDeep(this.countryModel[i])
+      intervention.countryModel[i] = countryModel
+      if (i === iCountry1) {
+        countryModel.applyIntervention(inputParams)
+      } else if (i === iCountry2) {
+        countryModel.applyIntervention(inputParams)
+      }
+    }
+    return intervention
+  }
+
   transferPeople() {
     if (!this.getTravelPerDay) {
       throw new Error('GlobalModel.getTravelPerDay function not set!')
