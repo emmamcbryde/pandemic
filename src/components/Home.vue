@@ -107,7 +107,6 @@
               </md-input-container>
 
             </md-layout>
-
             <md-layout
               md-row
               md-vertical-align="center">
@@ -119,11 +118,16 @@
                     margin-right: 1em;">
                 <label>{{ entry.label }}</label>
                 <md-input
+                  v-if="!entry.isReadOnly"
                   v-model="entry.value"
                   :step="entry.step"
+                  :min="entry.min"
                   type="number"
-                  min="0"
                   @change="asyncCalculateRisk"/>
+                <md-input
+                  v-else-if="entry.isReadOnly"
+                  v-model="entry.getValue()"
+                  :disabled="true"/>
               </md-input-container>
 
             </md-layout>
@@ -162,6 +166,22 @@
                 Source Country Only
               </md-radio>
 
+              <md-radio
+                v-model="interventionMode"
+                style="margin-right: 1em"
+                md-value="watch-country-only"
+                @change="asyncCalculateRisk">
+                Watch Country Only
+              </md-radio>
+
+              <md-radio
+                v-model="interventionMode"
+                style="margin-right: 1em"
+                md-value="watch-and-source-countries"
+                @change="asyncCalculateRisk">
+                Source and Watch Countries
+              </md-radio>
+
             </md-layout>
 
             <md-layout
@@ -175,11 +195,16 @@
                   margin-right: 1em;">
                 <label>{{ entry.label }}</label>
                 <md-input
+                  v-if="!entry.isReadOnly"
                   v-model="entry.value"
                   :step="entry.step"
+                  :min="entry.min"
                   type="number"
-                  min="0"
                   @change="asyncCalculateRisk"/>
+                <md-input
+                  v-else-if="entry.isReadOnly"
+                  v-model="entry.getValue()"
+                  :disabled="true"/>
               </md-input-container>
 
             </md-layout>
@@ -245,7 +270,7 @@
 
               {{ days }} Day
 
-              <div 
+              <div
                 style="
                       flex: 1;
                       margin-left: 0.5em;">
@@ -594,7 +619,6 @@ export default {
     this.globe.clickCountry = this.selectWatchCountryFromGlobe
 
     this.mode = 'risk' // 'destination' or 'risk'
-
     this.flightData = flightData
     // data is for Feb, 2015 {
     //   'travel': [
@@ -810,11 +834,8 @@ export default {
         ModelClass,
         sourceCountryName
       )
-      copyArray(this.guiParams, this.globalModel.getGuiParams())
-      copyArray(
-        this.interventionParams,
-        this.globalModel.getInterventionParams()
-      )
+      this.guiParams = this.globalModel.getGuiParams()
+      this.interventionParams = this.globalModel.getInterventionParams()
 
       for (let paramEntry of this.guiParams) {
         if (paramEntry.key in oldInputParams) {
@@ -822,6 +843,9 @@ export default {
         }
         if (paramEntry.step === 0.01) {
           paramEntry.value = parseFloat(paramEntry.value).toFixed(2)
+        }
+        if (paramEntry.isReadOnly) {
+          paramEntry.value = paramEntry.getValue()
         }
       }
 
@@ -897,6 +921,17 @@ export default {
             this.intervention = this.globalModel.makeSingleCountryIntervention(
               this.interventionParams,
               this.iSourceCountry
+            )
+          } else if (this.interventionMode === 'watch-country-only') {
+            this.intervention = this.globalModel.makeSingleCountryIntervention(
+              this.interventionParams,
+              this.iWatchCountry
+            )
+          } else if (this.interventionMode === 'watch-and-source-countries') {
+            this.intervention = this.globalModel.makeDoubleCountryIntervention(
+              this.interventionParams,
+              this.iSourceCountry,
+              this.iWatchCountry
             )
           }
         }

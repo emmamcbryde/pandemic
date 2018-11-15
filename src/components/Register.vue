@@ -1,9 +1,9 @@
 <template>
   <md-layout md-align="center">
     <md-whiteframe style="margin-top: 4em; padding: 3em">
-      <md-layout 
-        md-flex="50" 
-        md-align="center" 
+      <md-layout
+        md-flex="50"
+        md-align="center"
         md-column>
 
         <h2 class="md-display-2">
@@ -39,13 +39,13 @@
               type="password"
               placeholder="Confirm Password"/>
           </md-input-container>
-          <md-button 
-            type="submit" 
+          <md-button
+            type="submit"
             class="md-raised md-primary">
             Register
           </md-button>
-          <div 
-            v-if="error" 
+          <div
+            v-if="error"
             style="color: red">
             {{ error }}
           </div>
