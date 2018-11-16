@@ -305,6 +305,9 @@ class BaseModel {
    */
   transferTo(toCountryModel, travelPerDay) {
     let probSickCanTravel = 1
+    if (_.has(this.param, 'probSickCanTravel')) {
+      probSickCanTravel = this.param.probSickCanTravel
+    }
     let probTravelPerDay = travelPerDay / this.var.population
     let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
     let delta = this.compartment.prevalence * probSickTravelPerDay
@@ -419,7 +422,11 @@ class BaseModel {
       this.runStep(dTimeInDay)
     })
 
-    console.log('BaseModel.run', _.keys(this.solution), _.keys(this.compartment))
+    console.log(
+      'BaseModel.run',
+      _.keys(this.solution),
+      _.keys(this.compartment)
+    )
   }
 }
 
@@ -438,8 +445,8 @@ class SisModel extends BaseModel {
       initPopulation: 50000,
       initPrevalence: 3000,
       infectiousPeriodSis: 5,
-      transmissionRateSis: 0.36
-      // reproductionNumber: 0.35 * 5
+      transmissionRateSis: 0.36,
+      probSickCanTravel: 1
     }
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -452,6 +459,7 @@ class SisModel extends BaseModel {
         value: 0.36,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -460,6 +468,7 @@ class SisModel extends BaseModel {
         value: 5,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -468,8 +477,18 @@ class SisModel extends BaseModel {
         value: 300,
         step: 1,
         min: 0,
+        max: 10000,
         placeHolder: '',
         label: 'Prevalence'
+      },
+      {
+        key: 'initPopulation',
+        value: 50000,
+        step: 1,
+        min: 0,
+        max: 100000,
+        placeHolder: '',
+        label: 'Population'
       },
       {
         label: 'R0',
@@ -488,6 +507,7 @@ class SisModel extends BaseModel {
         value: 5,
         step: 1,
         min: 0,
+        max: 100,
         placeHolder: '',
         label: 'Start Day'
       },
@@ -496,6 +516,7 @@ class SisModel extends BaseModel {
         value: 0.3,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -504,6 +525,7 @@ class SisModel extends BaseModel {
         value: 4,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -540,9 +562,10 @@ class SirModel extends BaseModel {
     this.modelType = 'SIR'
 
     this.compartment = {
-      prevalence: 0,
       susceptible: 0,
-      recovered: 0
+      prevalence: 0,
+      recovered: 0,
+      dead: 0
     }
 
     this.defaultParams = {
@@ -550,12 +573,13 @@ class SirModel extends BaseModel {
       initPrevalence: 3000,
       infectiousPeriodSir: 5,
       transmissionRateSir: 0.35,
-      caseFatalitySir: 0.02
+      caseFatalitySir: 0.02,
+      probSickCanTravel: 1
     }
 
     this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
     this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
-    this.paramEvents.push(['prevalence', 'prevalence', 'disDeath'])
+    this.paramEvents.push(['prevalence', 'dead', 'disDeath'])
 
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -565,7 +589,7 @@ class SirModel extends BaseModel {
         value: 0.35,
         step: 0.01,
         min: 0,
-        max: 10,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -597,6 +621,24 @@ class SirModel extends BaseModel {
         label: 'Prevalence'
       },
       {
+        key: 'initPopulation',
+        value: 50000,
+        step: 1,
+        min: 0,
+        max: 100000,
+        placeHolder: '',
+        label: 'Population'
+      },
+      {
+        key: 'probSickCanTravel',
+        value: 1,
+        step: 0.1,
+        min: 0,
+        max: 1,
+        placeHolder: '',
+        label: 'Travel Fraction'
+      },
+      {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
@@ -622,7 +664,7 @@ class SirModel extends BaseModel {
         value: 0.3,
         step: 0.01,
         min: 0,
-        max: 10,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -634,6 +676,15 @@ class SirModel extends BaseModel {
         max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
+      },
+      {
+        key: 'probSickCanTravel',
+        value: 1,
+        step: 0.1,
+        min: 0,
+        max: 1,
+        placeHolder: '',
+        label: 'Travel Fraction'
       },
       {
         label: 'R0',
@@ -653,7 +704,7 @@ class SirModel extends BaseModel {
     this.param.recoverRate =
       (1 - this.param.caseFatalitySir) * (1 / this.param.infectiousPeriodSir)
     this.param.disDeath =
-      -this.param.caseFatalitySir * (1 / this.param.infectiousPeriodSir)
+      this.param.caseFatalitySir * (1 / this.param.infectiousPeriodSir)
   }
 
   calcVars() {
@@ -675,7 +726,8 @@ class SEIRModel extends BaseModel {
       prevalence: 0,
       susceptible: 0,
       exposed: 0,
-      recovered: 0
+      recovered: 0,
+      dead: 0
     }
 
     this.defaultParams = {
@@ -690,7 +742,7 @@ class SEIRModel extends BaseModel {
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
     this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
-    this.paramEvents.push(['prevalence', 'prevalence', 'disDeath'])
+    this.paramEvents.push(['prevalence', 'dead', 'disDeath'])
     this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
 
     this.guiParams = [
@@ -699,6 +751,7 @@ class SEIRModel extends BaseModel {
         value: 0.35,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -707,6 +760,7 @@ class SEIRModel extends BaseModel {
         value: 5,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -715,6 +769,7 @@ class SEIRModel extends BaseModel {
         value: 0.2,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Case-Fatality Rate'
       },
@@ -723,6 +778,7 @@ class SEIRModel extends BaseModel {
         value: 300,
         step: 1,
         min: 0,
+        max: 10000,
         placeHolder: '',
         label: 'Prevalence'
       },
@@ -743,6 +799,7 @@ class SEIRModel extends BaseModel {
         value: 5,
         step: 1,
         min: 0,
+        max: 100,
         placeHolder: '',
         label: 'Start Day'
       },
@@ -751,6 +808,7 @@ class SEIRModel extends BaseModel {
         value: 0.3,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -759,6 +817,7 @@ class SEIRModel extends BaseModel {
         value: 4,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -779,7 +838,7 @@ class SEIRModel extends BaseModel {
     this.param.recoverRate =
       (1 - this.param.caseFatalitySeir) * (1 / this.param.infectiousPeriodSeir)
     this.param.disDeath =
-      -1 * this.param.caseFatalitySeir * (1 / this.param.infectiousPeriodSeir)
+      this.param.caseFatalitySeir * (1 / this.param.infectiousPeriodSeir)
     this.param.contactRate = this.param.transmissionRateSeir
   }
 
@@ -802,7 +861,8 @@ class SEIRSModel extends BaseModel {
       prevalence: 0,
       susceptible: 0,
       exposed: 0,
-      recovered: 0
+      recovered: 0,
+      dead: 0
     }
 
     this.defaultParams = {
@@ -818,7 +878,7 @@ class SEIRSModel extends BaseModel {
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
     this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
-    this.paramEvents.push(['prevalence', 'prevalence', 'disDeath'])
+    this.paramEvents.push(['prevalence', 'dead', 'disDeath'])
     this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
     this.paramEvents.push(['recovered', 'susceptible', 'immunityLossRate'])
 
@@ -828,6 +888,7 @@ class SEIRSModel extends BaseModel {
         value: 0.35,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -836,6 +897,7 @@ class SEIRSModel extends BaseModel {
         value: 5,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -844,6 +906,7 @@ class SEIRSModel extends BaseModel {
         value: 0.2,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Case-Fatality Rate'
       },
@@ -852,6 +915,7 @@ class SEIRSModel extends BaseModel {
         value: 50,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Immunity Period (days) '
       },
@@ -860,6 +924,7 @@ class SEIRSModel extends BaseModel {
         value: 300,
         step: 1,
         min: 0,
+        max: 10000,
         placeHolder: '',
         label: 'Prevalence'
       },
@@ -880,6 +945,7 @@ class SEIRSModel extends BaseModel {
         value: 5,
         step: 1,
         min: 0,
+        max: 100,
         placeHolder: '',
         label: 'Start Day'
       },
@@ -888,6 +954,7 @@ class SEIRSModel extends BaseModel {
         value: 0.3,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -896,6 +963,7 @@ class SEIRSModel extends BaseModel {
         value: 4,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -918,7 +986,7 @@ class SEIRSModel extends BaseModel {
       (1 / this.param.infectiousPeriodSeirs)
     this.param.incubationRate = this.param.incubationPeriod
     this.param.disDeath =
-      -1 * this.param.caseFatalitySeirs * (1 / this.param.infectiousPeriodSeirs)
+      this.param.caseFatalitySeirs / this.param.infectiousPeriodSeirs
     this.param.contactRate = this.param.transmissionRateSeirs
     this.param.immunityLossRate = 1 / this.param.immunityPeriodSeirs
   }
@@ -983,6 +1051,7 @@ class EbolaModel extends BaseModel {
         value: 0.35,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate from Infectious Individuals(per day)'
       },
@@ -991,6 +1060,7 @@ class EbolaModel extends BaseModel {
         value: 0.2,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Fraction of People Potentially Infectious During Incubation'
       },
@@ -999,14 +1069,16 @@ class EbolaModel extends BaseModel {
         value: 10000,
         step: 1,
         min: 1,
+        max: 100000,
         placeHolder: '',
         label: 'Hospital Capacity (number of isolation beds)'
       },
       {
-        key: 'CaseFatalityHosp',
+        key: 'caseFatalityHosp',
         value: 0.35,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Case Fatality in Hospital'
       },
@@ -1015,6 +1087,7 @@ class EbolaModel extends BaseModel {
         value: 3,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Burial Period (days)'
       },
@@ -1023,6 +1096,7 @@ class EbolaModel extends BaseModel {
         value: 300,
         step: 1,
         min: 0,
+        max: 10000,
         placeHolder: '',
         label: 'Prevalence'
       },
@@ -1052,6 +1126,7 @@ class EbolaModel extends BaseModel {
         value: 5,
         step: 1,
         min: 0,
+        max: 100,
         placeHolder: '',
         label: 'Start Day'
       },
@@ -1060,6 +1135,7 @@ class EbolaModel extends BaseModel {
         value: 0.2,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Transmission Rate from Infectious Individuals(per day)'
       },
@@ -1068,6 +1144,7 @@ class EbolaModel extends BaseModel {
         value: 10000,
         step: 1,
         min: 1,
+        max: 100000,
         placeHolder: '',
         label: 'Hospital Capacity (number of isolation beds)'
       },
