@@ -24,6 +24,13 @@ export default {
     })
   },
 
+  copyArray(dest, source) {
+    dest.length = 0
+    for (let v of source) {
+      dest.push(v)
+    }
+  },
+
   makeArray(n, v) {
     let result = []
     for (let i = 0; i < n; i += 1) {

@@ -541,13 +541,6 @@ function convertLabel(val) {
   }
 }
 
-function copyArray(dest, source) {
-  dest.length = 0
-  for (let v of source) {
-    dest.push(v)
-  }
-}
-
 function formatInt(i) {
   if (i < 1) {
     return '< 1'
@@ -893,8 +886,8 @@ export default {
       countryModel.param.initPrevalence = 10
 
       this.globalModel.clearSolutions()
-      for (let iCountry of this.countryIndices) {
-        let countryModel = this.globalModel.countryModel[iCountry]
+      for (let countryModel of _.values(this.globalModel.countryModel)) {
+        countryModel.clearSolutions()
         countryModel.initCompartments()
       }
 

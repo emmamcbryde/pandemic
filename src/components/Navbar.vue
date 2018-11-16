@@ -12,6 +12,10 @@
       Global Pandemic Map
     </h2>
 
+    <md-button @click="epiModel">
+      epimodels
+    </md-button>
+
     <md-button @click="about">
       About
     </md-button>
@@ -70,6 +74,9 @@ export default {
     },
     about() {
       this.$router.push('/about')
+    },
+    epiModel() {
+      this.$router.push('/epimodel')
     },
     home() {
       this.$router.push('/')

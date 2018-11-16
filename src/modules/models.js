@@ -227,7 +227,9 @@ class BaseModel {
    */
   applyIntervention(guiParams) {
     for (let param of guiParams) {
-      this.param[param.key] = parseFloat(param.value)
+      if (!_.isNil(param.key)) {
+        this.param[param.key] = parseFloat(param.value)
+      }
     }
     this.calcExtraParams()
   }
@@ -239,8 +241,11 @@ class BaseModel {
    */
   clearSolutions() {
     this.keys = _.keys(this.compartment)
-    for (let key of _.keys(this.solution)) {
-      this.solution[key].length = 0
+    this.solution = {}
+    this.solution.incidence = []
+    this.solution.importIncidence = []
+    for (let key of _.keys(this.compartment)) {
+      this.solution[key] = []
     }
     this.times.length = 0
   }
@@ -348,7 +353,8 @@ class BaseModel {
     }
 
     this.solution.incidence.push(incidence)
-    for (let key of ['prevalence', 'susceptible']) {
+
+    for (let key of _.keys(this.compartment)) {
       this.solution[key].push(this.compartment[key])
     }
   }
@@ -397,6 +403,23 @@ class BaseModel {
     this.times.push(this.time)
 
     this.saveToSolution(dTime)
+  }
+
+  run(nStep = 30, dTimeInDay = 1) {
+    console.log('BaseModel.run', nStep, dTimeInDay)
+    this.clearSolutions()
+    this.initCompartments()
+
+    this.time = this.startTime
+    this.times.push(this.time)
+    this.saveToSolution(0)
+
+    _.times(nStep, () => {
+      this.clearBeforeTransfer()
+      this.runStep(dTimeInDay)
+    })
+
+    console.log('BaseModel.run', _.keys(this.solution), _.keys(this.compartment))
   }
 }
 
@@ -542,6 +565,7 @@ class SirModel extends BaseModel {
         value: 0.35,
         step: 0.01,
         min: 0,
+        max: 10,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -550,6 +574,7 @@ class SirModel extends BaseModel {
         value: 5,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -558,6 +583,7 @@ class SirModel extends BaseModel {
         value: 0.02,
         step: 0.01,
         min: 0,
+        max: 1,
         placeHolder: '',
         label: 'Case-Fatality Rate'
       },
@@ -567,6 +593,7 @@ class SirModel extends BaseModel {
         placeHolder: '',
         step: 1,
         min: 0,
+        max: 100000,
         label: 'Prevalence'
       },
       {
@@ -586,6 +613,7 @@ class SirModel extends BaseModel {
         value: 5,
         step: 1,
         min: 0,
+        max: 100,
         placeHolder: '',
         label: 'Start Day'
       },
@@ -594,6 +622,7 @@ class SirModel extends BaseModel {
         value: 0.3,
         step: 0.01,
         min: 0,
+        max: 10,
         placeHolder: '',
         label: 'Transmission Rate (per day)'
       },
@@ -602,6 +631,7 @@ class SirModel extends BaseModel {
         value: 4,
         step: 1,
         min: 1,
+        max: 100,
         placeHolder: '',
         label: 'Infectious Period (days)'
       },
@@ -1045,7 +1075,8 @@ class EbolaModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          var R11 = this.interventionParams[1].value / this.defaultParams.preDetection
+          var R11 =
+            this.interventionParams[1].value / this.defaultParams.preDetection
           var R12 =
             this.defaultParams.foiZero * (1 - this.guiParams[1].value) +
             this.defaultParams.foiThree * this.guiParams[1].value
