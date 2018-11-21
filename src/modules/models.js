@@ -80,6 +80,12 @@ class BaseModel {
     // by a key
     this.param = {}
 
+    this.defaultParams = {
+      initPopulation: 50000,
+      initPrevalence: 3000,
+      probSickCanTravel: 1
+    }
+
     // List of parameters that will be exported to a
     // GUI and used as a template to return values
     // to input into this.param
@@ -297,26 +303,27 @@ class BaseModel {
   }
 
   /**
-   * Moves people out of compartments to compartments in
+   * Moves only infectious people out of compartments to compartments in
    * toCountryModel
    *
-   * @param toCountryModel - another BaseModel
+   * @param toCountry - another BaseModel
    * @param travelPerDay - number of people travelling between the two models
    */
-  transferTo(toCountryModel, travelPerDay) {
-    let probTravelPerDay = travelPerDay / this.var.population
+  transferTo(toCountry, travelPerDay) {
+    let fromCountry = this
 
-    let probSickCanTravel = 1
-    if (_.has(this.param, 'travelBanFraction')) {
-      probSickCanTravel = 1 - this.param.travelBanFraction
-    }
-    let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
+    let probTravelPerDay = travelPerDay / fromCountry.var.population
+
+    let probSickTravelPerDay =
+      fromCountry.param.probSickCanTravel *
+      toCountry.param.probSickCanTravel *
+      probTravelPerDay
 
     for (let key of ['infectious']) {
-      let delta = this.compartment[key] * probSickTravelPerDay
-      this.delta[key] -= delta
-      toCountryModel.delta[key] += delta
-      toCountryModel.var.importIncidence += delta
+      let delta = fromCountry.compartment[key] * probSickTravelPerDay
+      fromCountry.delta[key] -= delta
+      toCountry.delta[key] += delta
+      toCountry.var.importIncidence += delta
     }
   }
 
@@ -413,7 +420,7 @@ class BaseModel {
   }
 
   run(nStep = 30, dTimeInDay = 1) {
-    console.log('BaseModel.run', nStep, dTimeInDay)
+    console.log(`BaseModel.run nStep=${nStep} dT=${dTimeInDay}`)
     this.clearSolutions()
     this.initCompartments()
 
@@ -425,12 +432,6 @@ class BaseModel {
       this.clearBeforeTransfer()
       this.runStep(dTimeInDay)
     })
-
-    console.log(
-      'BaseModel.run',
-      _.keys(this.solution),
-      _.keys(this.compartment)
-    )
   }
 }
 
@@ -706,6 +707,9 @@ class SirModel extends BaseModel {
       (1 - this.param.caseFatalitySir) * (1 / this.param.infectiousPeriodSir)
     this.param.disDeath =
       this.param.caseFatalitySir * (1 / this.param.infectiousPeriodSir)
+    if (_.has(this.param, 'travelBanFraction')) {
+      this.param.probSickCanTravel = 1 - this.param.travelBanFraction
+    }
   }
 
   calcVars() {
@@ -733,11 +737,12 @@ class SEIRModel extends BaseModel {
 
     this.defaultParams = {
       initPopulation: 50000,
-      incubationRate: 0.01,
+      incubationPeriod: 100,
       infectiousPeriodSeir: 5,
       transmissionRateSeir: 0.35,
       caseFatalitySeir: 0.02,
-      initPrevalence: 3000
+      initPrevalence: 3000,
+      probSickCanTravel: 1
     }
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -758,7 +763,7 @@ class SEIRModel extends BaseModel {
       },
       {
         key: 'infectiousPeriodSeir',
-        value: 5,
+        value: 30,
         step: 1,
         min: 1,
         max: 100,
@@ -773,6 +778,15 @@ class SEIRModel extends BaseModel {
           let r0 = param.transmissionRateSeir * param.infectiousPeriodSeir
           return r0.toFixed(2)
         }
+      },
+      {
+        key: 'incubationPeriod',
+        value: 5,
+        step: 1,
+        min: 1,
+        max: 100,
+        placeHolder: '',
+        label: 'Incubation Period (days)'
       },
       {
         key: 'caseFatalitySeir',
@@ -835,10 +849,12 @@ class SEIRModel extends BaseModel {
   }
 
   calcExtraParams() {
+    this.param.incubationRate = 1 / this.param.incubationPeriod
     this.param.recoverRate =
-      (1 - this.param.caseFatalitySeir) * (1 / this.param.infectiousPeriodSeir)
+      (1 - this.param.caseFatalitySeir) / this.param.infectiousPeriodSeir
     this.param.disDeath =
-      this.param.caseFatalitySeir * (1 / this.param.infectiousPeriodSeir)
+      this.param.caseFatalitySeir / this.param.infectiousPeriodSeir
+    console.log('SEIRModel.calcExtraParams', this.param)
   }
 
   calcVars() {
@@ -866,12 +882,13 @@ class SEIRSModel extends BaseModel {
 
     this.defaultParams = {
       initPopulation: 50000,
-      incubationPeriod: 0.01,
+      incubationPeriod: 100,
       caseFatalitySeirs: 0.02,
       initPrevalence: 3000,
       infectiousPeriodSeirs: 5,
       transmissionRateSeirs: 0.35,
-      immunityPeriodSeirs: 50
+      immunityPeriodSeirs: 50,
+      probSickCanTravel: 1
     }
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -908,6 +925,15 @@ class SEIRSModel extends BaseModel {
           let r0 = param.transmissionRateSeirs * param.infectiousPeriodSeirs
           return r0.toFixed(2)
         }
+      },
+      {
+        key: 'incubationPeriod',
+        value: 5,
+        step: 1,
+        min: 1,
+        max: 100,
+        placeHolder: '',
+        label: 'Incubation Period (days)'
       },
       {
         key: 'caseFatalitySeirs',
@@ -979,9 +1005,9 @@ class SEIRSModel extends BaseModel {
   }
 
   calcExtraParams() {
+    this.param.incubationRate = 1 / this.param.incubationPeriod
     this.param.recoverRate =
       (1 - this.param.caseFatalitySeirs) / this.param.infectiousPeriodSeirs
-    this.param.incubationRate = this.param.incubationPeriod
     this.param.disDeath =
       this.param.caseFatalitySeirs / this.param.infectiousPeriodSeirs
     this.param.immunityLossRate = 1 / this.param.immunityPeriodSeirs
@@ -1004,9 +1030,9 @@ class EbolaModel extends BaseModel {
 
     this.compartment = {
       susceptible: 0,
+      exposed: 0,
       infectedEarly: 0,
       infectious: 0,
-      exposed: 0,
       hospitalised: 0,
       recovered: 0,
       buried: 0,
@@ -1020,14 +1046,15 @@ class EbolaModel extends BaseModel {
       foi: 0.2,
       foiTwo: 0.02,
       foiThree: 0.2,
-      latency: 0.1,
+      incubationPeriod: 100,
       preDetection: 0.25,
       postDetection: 0.16,
       ascerProb: 0.05,
       hospitalCapacity: 10000,
       caseFatalityHosp: 0.35,
       caseFatality: 0.7,
-      preBurialPeriod: 3
+      preBurialPeriod: 3,
+      probSickCanTravel: 1
     }
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -1059,6 +1086,15 @@ class EbolaModel extends BaseModel {
         max: 1,
         placeHolder: '',
         label: 'Fraction of People Potentially Infectious During Incubation'
+      },
+      {
+        key: 'incubationPeriod',
+        value: 21,
+        step: 1,
+        min: 1,
+        max: 100,
+        placeHolder: '',
+        label: 'Incubation Period (days)'
       },
       {
         key: 'hospitalCapacity',
@@ -1169,7 +1205,7 @@ class EbolaModel extends BaseModel {
   }
 
   calcExtraParams() {
-    this.param.incubationRate = this.param.latency
+    this.param.incubationRate = 1 / this.param.incubationPeriod
     this.param.recoverRate1 =
       (1 - this.param.caseFatality) * this.param.postDetection
     this.param.recoverRate2 =
