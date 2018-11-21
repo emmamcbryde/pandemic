@@ -487,13 +487,22 @@ class SisModel extends BaseModel {
         label: 'Infectious Period (days)'
       },
       {
+        label: 'R0',
+        isReadOnly: true,
+        getValue: () => {
+          let param = convertParamsToDict(this.guiParams)
+          let R0Sir = param.transmissionRateSis * param.infectiousPeriodSis
+          return R0Sir.toFixed(2)
+        }
+      },
+      {
         key: 'initPrevalence',
         value: 300,
         step: 1,
         min: 0,
         max: 10000,
         placeHolder: '',
-        label: 'infectious'
+        label: 'Initial Prevalence'
       },
       {
         key: 'initPopulation',
@@ -503,15 +512,6 @@ class SisModel extends BaseModel {
         max: 100000,
         placeHolder: '',
         label: 'Population'
-      },
-      {
-        label: 'R0',
-        isReadOnly: true,
-        getValue: () => {
-          let param = convertParamsToDict(this.guiParams)
-          let R0Sir = param.transmissionRateSis * param.infectiousPeriodSis
-          return R0Sir.toFixed(2)
-        }
       }
     ]
 
@@ -615,6 +615,15 @@ class SirModel extends BaseModel {
         label: 'Infectious Period (days)'
       },
       {
+        label: 'R0',
+        isReadOnly: true,
+        getValue: () => {
+          let param = convertParamsToDict(this.guiParams)
+          let r0 = param.transmissionRateSir * param.infectiousPeriodSir
+          return r0.toFixed(2)
+        }
+      },
+      {
         key: 'caseFatalitySir',
         value: 0.02,
         step: 0.01,
@@ -630,7 +639,7 @@ class SirModel extends BaseModel {
         step: 1,
         min: 0,
         max: 100000,
-        label: 'infectious'
+        label: 'Initial Prevalence'
       },
       {
         key: 'initPopulation',
@@ -640,15 +649,6 @@ class SirModel extends BaseModel {
         max: 100000,
         placeHolder: '',
         label: 'Population'
-      },
-      {
-        label: 'R0',
-        isReadOnly: true,
-        getValue: () => {
-          let param = convertParamsToDict(this.guiParams)
-          let r0 = param.transmissionRateSir * param.infectiousPeriodSir
-          return r0.toFixed(2)
-        }
       }
     ]
 
@@ -766,6 +766,15 @@ class SEIRModel extends BaseModel {
         label: 'Infectious Period (days)'
       },
       {
+        label: 'R0',
+        isReadOnly: true,
+        getValue: () => {
+          let param = convertParamsToDict(this.guiParams)
+          let r0 = param.transmissionRateSeir * param.infectiousPeriodSeir
+          return r0.toFixed(2)
+        }
+      },
+      {
         key: 'caseFatalitySeir',
         value: 0.2,
         step: 0.01,
@@ -781,16 +790,7 @@ class SEIRModel extends BaseModel {
         min: 0,
         max: 10000,
         placeHolder: '',
-        label: 'infectious'
-      },
-      {
-        label: 'R0',
-        isReadOnly: true,
-        getValue: () => {
-          let param = convertParamsToDict(this.guiParams)
-          let r0 = param.transmissionRateSeir * param.infectiousPeriodSeir
-          return r0.toFixed(2)
-        }
+        label: 'Initial Prevalence'
       }
     ]
 
@@ -901,6 +901,15 @@ class SEIRSModel extends BaseModel {
         label: 'Infectious Period (days)'
       },
       {
+        label: 'R0',
+        isReadOnly: true,
+        getValue: () => {
+          let param = convertParamsToDict(this.guiParams)
+          let r0 = param.transmissionRateSeirs * param.infectiousPeriodSeirs
+          return r0.toFixed(2)
+        }
+      },
+      {
         key: 'caseFatalitySeirs',
         value: 0.2,
         step: 0.01,
@@ -925,16 +934,7 @@ class SEIRSModel extends BaseModel {
         min: 0,
         max: 10000,
         placeHolder: '',
-        label: 'infectious'
-      },
-      {
-        label: 'R0',
-        isReadOnly: true,
-        getValue: () => {
-          let param = convertParamsToDict(this.guiParams)
-          let r0 = param.transmissionRateSeirs * param.infectiousPeriodSeirs
-          return r0.toFixed(2)
-        }
+        label: 'Initial Prevalence'
       }
     ]
 
@@ -1003,14 +1003,14 @@ class EbolaModel extends BaseModel {
     this.modelType = 'Ebola'
 
     this.compartment = {
-      infectious: 0,
       susceptible: 0,
-      exposed: 0,
-      recovered: 0,
       infectedEarly: 0,
+      infectious: 0,
+      exposed: 0,
       hospitalised: 0,
-      dead: 0,
-      buried: 0
+      recovered: 0,
+      buried: 0,
+      dead: 0
     }
 
     this.defaultParams = {
@@ -1088,15 +1088,6 @@ class EbolaModel extends BaseModel {
         label: 'Burial Period (days)'
       },
       {
-        key: 'initPrevalence',
-        value: 300,
-        step: 1,
-        min: 0,
-        max: 10000,
-        placeHolder: '',
-        label: 'infectious'
-      },
-      {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
@@ -1113,6 +1104,15 @@ class EbolaModel extends BaseModel {
           let R0Ebola = R1 + R2 + R3
           return R0Ebola.toFixed(2)
         }
+      },
+      {
+        key: 'initPrevalence',
+        value: 300,
+        step: 1,
+        min: 0,
+        max: 10000,
+        placeHolder: '',
+        label: 'Initial Prevalence'
       }
     ]
 
@@ -1136,15 +1136,6 @@ class EbolaModel extends BaseModel {
         label: 'Transmission Rate from Infectious Individuals(per day)'
       },
       {
-        key: 'hospitalCapacity',
-        value: 10000,
-        step: 1,
-        min: 1,
-        max: 100000,
-        placeHolder: '',
-        label: 'Hospital Capacity (number of isolation beds)'
-      },
-      {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
@@ -1164,6 +1155,15 @@ class EbolaModel extends BaseModel {
           var R0EbolaI = R11 + R12 + R13
           return R0EbolaI.toFixed(2)
         }
+      },
+      {
+        key: 'hospitalCapacity',
+        value: 10000,
+        step: 1,
+        min: 1,
+        max: 100000,
+        placeHolder: '',
+        label: 'Hospital Capacity (number of isolation beds)'
       }
     ]
   }
