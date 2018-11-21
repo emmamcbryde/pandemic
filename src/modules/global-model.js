@@ -120,7 +120,7 @@ class GlobalModel {
     return intervention
   }
 
-  transferPeople() {
+  transferInfectiousPeople() {
     if (!this.getTravelPerDay) {
       throw new Error('GlobalModel.getTravelPerDay function not set!')
     }
@@ -129,7 +129,7 @@ class GlobalModel {
       let fromCountry = this.countryModel[iFromCountry]
       for (let iToCountry of this.countryIndices) {
         if (iFromCountry !== iToCountry) {
-          fromCountry.transferTo(
+          fromCountry.transferInfectiousTo(
             this.countryModel[iToCountry],
             this.getTravelPerDay(iFromCountry, iToCountry)
           )
@@ -157,7 +157,7 @@ class GlobalModel {
     }
 
     // sets countryModel.delta and countryModel.importIncidence
-    this.transferPeople()
+    this.transferInfectiousPeople()
 
     this.vars.incidence = 0
     this.vars.prevalence = 0

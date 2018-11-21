@@ -25,7 +25,7 @@ class BaseModel {
    * The execution loop is:
    *
    * 1) externally add to this.delta of compartments
-   *    due to extrinsic import of people, via this.transferTo
+   *    due to extrinsic import of people, via this.transferInfectiousTo
    * 2) recalculate this.var - should
    *    depends only on this.param and
    *    current this.compartment values
@@ -304,12 +304,13 @@ class BaseModel {
 
   /**
    * Moves only infectious people out of compartments to compartments in
-   * toCountryModel
+   * toCountryModel, where the probabilities are also controlled by
+   * potential travel bans both at the origin and destination countries
    *
    * @param toCountry - another BaseModel
    * @param travelPerDay - number of people travelling between the two models
    */
-  transferTo(toCountry, travelPerDay) {
+  transferInfectiousTo(toCountry, travelPerDay) {
     let fromCountry = this
 
     let probTravelPerDay = travelPerDay / fromCountry.var.population
