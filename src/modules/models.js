@@ -304,16 +304,20 @@ class BaseModel {
    * @param travelPerDay - number of people travelling between the two models
    */
   transferTo(toCountryModel, travelPerDay) {
-    let probSickCanTravel = 1
-    if (_.has(this.param, 'probSickCanTravel')) {
-      probSickCanTravel = this.param.probSickCanTravel
-    }
     let probTravelPerDay = travelPerDay / this.var.population
+
+    let probSickCanTravel = 1
+    if (_.has(this.param, 'travelBanFraction')) {
+      probSickCanTravel = 1 - this.param.travelBanFraction
+    }
     let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
-    let delta = this.compartment.prevalence * probSickTravelPerDay
-    this.delta.prevalence -= delta
-    toCountryModel.delta.prevalence += delta
-    toCountryModel.var.importIncidence += delta
+
+    for (let key of ['prevalence']) {
+      let delta = this.compartment[key] * probSickTravelPerDay
+      this.delta[key] -= delta
+      toCountryModel.delta[key] += delta
+      toCountryModel.var.importIncidence += delta
+    }
   }
 
   /**
@@ -552,14 +556,13 @@ class SisModel extends BaseModel {
   }
 
   calcExtraParams() {
-    this.param.contactRate = this.param.transmissionRateSis
     this.param.recoverRate = 1 / this.param.infectiousPeriodSis
   }
 
   calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      (this.param.contactRate / this.var.population) *
+      (this.param.transmissionRateSis / this.var.population) *
       this.compartment.prevalence
   }
 }
@@ -639,15 +642,6 @@ class SirModel extends BaseModel {
         label: 'Population'
       },
       {
-        key: 'probSickCanTravel',
-        value: 1,
-        step: 0.1,
-        min: 0,
-        max: 1,
-        placeHolder: '',
-        label: 'Travel Fraction'
-      },
-      {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
@@ -687,13 +681,13 @@ class SirModel extends BaseModel {
         label: 'Infectious Period (days)'
       },
       {
-        key: 'probSickCanTravel',
-        value: 1,
+        key: 'travelBanFraction',
+        value: 0.5,
         step: 0.1,
         min: 0,
         max: 1,
         placeHolder: '',
-        label: 'Travel Fraction'
+        label: 'Travel Ban Fraction'
       },
       {
         label: 'R0',
@@ -708,7 +702,6 @@ class SirModel extends BaseModel {
   }
 
   calcExtraParams() {
-    this.param.contactRate = this.param.transmissionRateSir
     this.param.recoverRate =
       (1 - this.param.caseFatalitySir) * (1 / this.param.infectiousPeriodSir)
     this.param.disDeath =
@@ -718,7 +711,7 @@ class SirModel extends BaseModel {
   calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      (this.param.contactRate / this.var.population) *
+      (this.param.transmissionRateSir / this.var.population) *
       this.compartment.prevalence
   }
 }
@@ -731,9 +724,9 @@ class SEIRModel extends BaseModel {
     this.modelType = 'SEIR'
 
     this.compartment = {
-      prevalence: 0,
       susceptible: 0,
       exposed: 0,
+      prevalence: 0,
       recovered: 0,
       dead: 0
     }
@@ -846,13 +839,12 @@ class SEIRModel extends BaseModel {
       (1 - this.param.caseFatalitySeir) * (1 / this.param.infectiousPeriodSeir)
     this.param.disDeath =
       this.param.caseFatalitySeir * (1 / this.param.infectiousPeriodSeir)
-    this.param.contactRate = this.param.transmissionRateSeir
   }
 
   calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      (this.param.contactRate / this.var.population) *
+      (this.param.transmissionRateSeir / this.var.population) *
       this.compartment.prevalence
   }
 }
@@ -865,9 +857,9 @@ class SEIRSModel extends BaseModel {
     this.modelType = 'SEIRS'
 
     this.compartment = {
-      prevalence: 0,
       susceptible: 0,
       exposed: 0,
+      prevalence: 0,
       recovered: 0,
       dead: 0
     }
@@ -988,19 +980,17 @@ class SEIRSModel extends BaseModel {
 
   calcExtraParams() {
     this.param.recoverRate =
-      (1 - this.param.caseFatalitySeirs) *
-      (1 / this.param.infectiousPeriodSeirs)
+      (1 - this.param.caseFatalitySeirs) / this.param.infectiousPeriodSeirs
     this.param.incubationRate = this.param.incubationPeriod
     this.param.disDeath =
       this.param.caseFatalitySeirs / this.param.infectiousPeriodSeirs
-    this.param.contactRate = this.param.transmissionRateSeirs
     this.param.immunityLossRate = 1 / this.param.immunityPeriodSeirs
   }
 
   calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      (this.param.contactRate / this.var.population) *
+      (this.param.transmissionRateSeirs / this.var.population) *
       this.compartment.prevalence
   }
 }
