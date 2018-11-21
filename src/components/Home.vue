@@ -774,7 +774,7 @@ export default {
       for (let iCountry of this.countryIndices) {
         let id = this.flightData.countries[iCountry].iso_n3
         let countryModel = this.globalModel.countryModel[iCountry]
-        result[id] = countryModel.compartment.prevalence
+        result[id] = countryModel.compartment.infectious
       }
       return result
     },
@@ -891,7 +891,7 @@ export default {
         countryModel.initCompartments()
       }
 
-      while (countryModel.compartment.prevalence < initPrevalence) {
+      while (countryModel.compartment.infectious < initPrevalence) {
         this.globalModel.update()
       }
 
@@ -1038,13 +1038,13 @@ export default {
       this.chartWidgets.prevalence.updateDataset(
         0,
         this.globalModel.times,
-        solution.prevalence
+        solution.infectious
       )
       if (interventionSolution) {
         this.chartWidgets.prevalence.updateDataset(
           1,
           this.intervention.times,
-          interventionSolution.prevalence
+          interventionSolution.infectious
         )
       }
 
@@ -1240,7 +1240,7 @@ export default {
           let countryId = this.flightData.countries[iCountry].iso_n3
           if (countryId === id) {
             country = this.globalModel.countryModel[iCountry]
-            prevalence = country.compartment.prevalence
+            prevalence = country.compartment.infectious
             solution = country.solution
             break
           }

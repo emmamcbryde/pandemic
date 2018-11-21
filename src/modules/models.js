@@ -57,10 +57,10 @@ class BaseModel {
     // by the key of the compartment.
     // There are two key compartments that are
     // assumed in other parts of the app:
-    //   1. prevalence
+    //   1. infectious
     //   2. susceptible
     this.compartment = {
-      prevalence: 0,
+      infectious: 0,
       susceptible: 0
     }
 
@@ -89,7 +89,7 @@ class BaseModel {
       //   value: 3000,
       //   step: 1,
       //   placeHolder: '',
-      //   label: 'Prevalence'
+      //   label: 'infectious'
       // }
     ]
 
@@ -144,7 +144,7 @@ class BaseModel {
 
     // Stored list of variables for further analysis
     this.solution = {
-      prevalence: [],
+      infectious: [],
       susceptible: [],
       incidence: [],
       importIncidence: []
@@ -202,7 +202,7 @@ class BaseModel {
    * called by this.initCompartments
    */
   initCompartmentsByParams() {
-    this.compartment.prevalence = this.param.initPrevalence
+    this.compartment.infectious = this.param.initPrevalence
     this.compartment.susceptible =
       this.param.initPopulation - this.param.initPrevalence
   }
@@ -312,7 +312,7 @@ class BaseModel {
     }
     let probSickTravelPerDay = probSickCanTravel * probTravelPerDay
 
-    for (let key of ['prevalence']) {
+    for (let key of ['infectious']) {
       let delta = this.compartment[key] * probSickTravelPerDay
       this.delta[key] -= delta
       toCountryModel.delta[key] += delta
@@ -354,7 +354,7 @@ class BaseModel {
     for (let event of this.events) {
       let to = event[1]
       let val = event[2]
-      if (to === 'prevalence') {
+      if (to === 'infectious') {
         incidence += val * dTime
       }
     }
@@ -451,8 +451,8 @@ class SisModel extends BaseModel {
     this.modelType = 'SIS'
 
     this.compartment = {
-      prevalence: 0,
-      susceptible: 0
+      susceptible: 0,
+      infectious: 0
     }
 
     this.defaultParams = {
@@ -464,8 +464,8 @@ class SisModel extends BaseModel {
     }
     this.param = _.cloneDeep(this.defaultParams)
 
-    this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
-    this.paramEvents.push(['prevalence', 'susceptible', 'recoverRate'])
+    this.varEvents.push(['susceptible', 'infectious', 'rateForce'])
+    this.paramEvents.push(['infectious', 'susceptible', 'recoverRate'])
 
     this.guiParams = [
       {
@@ -493,7 +493,7 @@ class SisModel extends BaseModel {
         min: 0,
         max: 10000,
         placeHolder: '',
-        label: 'Prevalence'
+        label: 'infectious'
       },
       {
         key: 'initPopulation',
@@ -563,7 +563,7 @@ class SisModel extends BaseModel {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.transmissionRateSis / this.var.population) *
-      this.compartment.prevalence
+      this.compartment.infectious
   }
 }
 
@@ -575,7 +575,7 @@ class SirModel extends BaseModel {
 
     this.compartment = {
       susceptible: 0,
-      prevalence: 0,
+      infectious: 0,
       recovered: 0,
       dead: 0
     }
@@ -589,9 +589,9 @@ class SirModel extends BaseModel {
       probSickCanTravel: 1
     }
 
-    this.varEvents.push(['susceptible', 'prevalence', 'rateForce'])
-    this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
-    this.paramEvents.push(['prevalence', 'dead', 'disDeath'])
+    this.varEvents.push(['susceptible', 'infectious', 'rateForce'])
+    this.paramEvents.push(['infectious', 'recovered', 'recoverRate'])
+    this.paramEvents.push(['infectious', 'dead', 'disDeath'])
 
     this.param = _.cloneDeep(this.defaultParams)
 
@@ -630,7 +630,7 @@ class SirModel extends BaseModel {
         step: 1,
         min: 0,
         max: 100000,
-        label: 'Prevalence'
+        label: 'infectious'
       },
       {
         key: 'initPopulation',
@@ -712,7 +712,7 @@ class SirModel extends BaseModel {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.transmissionRateSir / this.var.population) *
-      this.compartment.prevalence
+      this.compartment.infectious
   }
 }
 
@@ -726,7 +726,7 @@ class SEIRModel extends BaseModel {
     this.compartment = {
       susceptible: 0,
       exposed: 0,
-      prevalence: 0,
+      infectious: 0,
       recovered: 0,
       dead: 0
     }
@@ -742,9 +742,9 @@ class SEIRModel extends BaseModel {
     this.param = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
-    this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
-    this.paramEvents.push(['prevalence', 'dead', 'disDeath'])
-    this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
+    this.paramEvents.push(['exposed', 'infectious', 'incubationRate'])
+    this.paramEvents.push(['infectious', 'dead', 'disDeath'])
+    this.paramEvents.push(['infectious', 'recovered', 'recoverRate'])
 
     this.guiParams = [
       {
@@ -781,7 +781,7 @@ class SEIRModel extends BaseModel {
         min: 0,
         max: 10000,
         placeHolder: '',
-        label: 'Prevalence'
+        label: 'infectious'
       },
       {
         label: 'R0',
@@ -845,7 +845,7 @@ class SEIRModel extends BaseModel {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.transmissionRateSeir / this.var.population) *
-      this.compartment.prevalence
+      this.compartment.infectious
   }
 }
 
@@ -859,7 +859,7 @@ class SEIRSModel extends BaseModel {
     this.compartment = {
       susceptible: 0,
       exposed: 0,
-      prevalence: 0,
+      infectious: 0,
       recovered: 0,
       dead: 0
     }
@@ -876,9 +876,9 @@ class SEIRSModel extends BaseModel {
     this.param = _.cloneDeep(this.defaultParams)
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
-    this.paramEvents.push(['exposed', 'prevalence', 'incubationRate'])
-    this.paramEvents.push(['prevalence', 'dead', 'disDeath'])
-    this.paramEvents.push(['prevalence', 'recovered', 'recoverRate'])
+    this.paramEvents.push(['exposed', 'infectious', 'incubationRate'])
+    this.paramEvents.push(['infectious', 'dead', 'disDeath'])
+    this.paramEvents.push(['infectious', 'recovered', 'recoverRate'])
     this.paramEvents.push(['recovered', 'susceptible', 'immunityLossRate'])
 
     this.guiParams = [
@@ -925,7 +925,7 @@ class SEIRSModel extends BaseModel {
         min: 0,
         max: 10000,
         placeHolder: '',
-        label: 'Prevalence'
+        label: 'infectious'
       },
       {
         label: 'R0',
@@ -991,7 +991,7 @@ class SEIRSModel extends BaseModel {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
       (this.param.transmissionRateSeirs / this.var.population) *
-      this.compartment.prevalence
+      this.compartment.infectious
   }
 }
 
@@ -1003,7 +1003,7 @@ class EbolaModel extends BaseModel {
     this.modelType = 'Ebola'
 
     this.compartment = {
-      prevalence: 0,
+      infectious: 0,
       susceptible: 0,
       exposed: 0,
       recovered: 0,
@@ -1033,11 +1033,11 @@ class EbolaModel extends BaseModel {
 
     this.varEvents.push(['susceptible', 'exposed', 'rateForce'])
     this.paramEvents.push(['exposed', 'infectedEarly', 'incubationRate'])
-    this.varEvents.push(['infectedEarly', 'prevalence', 'rateForce1'])
+    this.varEvents.push(['infectedEarly', 'infectious', 'rateForce1'])
     this.varEvents.push(['infectedEarly', 'hospitalised', 'rateForce2'])
-    this.paramEvents.push(['prevalence', 'recovered', 'recoverRate1'])
+    this.paramEvents.push(['infectious', 'recovered', 'recoverRate1'])
     this.paramEvents.push(['hospitalised', 'recovered', 'recoverRate2'])
-    this.paramEvents.push(['prevalence', 'dead', 'deathRate1'])
+    this.paramEvents.push(['infectious', 'dead', 'deathRate1'])
     this.paramEvents.push(['hospitalised', 'dead', 'deathRate2'])
     this.paramEvents.push(['dead', 'buried', 'burialRate'])
 
@@ -1094,7 +1094,7 @@ class EbolaModel extends BaseModel {
         min: 0,
         max: 10000,
         placeHolder: '',
-        label: 'Prevalence'
+        label: 'infectious'
       },
       {
         label: 'R0',
@@ -1192,7 +1192,7 @@ class EbolaModel extends BaseModel {
   calcVars() {
     this.var.population = _.sum(_.values(this.compartment))
     this.var.rateForce =
-      (this.param.foi * this.compartment.prevalence +
+      (this.param.foi * this.compartment.infectious +
         this.param.foiZero * this.compartment.infectedEarly +
         this.param.foiTwo * this.compartment.hospitalised +
         this.param.foiThree * this.compartment.dead) /

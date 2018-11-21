@@ -168,7 +168,7 @@ class GlobalModel {
       countryModel.solution.importIncidence.push(
         countryModel.var.importIncidence
       )
-      this.vars.prevalence += countryModel.compartment.prevalence
+      this.vars.prevalence += countryModel.compartment.infectious
       this.vars.incidence += _.last(countryModel.solution.incidence)
     }
 
