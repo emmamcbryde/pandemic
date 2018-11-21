@@ -430,6 +430,16 @@ class BaseModel {
   }
 }
 
+function convertParamsToDict(params) {
+  let result = {}
+  for (let param of params) {
+    if (!_.isNil(param.key)) {
+      result[param.key] = parseFloat(param.value)
+    }
+  }
+  return result
+}
+
 class SisModel extends BaseModel {
   constructor(id) {
     super(id)
@@ -494,8 +504,8 @@ class SisModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0Sir = this.guiParams[0].value * this.guiParams[1].value
-          console.log('SISModel.getValue.Ro', R0Sir)
+          let param = convertParamsToDict(this.guiParams)
+          let R0Sir = param.transmissionRateSis * param.infectiousPeriodSis
           return R0Sir.toFixed(2)
         }
       }
@@ -533,10 +543,9 @@ class SisModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0SirI =
-            this.interventionParams[1].value * this.interventionParams[2].value
-          console.log('SISModel.intervention.getValue.Ro', R0SirI)
-          return R0SirI.toFixed(2)
+          let param = convertParamsToDict(this.interventionParams)
+          let r0 = param.transmissionRateSis * param.infectiousPeriodSis
+          return r0.toFixed(2)
         }
       }
     ]
@@ -642,9 +651,9 @@ class SirModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0Sir = this.guiParams[0].value * this.guiParams[1].value
-          console.log('SIRModel.getValue.Ro', R0Sir)
-          return R0Sir.toFixed(2)
+          let param = convertParamsToDict(this.guiParams)
+          let r0 = param.transmissionRateSir * param.infectiousPeriodSir
+          return r0.toFixed(2)
         }
       }
     ]
@@ -690,10 +699,9 @@ class SirModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0SirI =
-            this.interventionParams[1].value * this.interventionParams[2].value
-          console.log('SIRModel.intervention.getValue.Ro', R0SirI)
-          return R0SirI.toFixed(2)
+          let param = convertParamsToDict(this.interventionParams)
+          let r0 = param.transmissionRateSir * param.infectiousPeriodSir
+          return r0.toFixed(2)
         }
       }
     ]
@@ -786,9 +794,9 @@ class SEIRModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0Sir = this.guiParams[0].value * this.guiParams[1].value
-          console.log('SEIRModel.getValue.Ro', R0Sir)
-          return R0Sir.toFixed(2)
+          let param = convertParamsToDict(this.guiParams)
+          let r0 = param.transmissionRateSeir * param.infectiousPeriodSeir
+          return r0.toFixed(2)
         }
       }
     ]
@@ -825,10 +833,9 @@ class SEIRModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0SirI =
-            this.interventionParams[1].value * this.interventionParams[2].value
-          console.log('SEIRModel.intervention.getValue.Ro', R0SirI)
-          return R0SirI.toFixed(2)
+          let param = convertParamsToDict(this.interventionParams)
+          let r0 = param.transmissionRateSeir * param.infectiousPeriodSeir
+          return r0.toFixed(2)
         }
       }
     ]
@@ -932,9 +939,9 @@ class SEIRSModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0Sir = this.guiParams[0].value * this.guiParams[1].value
-          console.log('SEIRSModel.getValue.Ro', R0Sir)
-          return R0Sir.toFixed(2)
+          let param = convertParamsToDict(this.guiParams)
+          let r0 = param.transmissionRateSeirs * param.infectiousPeriodSeirs
+          return r0.toFixed(2)
         }
       }
     ]
@@ -971,10 +978,9 @@ class SEIRSModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          let R0SirI =
-            this.interventionParams[1].value * this.interventionParams[2].value
-          console.log('SEIRSModel.intervention.getValue.Ro', R0SirI)
-          return R0SirI.toFixed(2)
+          let param = convertParamsToDict(this.interventionParams)
+          let r0 = param.transmissionRateSeirs * param.infectiousPeriodSeirs
+          return r0.toFixed(2)
         }
       }
     ]
@@ -1104,17 +1110,17 @@ class EbolaModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          var R1 = this.guiParams[0].value / this.defaultParams.preDetection
-          var R2 =
-            this.defaultParams.foiZero * (1 - this.guiParams[1].value) +
-            this.defaultParams.foiThree * this.guiParams[1].value
-          var R3 =
+          let guiParam = convertParamsToDict(this.guiParams)
+          let R1 = guiParam.foi / this.defaultParams.preDetection
+          let R2 =
+            this.defaultParams.foiZero * (1 - guiParam.ascerProb) +
+            this.defaultParams.foiThree * guiParam.ascerProb
+          let R3 =
             (this.defaultParams.foiThree *
-              (this.guiParams[3].value * (1 - this.guiParams[1].value) +
-                this.guiParams[1].value * this.defaultParams.caseFatality)) /
-            this.guiParams[4].value
-          var R0Ebola = R1 + R2 + R3
-          console.log('EbolaModel.getValue.Ro', R0Ebola)
+              (guiParam.caseFatalityHosp * (1 - guiParam.ascerProb) +
+                guiParam.ascerProb * this.defaultParams.caseFatality)) /
+            guiParam.preBurialPeriod
+          let R0Ebola = R1 + R2 + R3
           return R0Ebola.toFixed(2)
         }
       }
@@ -1152,18 +1158,20 @@ class EbolaModel extends BaseModel {
         label: 'R0',
         isReadOnly: true,
         getValue: () => {
-          var R11 =
-            this.interventionParams[1].value / this.defaultParams.preDetection
-          var R12 =
-            this.defaultParams.foiZero * (1 - this.guiParams[1].value) +
-            this.defaultParams.foiThree * this.guiParams[1].value
-          var R13 =
+          let guiParam = convertParamsToDict(this.guiParams)
+          let interventionParam = convertParamsToDict(this.interventionParams)
+
+          let R11 = interventionParam.foi / this.defaultParams.preDetection
+          let R12 =
+            this.defaultParams.foiZero * (1 - guiParam.ascerProb) +
+            this.defaultParams.foiThree * guiParam.ascerProb
+          let R13 =
             (this.defaultParams.foiThree *
-              (this.guiParams[3].value * (1 - this.guiParams[1].value) +
-                this.guiParams[1].value * this.defaultParams.caseFatality)) /
-            this.guiParams[4].value
+              (guiParam.caseFatalityHosp * (1 - guiParam.ascerProb) +
+                guiParam.ascerProb * this.defaultParams.caseFatality)) /
+            guiParam.preBurialPeriod
+
           var R0EbolaI = R11 + R12 + R13
-          console.log('EbolaModel.intervention.getValue.Ro', R0EbolaI)
           return R0EbolaI.toFixed(2)
         }
       }
