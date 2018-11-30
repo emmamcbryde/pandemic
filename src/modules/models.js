@@ -247,12 +247,14 @@ class BaseModel {
    */
   clearSolutions() {
     this.keys = _.keys(this.compartment)
+
     this.solution = {}
-    this.solution.incidence = []
-    this.solution.importIncidence = []
-    for (let key of _.keys(this.compartment)) {
+    for (let key of this.keys) {
       this.solution[key] = []
     }
+    this.solution.incidence = []
+    this.solution.importIncidence = []
+
     this.times.length = 0
   }
 
@@ -366,7 +368,6 @@ class BaseModel {
         incidence += val * dTime
       }
     }
-
     this.solution.incidence.push(incidence)
 
     for (let key of _.keys(this.compartment)) {
@@ -1251,23 +1252,23 @@ class EbolaModel extends BaseModel {
 
 let models = [
   {
-    class: SirModel,
+    Class: SirModel,
     name: 'Susceptible Infectious Recovered'
   },
   {
-    class: SisModel,
+    Class: SisModel,
     name: 'Susceptible Infectious Susceptible'
   },
   {
-    class: SEIRModel,
+    Class: SEIRModel,
     name: 'Susceptible Exposed Infections Recovered'
   },
   {
-    class: SEIRSModel,
+    Class: SEIRSModel,
     name: 'Susceptible Exposed Infections Recovered Susceptible'
   },
   {
-    class: EbolaModel,
+    Class: EbolaModel,
     name: 'Ebola'
   }
 ]

@@ -7,7 +7,7 @@
  */
 
 import Vue from 'vue'
-import VueMaterial from 'vue-material'
+import Vuetify from 'vuetify'
 
 import config from './config'
 import router from './router'
@@ -15,7 +15,7 @@ import auth from './modules/auth'
 import App from './App.vue'
 
 Vue.config.productionTip = false
-Vue.use(VueMaterial)
+Vue.use(Vuetify)
 document.title = config.title
 
 async function init() {

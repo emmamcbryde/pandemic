@@ -1,57 +1,73 @@
 <template>
-  <md-toolbar
-    md-theme="default"
-    class="md-dense">
+  <v-toolbar
+    dense
+    dark
+    tabs
+    color="indigo">
 
-    <h2
-      class="md-title"
+    <v-toolbar-title
       style="
         flex: 1;
         cursor: pointer;"
       @click="home">
       Global Pandemic Map
-    </h2>
+    </v-toolbar-title>
 
-    <md-button @click="epiModel">
-      epimodels
-    </md-button>
+    <v-spacer/>
 
-    <md-button @click="about">
-      About
-    </md-button>
+    <v-toolbar-items>
+      <v-btn
+        flat
+        to="/epimodel"
+        router>epimodels
+      </v-btn>
 
-    <div v-if="isUser">
+      <v-btn
+        flat
+        to="/about"
+        router>About
+      </v-btn>
 
-      <md-menu
-        v-if="user.authenticated">
-        <md-button
-          md-menu-trigger>
-          {{ user.name }}
-        </md-button>
+      <template v-if="isUser">
+        <v-menu
+          v-if="user.authenticated"
+          bottom
+          left
+          open-on-hover>
 
-        <md-menu-content>
-          <md-menu-item
-            @click="editUser">
-            Edit User
-          </md-menu-item>
+          <v-btn
+            slot="activator">
+            {{ user.name }}
+            <v-icon>arrow_drop_down</v-icon>
+          </v-btn>
 
-          <md-menu-item
-            @click="logout">
-            Logout
-          </md-menu-item>
-        </md-menu-content>
-      </md-menu>
+          <v-list>
+            <v-list-tile @click="editUser">
+              <v-list-tile-title>
+                Edit User
+              </v-list-tile-title>
+            </v-list-tile>
 
-      <router-link
-        v-else
-        to="/login"
-        tag="md-button">
-        Login
-      </router-link>
+            <v-list-tile @click="logout">
+              <v-list-tile-title>
+                Logout
+              </v-list-tile-title>
+            </v-list-tile>
+          </v-list>
 
-    </div>
+        </v-menu>
 
-  </md-toolbar>
+        <v-btn
+          v-else
+          flat
+          to="/login">
+          Login
+        </v-btn>
+
+      </template>
+
+    </v-toolbar-items>
+  </v-toolbar>
 </template>
 
 <script>
@@ -59,7 +75,6 @@ import auth from '../modules/auth'
 import config from '../config'
 
 export default {
-  name: 'Navbar',
   data() {
     return {
       isUser: config.isUser,
@@ -68,21 +83,15 @@ export default {
     }
   },
   methods: {
-    async logout() {
-      await auth.logout()
-      this.$router.push('/login')
-    },
-    about() {
-      this.$router.push('/about')
-    },
-    epiModel() {
-      this.$router.push('/epimodel')
-    },
     home() {
       this.$router.push('/')
     },
     editUser() {
       this.$router.push('/edit-user')
+    },
+    async logout() {
+      await auth.logout()
+      this.$router.push('/login')
     }
   }
 }

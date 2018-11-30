@@ -1,94 +1,84 @@
 <template>
   <div style="padding: 1em">
 
-    <md-layout 
-      md-column
-      style="
-        padding-bottom: 1.5em;
-        text-align: left">
-      <h1
+    <v-layout
+      column>
+
+      <div
+        style="padding-top: 1em; padding-bottom: 1em"
         class="display-1">
         {{ title }}
-      </h1>
-      <md-input-container>
-        <label>Model Type</label>
-        <md-select
-          v-model="modelName"
-          label="Model Type"
-          style="width: 400px"
-          @change="changeModel">
-          <md-option
-            v-for="modelName in modelNames"
-            :key="modelName"
-            :value="modelName">
-            {{ modelName }}
-          </md-option>
-        </md-select>
-      </md-input-container>
-    </md-layout>
+      </div>
 
-    <md-layout
-      md-row
-      md-flex="100"
-      md-gutter="50">
+      <v-select
+        v-model="modelName"
+        :items="modelNames"
+        label="Model Type"
+        solo
+        style="width: 550px"
+        @change="changeModel"/>
 
-      <md-layout
-        md-flex="30">
-        <md-card
-          style="margin-right: 1em; width: 100%">
-          <md-card-header >
-            <div class="md-title">
-              Parameters
+    </v-layout>
+
+    <v-layout
+      row>
+
+      <v-flex
+        xs4>
+        <v-card
+          style="margin-right: 1em; padding: 1em">
+
+          <div class="title">
+            Parameters
+          </div>
+
+          <div
+            v-for="param of sliders"
+            :key="param.label"
+            style="
+              text-align: left">
+            <br>
+            <template
+              v-if="!param.isReadOnly">
+              {{ param.label }} = {{ param.value }}
+              <v-slider
+                v-model="param.value"
+                :min="param.min"
+                :max="param.max"
+                :step="param.step"
+                style="padding-left: 1em; padding-right: 1em"
+                tooltip="false"
+                @drag-end="changeGraph()"/>
+            </template>
+            <div 
+              v-else 
+              style="padding-bottom: 1.5em;">
+              {{ param.label }} = {{ param.getValue() }}
             </div>
-          </md-card-header>
-          <md-card-content>
-            <div
-              v-for="param of sliders"
-              :key="param.label"
-              style="
-                text-align: left">
-              <br>
-              <template
-                v-if="!param.isReadOnly">
-                {{ param.label }} = {{ param.value }}
-                <vue-slider
-                  v-model="param.value"
-                  :min="param.min"
-                  :max="param.max"
-                  :interval="param.step"
-                  tooltip="false"
-                  @drag-end="changeGraph()"/>
-              </template>
-              <template v-else>
-                {{ param.label }} = {{ param.getValue() }}
-              </template>
-            </div>
-          </md-card-content>
-        </md-card>
-      </md-layout>
+          </div>
 
-      <md-layout>
-        <md-card
-          style="width: 100%; height: 100%">
-          <md-card-header >
-            <div class="md-title">
-              Graphs
-            </div>
-          </md-card-header>
-          <md-card-content>
-            <div id="epi-charts"/>
-          </md-card-content>
-        </md-card>
-      </md-layout>
+        </v-card>
+      </v-flex>
 
-    </md-layout>
+      <v-flex>
+        <v-card
+          style="
+            height: 100%; overflow: hidden; padding: 1em">
+          <div class="title">
+            Graphs
+          </div>
+          <div id="epi-charts"/>
+        </v-card>
+      </v-flex>
+
+    </v-layout>
 
   </div>
 </template>
 
 <style>
 .chart2 {
-  width: 100%;
+  max-width: 600px;
   height: 400px;
   margin-bottom: 1.5em;
 }
@@ -100,11 +90,9 @@ import ChartWidget from '../modules/chart-widget2'
 import { models } from '../modules/models'
 import $ from 'jquery'
 import _ from 'lodash'
-import vueSlider from 'vue-slider-component'
 
 export default {
   name: 'EpiModel',
-  components: { vueSlider },
   data() {
     return {
       title: 'Graphing Models',
@@ -130,7 +118,7 @@ export default {
   methods: {
     changeModel() {
       let epiModel = _.find(models, e => e.name === this.modelName)
-      this.model = new epiModel.class()
+      this.model = new epiModel.Class()
       this.title = 'Basic ' + this.model.modelType + ' Epi Model'
       this.charts = [
         {

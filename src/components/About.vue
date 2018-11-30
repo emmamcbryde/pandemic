@@ -1,5 +1,5 @@
 <template>
-  <md-layout
+  <v-container
     style="
       margin: auto;
       max-width: 550px;
@@ -33,7 +33,7 @@
       transmission of disease, to determine the risk of an early
       outbreak in an emerging pandemic. </p>
 
-      <p class="md-subheading">
+      <p class="subheading">
         Country Model
       </p>
 
@@ -43,7 +43,7 @@
       is sufficient to model the initial phases of an epidemic where
       long-term recurrent effects are yet to set in. </p>
 
-      <p class="md-subheading">
+      <p class="subheading">
         Travel Data
       </p>
 
@@ -52,7 +52,7 @@
       data from <a href="https://www.oag.com/">OAG</a>, combined with a simple estimate of land travel
       between neighbouring countries.</p>
 
-      <p class="md-subheading">
+      <p class="subheading">
         Global Model
       </p>
 
@@ -63,7 +63,7 @@
       model calculations are carried out in the browser directly.
       </p>
 
-      <p class="md-subheading">
+      <p class="subheading">
         Development Team
       </p>
 
@@ -77,7 +77,7 @@
         </ul>
       </p>
 
-      <p class="md-subheading">
+      <p class="subheading">
         Source
       </p>
 
@@ -86,7 +86,7 @@
           http://github.com/boscoh/pandemic</a>
       </p>
 
-      <p class="md-subheading">
+      <p class="subheading">
         Funding
       </p>
 
@@ -107,11 +107,11 @@
       </p>
     </div>
 
-  </md-layout>
+  </v-container>
 </template>
 
 <style>
-.md-subheading {
+.subheading {
   padding-top: 1em;
   width: 100%;
   text-align: left;

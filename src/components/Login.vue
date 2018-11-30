@@ -1,56 +1,73 @@
 <template>
-  <md-layout md-align="center">
-    <md-whiteframe style="margin-top: 4em; padding: 3em">
-      <md-layout
-        md-flex="50"
-        md-align="center"
-        md-column>
+  <v-container>
+    <v-card>
 
-        <h2 class="md-display-2">
+      <v-toolbar>
+        <v-toolbar-title>
           Login to {{ title }}
-        </h2>
+        </v-toolbar-title>
+      </v-toolbar>
 
+      <v-card-text>
         <form
           novalidate
-          class="login-screen"
           @submit.prevent="submit">
+          <v-container
+            fluid
+            grid-list-xl>
 
-          <md-input-container>
-            <label>E-mail address</label>
-            <md-input
-              v-model="email"
-              type="text"
-              placeholder="E-mail address"/>
-          </md-input-container>
+            <v-layout
+              row
+              wrap>
+              <v-flex class="xs12">
+                <v-text-field
+                  v-validate="'email'"
+                  v-model="user.email"
+                  :error-messages="errors.collect('email')"
+                  label="E-mail address"
+                  data-vv-name="email"/>
+                <v-text-field
+                  v-validate="'required|min:6'"
+                  v-model="rawPassword"
+                  :append-icon="passwordHidden ? 'visibility' : 'visibility_off'"
+                  :append-icon-cb="() => (passwordHidden = !passwordHidden)"
+                  :type="passwordHidden ? 'password' : 'text'"
+                  :error-messages="errors.collect('rawPassword')"
+                  hint="At least 6 characters"
+                  counter
+                  label="Password"
+                  data-vv-name="rawPassword"/>
+                <p>
+                  <router-link to="/forgot-password">Forgot</router-link>
+                  your password? </p>
+              </v-flex>
+            </v-layout>
 
-          <md-input-container>
-            <label>Password</label>
-            <md-input
-              v-model="rawPassword"
-              type="password"
-              placeholder="Password"/>
-          </md-input-container>
+            <v-btn
+              type="submit"
+              class="v-accent">
+              Login
+            </v-btn>
 
-          <md-button
-            type="submit"
-            class="md-raised md-primary">login</md-button>
+            <div
+              v-if="error"
+              style="color: red">
+              {{ error }}
+            </div>
 
-          <div
-            v-if="error"
-            style="color: red">
-            {{ error }}
-          </div>
+            <div style="margin-top: 3em">
+              New to {{ title }}? &nbsp;
+              <router-link to="/register">
+                Register
+              </router-link>
+            </div>
 
-          <div style="margin-top: 3em">
-            New to {{ title }}? &nbsp;
-            <router-link to="/register">Register</router-link>
-          </div>
-
+          </v-container>
         </form>
+      </v-card-text>
 
-      </md-layout>
-    </md-whiteframe>
-  </md-layout>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
@@ -62,23 +79,34 @@ export default {
   data() {
     return {
       title: config.title,
-      email: '',
+      passwordHidden: true,
       rawPassword: '',
-      error: ''
+      error: '',
+      errors: { collect: '' }
+    }
+  },
+  computed: {
+    user: {
+      get() {
+        return this.$store.state.user
+      },
+      set(u) {
+        this.$store.commit('setUser', u)
+      }
     }
   },
   methods: {
     async submit() {
       let payload = {
-        email: this.$data.email,
-        rawPassword: this.$data.rawPassword
+        email: this.user.email,
+        rawPassword: this.rawPassword
       }
       console.log('> Login.submit', payload)
       let response = await auth.login(payload)
       console.log('> Login.submit response', response)
 
       if (response.result) {
-        this.$router.push('/experiments')
+        this.$router.push('/')
       } else {
         this.error = response.error.message
       }

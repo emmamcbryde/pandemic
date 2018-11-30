@@ -1,7 +1,7 @@
 <template>
 
-  <md-layout
-    md-row
+  <v-layout
+    row
     style="
       height: calc(100vh - 48px);
       width: calc(100vw);">
@@ -17,25 +17,25 @@
           height: calc(100vh - 48px);
           padding: 1em;">
 
-        <md-layout md-column>
+        <v-layout column>
 
-          <md-card
+          <v-card
             style="padding: 1em;">
 
-            <h3 class="md-title">Global Pandemic Model</h3>
+            <h3 class="title">Global Pandemic Model</h3>
 
             <p>
               This is an interactive visualization for predicting emerging
               pandemics. Select the source country below (or double-click
-              on the globe), and see the
-              resulting pandemic on the globe to the right. Scroll down to
-              see the graphs of the pandemic for individual countries, as
-              well as globally.
+              on the globe), and see the predicted risk of pandemic
+              on the globe to the right. Scroll down to
+              see graphs of the progression of the risk pandemic for individual countries, and
+              for the global response.
             </p>
 
-            <md-layout
-              md-row
-              md-vertical-align="center">
+            <v-layout
+              row
+              align-center>
 
               <div
                 style="
@@ -49,297 +49,227 @@
                 &block;
               </div>
 
-              <md-input-container
+              <v-select
+                v-model="iSourceCountry"
+                :items="selectableCountries"
+                label="Source Country"
+                item-text="name"
+                item-value="iCountry"
                 style="
                   padding-left: 0.2em;
                   flex: 1;
-                  margin-right: 1em">
-                <label>
-                  Source Country
-                </label>
-                <md-select
-                  id="country"
-                  v-model="iSourceCountry"
-                  name="country">
-                  <md-option
-                    v-for="(country, i) in selectableCountries"
-                    :value="country.iCountry"
-                    :key="i"
-                    @selected="asyncSelectSourceCountry()">
-                    {{ country.name }}
-                  </md-option>
-                </md-select>
-              </md-input-container>
+                  margin-right: 1em"
+                @change="asyncSelectSourceCountry()"/>
 
-            </md-layout>
+            </v-layout>
 
-          </md-card>
+          </v-card>
 
-          <md-card style="padding: 1em;  margin-top: 1em">
+          <v-card style="padding: 1em;  margin-top: 1em">
 
-            <h3 class="md-title">Model Parameters</h3>
+            <h3 class="title">Model Parameters</h3>
 
-            <p>Choose the type of compartmental model you would like to
-            use, and modify the parameters of the pandemic.
+            <p>Choose the type of compartmental model of the epidemic,
+            and modify the parameters and
+            the initial conditions of the epidemic model at the
+            source country.
             </p>
 
-            <md-layout 
-              md-row 
-              md-vertical-align="center">
+            <v-layout
+              row
+              align-content-center>
 
-              <md-input-container
-                style="margin-right: 1em;">
-                <label>
-                  Model
-                </label>
-                <md-select
-                  id="modelType"
-                  v-model="modelType"
-                  name="modelType">
-                  <md-option
-                    v-for="(modelType, i) in modelTypes"
-                    :value="modelType"
-                    :key="i"
-                    @selected="asyncSelectNewModel">
-                    {{ modelType }}
-                  </md-option>
-                </md-select>
-              </md-input-container>
+              <v-select
+                v-model="modelType"
+                :items="modelTypes"
+                style="margin-right: 1em;"
+                label="Model"
+                @change="asyncSelectNewModel"
+              />
+            </v-layout>
 
-            </md-layout>
-            <md-layout
-              md-row
-              md-vertical-align="center">
+            <v-layout
+              column
+              align-content-center>
 
-              <md-input-container
+              <div
                 v-for="(entry, i) in guiParams"
-                :key="i"
-                style="
-                    margin-right: 1em;">
-                <label>{{ entry.label }}</label>
-                <md-input
+                :key="i">
+                <v-text-field
                   v-if="!entry.isReadOnly"
+                  :label="entry.label"
                   v-model="entry.value"
+                  :max="entry.max"
                   :step="entry.step"
-                  :min="entry.min"
+                  style="
+                  width: 100%;
+                  margin-right: 1em;"
                   type="number"
                   @change="asyncCalculateRisk"/>
-                <md-input
+                <v-text-field
                   v-else-if="entry.isReadOnly"
+                  :label="entry.label"
                   v-model="entry.getValue()"
-                  :disabled="true"/>
-              </md-input-container>
+                  :disabled="true"
+                  type="number"/>
+              </div>
 
-            </md-layout>
+            </v-layout>
 
-          </md-card>
+          </v-card>
 
-          <md-card
+          <v-card
             v-if="interventionParams.length > 0"
             style="padding: 1em; margin-top: 1em">
 
-            <h3 class="md-title">Intervention Parameters</h3>
+            <h3 class="title">Intervention Parameters</h3>
 
-            <p>To see the predicted effects of an intervention, select
-            a start date of the intervention, and the predicted
-            changes to the parameters of the epidemic arising from
-            the intervention.
+            <p>Interventions are modeled by modification of the
+            parameters of the epidemic after the start date
+            of the epidemic. Below, choose the start date
+            of the intervention, the effect of the intervention
+            on the parameters of the epidemic, and the countries
+            to which the intervention will be applied.
             </p>
 
-            <md-layout
-              md-row
-              md-vertical-align="center">
+            <v-radio-group
+              v-model="interventionMode"
+              @change="asyncCalculateRisk">
+              <v-radio
+                label="All Countries"
+                value="all-countries"/>
+              <v-radio
+                label="Source Country Only"
+                value="source-country-only"/>
+              <v-radio
+                value="watch-country-only"
+                label="Watch Country Only"/>
+              <v-radio
+                label="Source and Watch Countries"
+                value="watch-and-source-countries"/>
+            </v-radio-group>
 
-              <md-radio
-                v-model="interventionMode"
-                style="margin-right: 1em"
-                md-value="all-countries"
-                @change="asyncCalculateRisk">
-                All Countries
-              </md-radio>
-
-              <md-radio
-                v-model="interventionMode"
-                style="margin-right: 1em"
-                md-value="source-country-only"
-                @change="asyncCalculateRisk">
-                Source Country Only
-              </md-radio>
-
-              <md-radio
-                v-model="interventionMode"
-                style="margin-right: 1em"
-                md-value="watch-country-only"
-                @change="asyncCalculateRisk">
-                Watch Country Only
-              </md-radio>
-
-              <md-radio
-                v-model="interventionMode"
-                style="margin-right: 1em"
-                md-value="watch-and-source-countries"
-                @change="asyncCalculateRisk">
-                Source and Watch Countries
-              </md-radio>
-
-            </md-layout>
-
-            <md-layout
-              md-row
-              md-vertical-align="center">
-
-              <md-input-container
-                v-for="(entry, i) in interventionParams"
-                :key="i"
+            <div
+              v-for="(entry, i) in interventionParams"
+              :key="i">
+              <v-text-field
+                v-if="!entry.isReadOnly"
+                :label="entry.label"
+                v-model="entry.value"
+                :max="entry.max"
+                :step="entry.step"
                 style="
-                  margin-right: 1em;">
-                <label>{{ entry.label }}</label>
-                <md-input
-                  v-if="!entry.isReadOnly"
-                  v-model="entry.value"
-                  :step="entry.step"
-                  :min="entry.min"
-                  type="number"
-                  @change="asyncCalculateRisk"/>
-                <md-input
-                  v-else-if="entry.isReadOnly"
-                  v-model="entry.getValue()"
-                  :disabled="true"/>
-              </md-input-container>
+                width: 100%;
+                margin-right: 1em;"
+                type="number"
+                @change="asyncCalculateRisk"/>
+              <v-text-field
+                v-else-if="entry.isReadOnly"
+                :label="entry.label"
+                v-model="entry.getValue()"
+                :disabled="true"
+                type="number"/>
+            </div>
 
-            </md-layout>
+          </v-card>
 
-          </md-card>
+          <v-card style="padding: 1em; margin-top: 1em">
 
-          <md-card style="padding: 1em; margin-top: 1em">
+            <v-layout
+              column
+              align-start>
 
-            <h3 class="md-title">
-              Model the Pandemic over Time
-            </h3>
+              <h3 class="title">
+                Model the Pandemic over Time
+              </h3>
 
-            <p>
-              Select the time course of the pandemic, with the option
-              of animating the pandemic. Adjust max days for the
-              display of the graphs below.
-            </p>
+              <p>
+                Select the time interval of the simulation from
+                the initial state that was defined above. Animate allows
+                the simulation to automatically progress day-by-day.
+                Adjust Max Days for the
+                display of the graphs below.
+              </p>
 
-            <md-layout
-              md-row
-              md-vertical-align="center">
-
-              <md-radio
+              <v-radio-group
                 v-model="mode"
-                md-value="risk"
-                @change="asyncSelectMode('risk')">
-                <div
-                  style="
-                    display: inline;
-                    height: 1em;
-                    color: #f0f">
-                  &block;
-                </div>
-                Show Pandemic Prediction
-              </md-radio>
+                @change="asyncSelectMode">
+                <v-radio
+                  label="Show Pandemic Prediction"
+                  value="risk"/>
+                <v-radio
+                  label="Show Travel Data Only"
+                  value="destination"/>
+              </v-radio-group>
 
-              <span style="width:1em"/>
-
-              <md-radio
-                v-model="mode"
-                md-value="destination"
-                @change="asyncSelectMode('destination')">
-                <div
-                  style="
-                    display: inline;
-                    height: 1em;
-                    color: #02386F">
-                  &block;
-                </div>
-                Show Travel Data Only
-              </md-radio>
-
-            </md-layout>
-
-            <md-layout
-              md-row
-              md-vertical-align="center">
-
-              Animate &nbsp;
-              <md-switch
+              <v-switch
                 v-model="isLoop"
+                label="Animate"
                 @change="toggleLoop"/>
 
-              {{ days }} Day
+              <v-layout
+                style="width: 100%"
+                row
+                align-center>
 
-              <div
-                style="
-                      flex: 1;
-                      margin-left: 0.5em;">
-                <vue-slider
-                  ref="slider"
+                Day {{ days }} &nbsp; &nbsp;
+
+                <v-slider
                   :interval="1"
                   :min="1"
                   :max="getMaxDays"
                   v-model="days"
                   tooltip="none"
-                  @callback="asyncCalculateRisk()"/>
-              </div>
-
-            </md-layout>
-
-            <md-layout
-              md-row
-              md-vertical-align="center">
-
-              <md-input-container
-                style="
-                  width: 80px;">
-                <label>Max Days</label>
-                <md-input
-                  v-model="maxDays"
-                  type="number"
                   @change="asyncCalculateRisk()"/>
-              </md-input-container>
 
-            </md-layout>
+              </v-layout>
 
-          </md-card>
+              <v-text-field
+                v-model="maxDays"
+                label="Max days on chart"
+                type="number"
+                @change="asyncCalculateRisk"/>
 
-          <md-card
+            </v-layout>
+
+          </v-card>
+
+          <v-card
             style="padding: 1em; margin-top: 1em">
 
-            <h3 class="md-title">
+            <h3 class="title">
               Global Pandemic Predictions
             </h3>
 
             <p>
-              Progression of the pandemic summed over all
+              Progression of the risk of pandemic summed over all
               the countries.
             </p>
 
-            <div
+            <v-layout
               v-show="mode === 'risk'"
-              style="width: 100%">
-              <md-layout id="globalCharts"/>
-            </div>
+              id="globalCharts"
+              row
+              wrap/>
 
-          </md-card>
+          </v-card>
 
-          <md-card
+          <v-card
             style="padding: 1em; margin-top: 1em">
 
-            <h3 class="md-title">
+            <h3 class="title">
               Watch Country Pandemic Predictions
             </h3>
 
             <p>
-              Progression of the pandemic for the chosen watch
-              country. Select different countries either through
-              the drop-down or clicking on the globe.
+              Progression of the pandemic for the chosen Watch
+              Country. You can select the Watch Country either through
+              the drop-down or clicking on the globe on the right.
             </p>
 
-            <md-layout
-              md-row
-              md-vertical-align="center">
+            <v-layout
+              row
+              align-center>
               <div
                 style="
                   display: inline;
@@ -352,33 +282,28 @@
                 &block;
               </div>
 
-              <md-input-container
-                style="flex: 1">
-                <label>
-                  Watch Country
-                </label>
-                <md-select
-                  id="country"
-                  v-model="iWatchCountry"
-                  name="country">
-                  <md-option
-                    v-for="(country, i) in selectableCountries"
-                    :value="country.iCountry"
-                    :key="i"
-                    @selected="asyncSelectWatchCountry()">
-                    {{ country.name }}
-                  </md-option>
-                </md-select>
-              </md-input-container>
-            </md-layout>
+              <v-select
+                v-model="iWatchCountry"
+                :items="selectableCountries"
+                label="Source Country"
+                item-text="name"
+                item-value="iCountry"
+                style="
+                  padding-left: 0.2em;
+                  flex: 1;
+                  margin-right: 1em"
+                @change="asyncSelectSourceCountry()"/>
+            </v-layout>
 
-            <md-layout
-              v-show="mode === 'risk'"
-              id="localCharts"/>
+            <v-layout
+              v-show="mode === 'risk'" 
+              id="localCharts"
+              row
+              wrap/>
 
-          </md-card>
+          </v-card>
 
-        </md-layout>
+        </v-layout>
       </div>
     </div>
 
@@ -391,14 +316,13 @@
         padding: 1em;
         ">
 
-      <md-card
+      <v-card
         style="
           height: calc(100vh - 48px - 2em);
           padding: 1em;">
 
-        <md-layout
-          md-column
-          md-align="start"
+        <v-layout
+          column
           style="
             height: 100%;
             box-sizing: border-box;
@@ -408,7 +332,7 @@
           <div
             v-if="isRunning">
             <h2
-              class="md-title"
+              class="title"
               style="
                 opacity: 0.2;
                 background-color: #DDD;
@@ -427,7 +351,7 @@
           </div>
           <div v-else>
             <h2
-              class="md-title"
+              class="title"
               style="line-height: 1em">
               {{ title }}
             </h2>
@@ -439,29 +363,26 @@
             </div>
           </div>
 
-          <md-layout
+          <v-layout
             id="main"
             style="
               background-color: white;
               width: 100%"/>
 
-          <md-input-container
+          <v-text-field
             v-if="mode === 'risk'"
-            style="width: 130px;">
-            <label>Saturation Prevalence</label>
-            <md-input
-              v-model="maxPrevalence"
-              type="number"
-              @change="asyncCalculateRisk()"/>
-          </md-input-container>
+            v-model="maxPrevalence"
+            label="Saturation Prevalence"
+            style="width: 130px;"
+            @change="asyncCalculateRisk()"/>
 
-        </md-layout>
+        </v-layout>
 
-      </md-card>
+      </v-card>
 
     </div>
 
-  </md-layout>
+  </v-layout>
 
 </template>
 
@@ -493,8 +414,6 @@ body {
 import _ from 'lodash'
 import $ from 'jquery'
 import numeral from 'numeral'
-
-import vueSlider from 'vue-slider-component'
 
 import util from '../modules/util'
 import { Globe } from '../modules/globe'
@@ -552,10 +471,6 @@ function formatInt(i) {
 let isDef = x => !_.isNil(x)
 
 export default {
-  id: 'home',
-
-  components: { vueSlider },
-
   /**
    * There are three indexes
    * - country ID
@@ -817,7 +732,7 @@ export default {
       let ModelClass
       for (let model of models) {
         if (model.name === this.modelType) {
-          ModelClass = model.class
+          ModelClass = model.Class
         }
       }
 
@@ -1174,10 +1089,9 @@ export default {
       await this.asyncSelectSourceCountry()
     },
 
-    async asyncSelectMode(mode) {
+    async asyncSelectMode() {
       await util.delay(100)
-      console.log('> Home.asyncSelectMode', mode)
-      this.mode = mode
+      console.log('> Home.asyncSelectMode', this.mode)
       this.asyncRecalculateGlobe()
     },
 
