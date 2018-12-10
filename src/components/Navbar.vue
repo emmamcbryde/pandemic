@@ -6,6 +6,7 @@
     color="indigo">
 
     <v-toolbar-title
+      class="heading font-weight-medium"
       style="
         flex: 1;
         cursor: pointer;"

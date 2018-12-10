@@ -22,7 +22,7 @@
           <v-card
             style="padding: 1em;">
 
-            <h3 class="title">Global Pandemic Model</h3>
+            <h3 class="headline">Global Pandemic Model</h3>
 
             <p>
               This is an interactive visualization for predicting emerging
@@ -67,7 +67,7 @@
 
           <v-card style="padding: 1em;  margin-top: 1em">
 
-            <h3 class="title">Model Parameters</h3>
+            <h3 class="headline">Model Parameters</h3>
 
             <p>Choose the type of compartmental model of the epidemic,
             and modify the parameters and
@@ -122,7 +122,7 @@
             v-if="interventionParams.length > 0"
             style="padding: 1em; margin-top: 1em">
 
-            <h3 class="title">Intervention Parameters</h3>
+            <h3 class="headline">Intervention Parameters</h3>
 
             <p>Interventions are modeled by modification of the
             parameters of the epidemic after the start date
@@ -179,7 +179,7 @@
               column
               align-start>
 
-              <h3 class="title">
+              <h3 class="headline">
                 Model the Pandemic over Time
               </h3>
 
@@ -237,7 +237,7 @@
           <v-card
             style="padding: 1em; margin-top: 1em">
 
-            <h3 class="title">
+            <h3 class="headline">
               Global Pandemic Predictions
             </h3>
 
@@ -257,7 +257,7 @@
           <v-card
             style="padding: 1em; margin-top: 1em">
 
-            <h3 class="title">
+            <h3 class="headline">
               Watch Country Pandemic Predictions
             </h3>
 
@@ -285,7 +285,7 @@
               <v-select
                 v-model="iWatchCountry"
                 :items="selectableCountries"
-                label="Source Country"
+                label="Watch Country"
                 item-text="name"
                 item-value="iCountry"
                 style="
@@ -332,7 +332,7 @@
           <div
             v-if="isRunning">
             <h2
-              class="title"
+              class="headline"
               style="
                 opacity: 0.2;
                 background-color: #DDD;
@@ -351,7 +351,7 @@
           </div>
           <div v-else>
             <h2
-              class="title"
+              class="headline"
               style="line-height: 1em">
               {{ title }}
             </h2>
@@ -372,7 +372,7 @@
           <v-text-field
             v-if="mode === 'risk'"
             v-model="maxPrevalence"
-            label="Saturation Prevalence"
+            label="Prevalence of Saturated Color"
             style="width: 130px;"
             @change="asyncCalculateRisk()"/>
 
@@ -387,8 +387,8 @@
 </template>
 
 <style>
-html,
-body {
+p {
+  margin-top: 0.8em;
 }
 
 .countryTooltip {

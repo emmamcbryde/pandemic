@@ -30,7 +30,8 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
               labelString: xAxisLabel
             },
             ticks: {
-              max: 60
+              max: 60,
+              min: -5
             }
           }
         ],

@@ -318,9 +318,10 @@ class BaseModel {
     let probTravelPerDay = travelPerDay / fromCountry.var.population
 
     let probSickTravelPerDay =
-      fromCountry.param.probSickCanTravel *
-      toCountry.param.probSickCanTravel *
-      probTravelPerDay
+      Math.min(
+        fromCountry.param.probSickCanTravel,
+        toCountry.param.probSickCanTravel
+      ) * probTravelPerDay
 
     for (let key of ['infectious']) {
       let delta = fromCountry.compartment[key] * probSickTravelPerDay
