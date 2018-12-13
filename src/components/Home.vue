@@ -238,6 +238,26 @@
             style="padding: 1em; margin-top: 1em">
 
             <h3 class="headline">
+              Source Country Pandemic Predictions
+            </h3>
+
+            <p>
+              Progression of the pandemic for the chosen Source
+              Country.
+            </p>
+
+            <v-layout
+              v-show="mode === 'risk'"
+              id="sourceCharts"
+              row
+              wrap/>
+
+          </v-card>
+
+          <v-card
+            style="padding: 1em; margin-top: 1em">
+
+            <h3 class="headline">
               Global Pandemic Predictions
             </h3>
 
@@ -297,7 +317,7 @@
 
             <v-layout
               v-show="mode === 'risk'" 
-              id="localCharts"
+              id="watchCharts"
               row
               wrap/>
 
@@ -373,7 +393,7 @@
             v-if="mode === 'risk'"
             v-model="maxPrevalence"
             label="Prevalence of Saturated Color"
-            style="width: 130px;"
+            style="width: 200px;"
             @change="asyncCalculateRisk()"/>
 
         </v-layout>
@@ -611,6 +631,20 @@ export default {
     this.setNewEpiModel()
 
     this.chartWidgets = {}
+
+    await this.asyncMakeChartWidget(
+      '#sourceCharts',
+      'sourcePrevalence',
+      'Number of Active Infections',
+      'Time (days)'
+    )
+    await this.asyncMakeChartWidget(
+      '#sourceCharts',
+      'sourceImportIncidence',
+      'Cumulative Import Incidence',
+      'Time (days)'
+    )
+
     await this.asyncMakeChartWidget(
       '#globalCharts',
       'globalPrevalence',
@@ -624,14 +658,14 @@ export default {
       'Time (days)'
     )
     await this.asyncMakeChartWidget(
-      '#localCharts',
-      'prevalence',
+      '#watchCharts',
+      'watchPrevalence',
       'Number of Active Infections',
       'Time (days)'
     )
     await this.asyncMakeChartWidget(
-      '#localCharts',
-      'importIncidence',
+      '#watchCharts',
+      'watchImportIncidence',
       'Cumulative Import Incidence',
       'Time (days)'
     )
@@ -872,7 +906,68 @@ export default {
         chart.updateDataset(1, [], [])
       }
 
+      this.updateSourceCharts()
       this.updateGlobalCharts()
+    },
+
+    updateSourceCharts() {
+      if (this.iSourceCountry < 0) {
+        return
+      }
+
+      let countryModel = this.globalModel.countryModel[this.iSourceCountry]
+      if (_.isUndefined(countryModel)) {
+        return
+      }
+      let solution = countryModel.solution
+
+      let interventionSolution = null
+      if (this.intervention) {
+        interventionSolution = this.intervention.countryModel[
+          this.iSourceCountry
+          ].solution
+      }
+
+      solution.cumulativeImportIncidence = acumulateValues(
+        solution.importIncidence
+      )
+      if (interventionSolution) {
+        let i = this.interventionDay - 1
+        let offset = solution.cumulativeImportIncidence[i]
+        let newValues = acumulateValues(interventionSolution.importIncidence)
+        interventionSolution.cumulativeImportIncidence = _.map(
+          newValues,
+          v => v + offset
+        )
+      }
+
+      this.chartWidgets.sourcePrevalence.setMaxX(this.showMaxDays)
+      this.chartWidgets.sourcePrevalence.updateDataset(
+        0,
+        this.globalModel.times,
+        solution.infectious
+      )
+      if (interventionSolution) {
+        this.chartWidgets.sourcePrevalence.updateDataset(
+          1,
+          this.intervention.times,
+          interventionSolution.infectious
+        )
+      }
+
+      this.chartWidgets.sourceImportIncidence.setMaxX(this.showMaxDays)
+      this.chartWidgets.sourceImportIncidence.updateDataset(
+        0,
+        this.globalModel.times,
+        solution.cumulativeImportIncidence
+      )
+      if (interventionSolution) {
+        this.chartWidgets.sourceImportIncidence.updateDataset(
+          1,
+          this.intervention.times,
+          interventionSolution.cumulativeImportIncidence
+        )
+      }
     },
 
     updateGlobalCharts() {
@@ -949,28 +1044,28 @@ export default {
         )
       }
 
-      this.chartWidgets.prevalence.setMaxX(this.showMaxDays)
-      this.chartWidgets.prevalence.updateDataset(
+      this.chartWidgets.watchPrevalence.setMaxX(this.showMaxDays)
+      this.chartWidgets.watchPrevalence.updateDataset(
         0,
         this.globalModel.times,
         solution.infectious
       )
       if (interventionSolution) {
-        this.chartWidgets.prevalence.updateDataset(
+        this.chartWidgets.watchPrevalence.updateDataset(
           1,
           this.intervention.times,
           interventionSolution.infectious
         )
       }
 
-      this.chartWidgets.importIncidence.setMaxX(this.showMaxDays)
-      this.chartWidgets.importIncidence.updateDataset(
+      this.chartWidgets.watchImportIncidence.setMaxX(this.showMaxDays)
+      this.chartWidgets.watchImportIncidence.updateDataset(
         0,
         this.globalModel.times,
         solution.cumulativeImportIncidence
       )
       if (interventionSolution) {
-        this.chartWidgets.importIncidence.updateDataset(
+        this.chartWidgets.watchImportIncidence.updateDataset(
           1,
           this.intervention.times,
           interventionSolution.cumulativeImportIncidence

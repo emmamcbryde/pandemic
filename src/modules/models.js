@@ -508,15 +508,6 @@ class SisModel extends BaseModel {
         placeHolder: '',
         label: 'Initial Prevalence'
       },
-      {
-        key: 'initPopulation',
-        value: 50000,
-        step: 1,
-        min: 0,
-        max: 100000,
-        placeHolder: '',
-        label: 'Population'
-      }
     ]
 
     this.interventionParams = [
@@ -645,15 +636,6 @@ class SirModel extends BaseModel {
         max: 100000,
         label: 'Initial Prevalence'
       },
-      {
-        key: 'initPopulation',
-        value: 50000,
-        step: 1,
-        min: 0,
-        max: 100000,
-        placeHolder: '',
-        label: 'Population'
-      }
     ]
 
     this.interventionParams = [

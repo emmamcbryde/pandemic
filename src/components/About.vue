@@ -63,6 +63,13 @@
       model calculations are carried out in the browser directly.
       </p>
 
+      <p class="subheading">Lead-in time</p>
+
+      <p>The simulation starts off with an initial prevalence of 10 in
+        the source country, and
+      continues until the prevalence hits the Initial Prevalence value
+      specified by the user. This time is designated Day 0.</p>
+
       <p class="subheading">
         Development Team
       </p>
