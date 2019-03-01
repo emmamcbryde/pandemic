@@ -1,0 +1,110 @@
+<template>
+  <v-container>
+    <v-layout
+      justify-center
+      row
+    >
+      <v-flex
+        xs8
+        md4
+        lg4
+      >
+        <v-card class="mt-5">
+          <v-card-title
+            primary-title
+            class="headline"
+          >
+            {{ title }}
+          </v-card-title>
+
+          <v-card-text>
+            <form
+              novalidate
+              class="login-screen"
+              @submit.prevent="submit"
+            >
+              <v-text-field
+                ref="password"
+                v-model="rawPassword"
+                v-validate="'required|min:6'"
+                :append-icon="passwordHidden ? 'visibility' : 'visibility_off'"
+                :append-icon-cb="() => (passwordHidden = !passwordHidden)"
+                :type="passwordHidden ? 'password' : 'text'"
+                :error-messages="errors.collect('password')"
+                hint="At least 6 characters"
+                counter
+                label="Password"
+                data-vv-name="password"
+                data-vv-delay="300"
+              ></v-text-field>
+              <v-text-field
+                ref="password_confirmation"
+                v-model="rawPasswordConfirm"
+                v-validate="'required|confirmed:password'"
+                :append-icon="
+                  confirmPasswordHidden ? 'visibility' : 'visibility_off'
+                "
+                :append-icon-cb="
+                  () => (confirmPasswordHidden = !confirmPasswordHidden)
+                "
+                :type="confirmPasswordHidden ? 'password' : 'text'"
+                :error-messages="errors.collect('password_confirmation')"
+                hint="At least 6 characters"
+                counter
+                label="Confirm Password"
+                target="password"
+                data-vv-name="password_confirmation"
+                data-vv-delay="300"
+              ></v-text-field>
+
+              <v-btn
+                type="submit"
+                class="v-accent"
+              >
+                Save
+              </v-btn>
+
+              <div
+                v-if="error"
+                style="color: red"
+              >
+                {{ error }}
+              </div>
+            </form>
+          </v-card-text>
+        </v-card>
+      </v-flex>
+    </v-layout>
+  </v-container>
+</template>
+
+<script>
+import auth from '../../modules/auth'
+export default {
+  data () {
+    let tokenId = this.$route.params.tokenId
+    console.log(`> ResetPassword tokenId=${tokenId}`)
+    return {
+      title: 'Reset Password',
+      tokenId,
+      rawPassword: '',
+      passwordHidden: true,
+      rawPasswordConfirm: '',
+      confirmPasswordHidden: true,
+      error: ''
+    }
+  },
+  methods: {
+    async submit () {
+      this.error = ''
+      let response = await auth.resetPassword(this.tokenId, this.rawPassword)
+      if (response.result) {
+        this.error = 'Password reset'
+      } else {
+        console.log('> ResetPassword.submit fail', response)
+        this.error = response.error.message
+      }
+    }
+  }
+}
+</script>

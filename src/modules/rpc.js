@@ -1,5 +1,4 @@
 import axios from 'axios'
-import _ from 'lodash'
 import config from '../config'
 
 /**
@@ -12,8 +11,12 @@ import config from '../config'
 axios.defaults.withCredentials = true
 
 export default {
-  async rpcRun(method, ...params) {
-    let payload = { method, params, jsonrpc: '2.0' }
+  async rpcRun (method, ...params) {
+    let payload = {
+      method,
+      params,
+      jsonrpc: '2.0'
+    }
 
     console.log('> rpc.rpcRun', method, ...params)
 
@@ -30,7 +33,7 @@ export default {
     }
   },
 
-  async rpcUpload(method, files, ...params) {
+  async rpcUpload (method, files, ...params) {
     let formData = new FormData()
     formData.append('method', method)
     formData.append('params', JSON.stringify(params))
@@ -40,7 +43,7 @@ export default {
       formData.append('uploadFiles', f, f.name)
     }
 
-    console.log('> rpc.rpcUpoad', method, ...params, _.map(files, 'name'))
+    console.log('> rpc.rpcUpoad', method, files, ...params)
 
     try {
       let response = await axios.post(
@@ -48,6 +51,42 @@ export default {
         formData
       )
       return response.data
+    } catch (e) {
+      return {
+        error: {
+          code: -32000,
+          message: e.toString()
+        }
+      }
+    }
+  },
+
+  async rpcDownload (method, ...params) {
+    let payload = {
+      method,
+      params,
+      jsonrpc: '2.0'
+    }
+
+    console.log('> rpc.rpcDownload', method, ...params)
+
+    try {
+      let response = await axios.post(
+        `${config.apiUrl}/api/rpc-download`,
+        payload,
+        { responseType: 'arraybuffer' }
+      )
+      let filename = response.headers.filename
+      let data = JSON.parse(response.headers.data)
+
+      if (!data.error) {
+        let blob = new Blob([response.data])
+        let link = document.createElement('a')
+        link.href = window.URL.createObjectURL(blob)
+        link.download = filename
+        link.click()
+      }
+      return data
     } catch (e) {
       return {
         error: {

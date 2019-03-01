@@ -1,8 +1,15 @@
 <template>
   <div>
     <v-app>
-      <navbar/>
-      <router-view/>
+      <navbar></navbar>
+      <div
+        style="
+          margin-top: 10px;
+          height: calc(100vh - 58px);
+          overflow: auto"
+      >
+        <router-view></router-view>
+      </div>
     </v-app>
   </div>
 </template>

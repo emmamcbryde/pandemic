@@ -1,26 +1,44 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import Home from './components/Home'
-import EpiModel from './components/EpiModel'
-import Login from './components/Login'
-import Register from './components/Register'
-import EditUser from './components/EditUser'
-import About from './components/About'
+import config from './config.js'
+
+import Home from './pages/Home'
+import EpiModel from './pages/EpiModel'
+import About from './pages/About'
+
+import Private from './pages/user/Private'
+import Login from './pages/user/Login'
+import Register from './pages/user/Register'
+import EditUser from './pages/user/EditUser'
+import AdminUsers from './pages/user/AdminUsers'
+import ForgotPassword from './pages/user/ForgotPassword'
+import ResetPassword from './pages/user/ResetPassword'
 
 Vue.use(Router)
 
-let router = new Router({
-  routes: [
+Vue.use(Router)
+let routes = [
+  {
+    path: '/',
+    component: Home
+  },
+  {
+    path: '/about',
+    component: About
+  },
+  {
+    path: '/epimodel',
+    component: EpiModel
+  }
+]
+
+if (config.isUser) {
+  routes = routes.concat([
     {
-      path: '/',
-      name: 'home',
-      component: Home
-    },
-    {
-      path: '/epimodel',
-      name: 'epimodel',
-      component: EpiModel
+      path: '/private',
+      name: 'private',
+      component: Private
     },
     {
       path: '/login',
@@ -38,11 +56,23 @@ let router = new Router({
       component: EditUser
     },
     {
-      path: '/about',
-      name: 'about',
-      component: About
+      path: '/admin-users',
+      name: 'adminUsers',
+      component: AdminUsers
+    },
+    {
+      path: '/forgot-password',
+      name: 'forgotPassword',
+      component: ForgotPassword
+    },
+    {
+      path: '/reset-password/:tokenId',
+      name: 'resetPassword',
+      component: ResetPassword
     }
-  ]
-})
+  ])
+}
+
+let router = new Router({ routes })
 
 export default router

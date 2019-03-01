@@ -9,27 +9,18 @@
  */
 
 import _ from 'lodash'
-import sha244 from 'crypto-js/sha224'
-
+import sha224 from 'crypto-js/sha224'
 import util from '../modules/util'
 import rpc from '../modules/rpc'
-
-function hashPassword(password) {
-  return sha244(password).toString()
-}
-
-// global reference to user in the authentication system
-let user = {
-  authenticated: false
-}
+import store from '../store'
 
 /**
  * Converts user.rawPassword to hashed user.password
  */
-function hashUserPassword(user) {
+function hashUserPassword (user) {
   let result = _.cloneDeep(user)
   if (!result.password && result.rawPassword) {
-    result.password = hashPassword(result.rawPassword)
+    result.password = sha224(result.rawPassword).toString()
     delete result.rawPassword
   }
   if (result.rawPasswordConfirm) {
@@ -39,8 +30,6 @@ function hashUserPassword(user) {
 }
 
 export default {
-  user: user,
-
   /**
    * Queries server for user login with newUser. If
    * newUser.rawPassword is given, will hash with SHA244
@@ -48,54 +37,65 @@ export default {
    *
    * @param {Object} newUser - {email, password, rawPassword}
    */
-  async login(newUser) {
+  async login (newUser) {
     let payload = hashUserPassword(newUser)
     console.log('> auth.login', payload)
-    let response = await rpc.rpcRun('login', payload)
+    let response = await rpc.rpcRun('publicLoginUser', payload)
     console.log('> auth.login response', response)
     if (response.result) {
-      user.authenticated = true
+      let user = _.cloneDeep(store.state.user)
       _.assign(user, response.result.user)
+      user.authenticated = true
       user.password = payload.password
       localStorage.setItem('user', util.jstr(user))
+      store.commit('setUser', user)
     }
     return response
   },
 
-  register(newUser) {
+  register (newUser) {
     let payload = hashUserPassword(newUser)
     console.log('> auth.register', payload)
     return rpc.rpcRun('publicRegisterUser', payload)
   },
 
-  async update(editUser) {
+  async update (editUser) {
     let payload = hashUserPassword(editUser)
     console.log('> auth.update', util.jstr(payload))
-    let response = await rpc.rpcRun('updateUser', payload)
+    let response = await rpc.rpcRun('loginUpdateUser', payload)
     if (response.result) {
+      let user = _.cloneDeep(store.state.user)
       _.assign(user, payload)
       localStorage.setItem('user', JSON.stringify(user))
+      store.commit('setUser', user)
     }
     return response
   },
 
-  async forceUpdate(editUser) {
-    let payload = hashUserPassword(editUser)
-    console.log('> auth.forceUpdate', util.jstr(payload))
-    return rpc.rpcRun('publicForceUpdatePassword', payload)
+  async resetPassword (tokenId, rawPassword) {
+    let password = sha224(rawPassword).toString()
+    console.log('> auth.resetPassword', tokenId, password)
+    return rpc.rpcRun('publicResetPassword', tokenId, password)
   },
 
-  async restoreLastUser() {
+  async forgotPassword (email) {
+    console.log('> auth.forgotPassword', email)
+    return rpc.rpcRun('publicForgotPassword', email)
+  },
+
+  async restoreLastUser () {
     let lastUser = JSON.parse(localStorage.getItem('user'))
     console.log('> auth.restoreLastUser from localStorage', lastUser)
-    if (lastUser) {
+    if (!_.isNil(lastUser)) {
       return this.login(lastUser)
     }
   },
 
-  logout() {
+  logout () {
     localStorage.removeItem('user')
-    user.authenticated = false
-    return rpc.rpcRun('logout')
+    store.commit('setUser', {
+      authenticated: false
+    })
+    return rpc.rpcRun('publicLogoutUser')
   }
 }

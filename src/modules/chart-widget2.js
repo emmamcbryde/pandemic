@@ -1,11 +1,12 @@
 import $ from 'jquery'
+import _ from 'lodash'
 import Chart from 'chart.js'
 
 /**
  * Functions to generate chartJs data for model
  */
 
-function makeLineChartData(title, xAxisLabel, yAxisLabel) {
+function makeLineChartData (title, xAxisLabel, yAxisLabel) {
   return {
     type: 'line',
     data: {
@@ -18,7 +19,15 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
       },
       legend: {
         display: true,
-        position: 'right'
+        position: 'right',
+        labels: {
+          filter: function (legend) {
+            if (!_.isNil(legend.lineDash)) {
+              return false
+            }
+            return true
+          }
+        }
       },
       maintainAspectRatio: false,
       responsive: true,
@@ -42,6 +51,9 @@ function makeLineChartData(title, xAxisLabel, yAxisLabel) {
             scaleLabel: {
               display: true,
               labelString: yAxisLabel
+            },
+            ticks: {
+              beginAtZero: true
             }
           }
         ]
@@ -70,7 +82,7 @@ const colors = [
 
 let seenNames = []
 
-function getColor(name) {
+function getColor (name) {
   let i = seenNames.indexOf(name)
   if (i < 0) {
     seenNames.push(name)
@@ -85,7 +97,7 @@ function getColor(name) {
  *
  */
 class ChartWidget {
-  constructor(divTag, chartData) {
+  constructor (divTag, chartData) {
     this.divTag = divTag
     this.div = $(this.divTag)
     let canvas = $('<canvas>')
@@ -96,17 +108,18 @@ class ChartWidget {
       this.chartData = chartData
     }
     this.chart = new Chart(canvas, this.chartData)
+    this.defaultColors = colors
   }
 
-  getDatasets() {
+  getDatasets () {
     return this.chartData.data.datasets
   }
 
-  getChartOptions() {
+  getChartOptions () {
     return this.chartData.options
   }
 
-  addDataset(name, xValues, yValues) {
+  addDataset (key, xValues, yValues, color = null, isDash = false) {
     let datasets = this.getDatasets()
     let newDatasetData = []
     if (xValues && yValues) {
@@ -118,22 +131,28 @@ class ChartWidget {
       }
     }
     let iDataset = datasets.length
+    if (_.isNil(color)) {
+      color = getColor(iDataset)
+    }
     let newDataset = {
-      label: name,
+      label: key,
       data: newDatasetData,
       fill: false,
-      backgroundColor: getColor(iDataset),
-      borderColor: getColor(iDataset),
+      backgroundColor: color,
+      borderColor: color,
       showLine: true,
       pointRadius: 0,
       borderWidth: 2
+    }
+    if (isDash) {
+      newDataset.borderDash = [10, 5]
     }
     datasets.push(newDataset)
     this.chart.update()
     return iDataset
   }
 
-  updateDataset(iDataset, xValues, yValues) {
+  updateDataset (iDataset, xValues, yValues) {
     let data = []
     for (let i = 0; i < xValues.length; i += 1) {
       data.push({
@@ -146,19 +165,42 @@ class ChartWidget {
     this.chart.update()
   }
 
-  setTitle(title) {
+  updateDatasetByKey (key, xValues, yValues) {
+    let data = []
+    for (let i = 0; i < xValues.length; i += 1) {
+      data.push({
+        x: xValues[i],
+        y: yValues[i]
+      })
+    }
+    let dataset = _.find(this.chartData.data.datasets, d => d.label === key)
+    dataset.data = data
+    this.chart.update()
+  }
+
+  setTitle (title) {
     let options = this.getChartOptions()
     options.title.text = title
   }
 
-  setXLabel(xLabel) {
+  setXLabel (xLabel) {
     let options = this.getChartOptions()
     options.scales.xAxes[0].scaleLabel.labelString = xLabel
   }
 
-  setYLabel(yLabel) {
+  setYLabel (yLabel) {
     let options = this.getChartOptions()
     options.scales.yAxes[0].scaleLabel.labelString = yLabel
+  }
+
+  setXMax (maxVal) {
+    let options = this.getChartOptions()
+    options.scales.xAxes[0].ticks.max = maxVal
+  }
+
+  setYMax (maxVal) {
+    let options = this.getChartOptions()
+    options.scales.yAxes[0].ticks.max = maxVal
   }
 }
 

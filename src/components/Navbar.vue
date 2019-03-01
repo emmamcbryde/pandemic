@@ -1,32 +1,36 @@
 <template>
   <v-toolbar
     dense
-    dark
     tabs
-    color="indigo">
-
+    color="white"
+  >
     <v-toolbar-title
       class="heading font-weight-medium"
       style="
         flex: 1;
         cursor: pointer;"
-      @click="home">
+      @click="home"
+    >
       Global Pandemic Map
     </v-toolbar-title>
 
-    <v-spacer/>
+    <v-spacer></v-spacer>
 
     <v-toolbar-items>
       <v-btn
         flat
         to="/epimodel"
-        router>epimodels
+        router
+      >
+        epimodels
       </v-btn>
 
       <v-btn
         flat
         to="/about"
-        router>About
+        router
+      >
+        About
       </v-btn>
 
       <template v-if="isUser">
@@ -34,10 +38,9 @@
           v-if="user.authenticated"
           bottom
           left
-          open-on-hover>
-
-          <v-btn
-            slot="activator">
+          open-on-hover
+        >
+          <v-btn slot="activator">
             {{ user.name }}
             <v-icon>arrow_drop_down</v-icon>
           </v-btn>
@@ -55,18 +58,16 @@
               </v-list-tile-title>
             </v-list-tile>
           </v-list>
-
         </v-menu>
 
         <v-btn
           v-else
           flat
-          to="/login">
+          to="/login"
+        >
           Login
         </v-btn>
-
       </template>
-
     </v-toolbar-items>
   </v-toolbar>
 </template>
@@ -76,7 +77,7 @@ import auth from '../modules/auth'
 import config from '../config'
 
 export default {
-  data() {
+  data () {
     return {
       isUser: config.isUser,
       user: auth.user,
@@ -84,13 +85,13 @@ export default {
     }
   },
   methods: {
-    home() {
+    home () {
       this.$router.push('/')
     },
-    editUser() {
+    editUser () {
       this.$router.push('/edit-user')
     },
-    async logout() {
+    async logout () {
       await auth.logout()
       this.$router.push('/login')
     }
